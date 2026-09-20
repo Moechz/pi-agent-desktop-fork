@@ -15,10 +15,11 @@ export async function GET() {
     const agentDir = getAgentDir();
     const { registry } = await createPiRuntime();
     const available = registry.getAvailable();
-    // P14：deepseek 目录仅留 V4.1 Flash（deepseek-flash；官方已下线 v4-flash/v4-pro）
+    // P14：deepseek 目录仅留 V4 Flash（干净目录真实 id 是 deepseek-v4-flash；
+    // 补丁时代曾手工改名 deepseek-flash，两者都兼容；v4-pro 隐藏）
     const filtered = available.filter(
       (m: { id: string; provider: string }) =>
-        !(m.provider === "deepseek" && m.id !== "deepseek-flash"),
+        !(m.provider === "deepseek" && m.id !== "deepseek-v4-flash" && m.id !== "deepseek-flash"),
     );
     modelList = filtered.map((m: { id: string; name: string; provider: string }) => ({
       id: m.id,
