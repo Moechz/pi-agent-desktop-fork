@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 2026-09-20 — 二次全量对齐（生产版产物逐字对照）
+
+- `ba514f7` 绿点判定改 /api/agent isStreaming 轮询、组头运行计数胶囊 N ▶、P10 思考手风琴、P6b 两处弹层
+- `512dc24` 侧栏宽度 347、时间 10.5px、组头图标 sw2/双态色、四钮顺序、P17 HDR/弹窗/持久化语义全面对齐
+- P4/P9 编号确认从未存在；P8 色板/字体/markdown 标题断言齐全
+
 ## 2026-09-20 — C 批：首枚自构建 DMG
 
 - `Pi-Agent-Desktop-0.8.8-mac-universal.dmg`（universal 298MB，含 P1–P21 全部定制）
