@@ -141,30 +141,35 @@ export function SessionSidebar({
   // P3-2：组折叠状态（cwd→收起；默认全展开，不持久化）
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
-  // P3-2 运行点：轮询 /api/sessions，modified 在两次轮询间变化 ≈ 会话正在运行（绿点）
+  // P3 运行点：轮询 /api/agent/{id} 的 running+state.isStreaming（实时真值；
+  // modified-diff 方案不可行——流式期间 modified 只在块落盘时变，长时间工具执行会误判空闲）
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     let alive = true;
-    let prev = new Map<string, string>();
     const tick = async () => {
       try {
         const r = await fetch("/api/sessions");
         if (!r.ok) return;
-        const d = (await r.json()) as { sessions?: SessionInfo[] };
-        const next = new Map<string, string>();
-        const running = new Set<string>();
-        for (const s of d.sessions ?? []) {
-          const p = prev.get(s.id);
-          if (p !== undefined && p !== s.modified) running.add(s.id);
-          next.set(s.id, s.modified);
-        }
-        prev = next;
-        if (alive) setRunningIds(running);
+        const d = (await r.json()) as { sessions?: { id: string }[] };
+        const ids = (d.sessions ?? []).map((s) => s.id);
+        const results = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const a = await fetch(`/api/agent/${encodeURIComponent(id)}`);
+              if (!a.ok) return [id, false] as const;
+              const j = (await a.json()) as { running?: boolean; state?: { isStreaming?: boolean } };
+              return [id, !!(j.running && j.state?.isStreaming)] as const;
+            } catch {
+              return [id, false] as const;
+            }
+          }),
+        );
+        if (alive) setRunningIds(new Set(results.filter(([, run]) => run).map(([id]) => id)));
       } catch {
         /* 轮询失败忽略，下轮重试 */
       }
     };
-    tick(); // 首轮建基线，不产生绿点
+    tick();
     const iv = setInterval(tick, 4000);
     return () => {
       alive = false;
@@ -216,14 +221,15 @@ export function SessionSidebar({
           const lastSegs = g.cwd.split("/").filter(Boolean).slice(-2).join("/");
           return (
             <div key={g.cwd}>
-              {/* P3-2 组头：文件夹图标（收起=闭合/展开=打开）+ 目录末两段 + 计数徽章；
-                  点图标切换折叠，点正文选为当前项目 */}
+              {/* P3-2 组头：文件夹图标（收起=闭合/展开=打开）+ 目录末两段（uppercase）
+                  + 运行中计数胶囊「N ▶」（run>0 才显示）；点图标切折叠，点正文选为当前项目 */}
               <button
                 onClick={() => onCwdChange?.(g.cwd)}
                 title={g.cwd}
-                className={`flex w-full items-center gap-0.5 border-none bg-transparent px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors duration-150 hover:bg-bg-hover ${
-                  selectedCwd === g.cwd ? "text-text-strong font-semibold" : "text-text-muted font-medium"
+                className={`flex w-full items-center gap-1.5 border-none bg-transparent text-left cursor-pointer transition-colors duration-150 hover:bg-bg-hover ${
+                  selectedCwd === g.cwd ? "text-accent" : "text-text-muted hover:text-text"
                 }`}
+                style={{ padding: "8px 12px 4px" }}
               >
                 <span
                   role="button"
@@ -244,11 +250,31 @@ export function SessionSidebar({
                     </svg>
                   )}
                 </span>
-                <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{lastSegs}</span>
-                <span className="shrink-0 px-1 text-[11px] tabular-nums text-text-dim">{g.sessions.length}</span>
+                <span
+                  className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                  style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.03em", textTransform: "uppercase" }}
+                >
+                  {lastSegs}
+                </span>
+                {(() => {
+                  const run = g.sessions.filter((s) => runningIds.has(s.id)).length;
+                  return run > 0 ? (
+                    <span
+                      title="运行中"
+                      className="shrink-0"
+                      style={{
+                        fontSize: 11, fontWeight: 700, padding: "1px 6px", borderRadius: 9999,
+                        background: "var(--success-bg)", color: "var(--success)",
+                        border: "1px solid var(--success-border)",
+                      }}
+                    >
+                      {run} ▶
+                    </span>
+                  ) : null;
+                })()}
               </button>
               {!collapsed && (
-                <div style={{ paddingLeft: 14 }}>
+                <div style={{ paddingLeft: 0 }}>
                   {groupTree.map((node) => (
                     <SessionTreeItem
                       key={node.session.id}

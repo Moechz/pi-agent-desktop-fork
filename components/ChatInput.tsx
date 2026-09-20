@@ -1004,7 +1004,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                 {compactError && (
                   <div style={{
                     position: "absolute", bottom: "calc(100% + 6px)", right: 0,
-                    background: "var(--bg-panel)", color: "var(--danger)",
+                    background: "var(--bg)", color: "var(--danger)" /* P6b：不透明 */,
                     fontSize: 12, padding: "4px 8px", borderRadius: "var(--radius-control)",
                     whiteSpace: "nowrap", pointerEvents: "none",
                     boxShadow: "var(--shadow-popover)", zIndex: 50,

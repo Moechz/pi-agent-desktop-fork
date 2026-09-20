@@ -240,7 +240,8 @@ function SessionItem({
         confirmDelete || renaming ? "cursor-default" : "cursor-pointer"
       } ${deleting ? "opacity-50" : "opacity-100"}`}
       style={{
-        paddingLeft: depth > 0 ? depth * 12 : 0, // P15：悬停背景整行贯通；缩进只留层级差
+        // P15：恢复上游 paddingLeft（12d+14）——生产版最终态；21px 圆点槽后标题恒 35px，与组头目录名对齐
+        paddingLeft: depth > 0 ? depth * 12 + 14 : 14,
       }}
     >
       {confirmDelete ? (

@@ -366,7 +366,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
               top: tooltipPositions[i],
               right: "100%",
               marginRight: 6,
-              background: "var(--bg-elevated)",
+              background: "var(--bg)", /* P6b：不透明，与主弹窗同色 */
               borderTop: `1px solid ${isNearest ? color.border : "var(--border)"}`,
               borderRight: `1px solid ${isNearest ? color.border : "var(--border)"}`,
               borderBottom: `1px solid ${isNearest ? color.border : "var(--border)"}`,

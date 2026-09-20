@@ -709,7 +709,8 @@ function TextBlock({ block }: { block: TextContent }) {
 
 function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?: number }) {
   const { t } = useI18n();
-  const [expanded, setExpanded] = useState(false);
+  // P10：思考手风琴默认展开（生产版 patch_thinking_live 同款；主流程被 P1 隐藏，分支视图等路径可见）
+  const [expanded, setExpanded] = useState(true);
   const panelId = useId();
   return (
     <div className="t-acc overflow-hidden rounded-panel border border-border text-[13px]" data-open={expanded ? "true" : "false"}>
