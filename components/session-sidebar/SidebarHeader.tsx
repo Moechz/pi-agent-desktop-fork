@@ -109,7 +109,7 @@ export function SidebarHeader({
       <div className="sidebar-title-row flex items-center justify-between gap-2 mb-2.5">
         {/* 红 π logo（无背景，取自应用图标重制）+ 标题 */}
         <div className="flex items-center gap-2 min-w-0">
-          <img src="/logo-red.png" alt="Pi" width={20} height={20} style={{ width: 20, height: 20, flexShrink: 0 }} />
+          <img src="/logo-red.png" alt="Pi" width={60} height={60} style={{ width: 60, height: 60, flexShrink: 0 }} />
           <PiAgentTitle />
         </div>
       </div>
