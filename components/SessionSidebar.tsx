@@ -129,6 +129,10 @@ export function SessionSidebar({
       if (arr) arr.push(s);
       else byCwd.set(s.cwd, [s]);
     }
+    // 组内按 modified 降序：活跃会话自动浮到组顶（对齐生产版 P15 递归排序语义）
+    for (const arr of byCwd.values()) {
+      arr.sort((a, b) => (new Date(b.modified).getTime() || 0) - (new Date(a.modified).getTime() || 0));
+    }
     const list = Array.from(byCwd.entries()).map(([cwd, sessions]) => ({
       cwd,
       sessions,
