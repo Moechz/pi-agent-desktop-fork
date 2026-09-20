@@ -211,10 +211,10 @@ function SessionItem({
     : "bg-transparent";
 
   const borderClass = confirmDelete
-    ? "border-l-2 border-danger"
+    ? "border-l-4 border-danger"
     : isSelected
-    ? "border-l-2 border-accent"
-    : "border-l-2 border-transparent";
+    ? "border-l-4 border-accent"
+    : "border-l-4 border-transparent";
 
   return (
     <div

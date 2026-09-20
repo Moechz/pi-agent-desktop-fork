@@ -109,8 +109,8 @@ export function SidebarHeader({
         <PiAgentTitle />
       </div>
 
-      {/* P16 四钮行（右对齐）：新会话 新建目录 ▾ 刷新 */}
-      <div className="flex items-center gap-1 justify-end" style={{ marginTop: 24 }}>
+      {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右 */}
+      <div className="flex items-center justify-between" style={{ marginTop: 24 }}>
         <button
           onClick={handleNewSession}
           disabled={!selectedCwd}
@@ -129,6 +129,7 @@ export function SidebarHeader({
           </svg>
           新会话
         </button>
+        <div className="flex items-center gap-1">
         <button
           onClick={() => void handleCustomPath()}
           disabled={customPathOpen}
@@ -190,6 +191,7 @@ export function SidebarHeader({
             </svg>
           )}
         </button>
+        </div>
         </div>
 
       {/* CWD 下拉（P16 后由 ▾ 钮唤起，不再占常驻行） */}
