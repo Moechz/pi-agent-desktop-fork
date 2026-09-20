@@ -242,6 +242,12 @@ export function AppShell() {
     [router, activeCwd]
   );
 
+  // P17：编写器目录弹窗切换目录——复用侧栏「新会话」同一处理（清会话/设新会话目录/切项目/刷新）
+  const handleNewSessionCwdChange = useCallback(
+    (cwd: string) => handleNewSession("", cwd),
+    [handleNewSession],
+  );
+
   const handleSessionCreated = useCallback((session: SessionInfo) => {
     setRefreshKey((k) => k + 1);
     router.replace(`/?session=${encodeURIComponent(session.id)}`, { scroll: false });
@@ -717,6 +723,7 @@ export function AppShell() {
                 key={sessionKey}
                 session={selectedSession}
                 newSessionCwd={effectiveNewSessionCwd}
+                onNewSessionCwdChange={handleNewSessionCwdChange}
                 onAgentEnd={handleAgentEnd}
                 onSessionCreated={handleSessionCreated}
                 onSessionForked={handleSessionForked}

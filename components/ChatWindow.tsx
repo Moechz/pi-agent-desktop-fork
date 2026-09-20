@@ -20,6 +20,8 @@ import { useI18n } from "./I18nProvider";
 interface Props {
   session: SessionInfo | null;
   newSessionCwd: string | null;
+  /** P17：切换新会话目录（目录行弹窗用，最终走 AppShell.handleNewSession） */
+  onNewSessionCwdChange?: (cwd: string) => void;
   onAgentEnd?: () => void;
   onSessionCreated?: (session: SessionInfo) => void;
   onSessionForked?: (newSessionId: string) => void;
@@ -31,7 +33,7 @@ interface Props {
   onContextUsageChange?: (usage: { percent: number | null; contextWindow: number; tokens: number | null } | null) => void;
 }
 
-export function ChatWindow({ session, newSessionCwd, onAgentEnd, onSessionCreated, onSessionForked, modelsRefreshKey, chatInputRef, onBranchDataChange, onSystemPromptChange, onSessionStatsChange, onContextUsageChange }: Props) {
+export function ChatWindow({ session, newSessionCwd, onNewSessionCwdChange, onAgentEnd, onSessionCreated, onSessionForked, modelsRefreshKey, chatInputRef, onBranchDataChange, onSystemPromptChange, onSessionStatsChange, onContextUsageChange }: Props) {
   const { t } = useI18n();
   const { soundEnabled, onSoundToggle, playDoneSound } = useAudio();
   const playDoneSoundRef = useRef(playDoneSound);
@@ -196,6 +198,8 @@ export function ChatWindow({ session, newSessionCwd, onAgentEnd, onSessionCreate
         onReorderFollowUps={handleReorderFollowUps}
         isStreaming={agentRunning}
         currentCwd={session?.cwd ?? newSessionCwd}
+        isNew={isNew}
+        onNewSessionCwdChange={onNewSessionCwdChange}
         model={displayModelValue}
         modelNames={modelNames}
         modelList={modelList}

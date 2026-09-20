@@ -17,6 +17,7 @@ import type { AgentMode } from "@/lib/approval-policy";
 import type { FollowUpQueueSnapshot } from "@/lib/follow-up-queue";
 import { useI18n } from "./I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
+import { pickDirectoryFromHost } from "./session-sidebar/helpers";
 
 interface Props {
   onSend: (message: string, images?: AttachedImage[]) => void;
@@ -25,6 +26,10 @@ interface Props {
   onFollowUp?: (message: string, images?: AttachedImage[]) => Promise<void>;
   isStreaming: boolean;
   currentCwd?: string | null;
+  /** P17：新会话态（决定是否显目录切换行） */
+  isNew?: boolean;
+  /** P17：切换新会话目录（链路：AppShell.handleNewSession） */
+  onNewSessionCwdChange?: (cwd: string) => void;
   model?: { provider: string; modelId: string } | null;
   modelNames?: Record<string, string>;
   modelList?: { id: string; name: string; provider: string }[];
@@ -51,7 +56,7 @@ interface Props {
 
 export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
   onSend, onAbort, onSteer, onFollowUp, isStreaming, model, modelNames, modelList, onModelChange,
-  currentCwd,
+  currentCwd, isNew, onNewSessionCwdChange,
   onCompact, onAbortCompaction, isCompacting, compactError, toolPreset, onToolPresetChange,
   agentMode, onAgentModeChange,
   thinkingLevel, onThinkingLevelChange, availableThinkingLevels, thinkingLevelMap,
@@ -357,6 +362,83 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
   useDismissOnOutsideClick(thinkingDropdownRef, thinkingDropdownOpen, () => setThinkingDropdownOpen(false));
   useDismissOnOutsideClick(secondaryControlsRef, secondaryControlsOpen, () => setSecondaryControlsOpen(false));
 
+  // ─── P17：新会话目录行 + ▾ 切换弹窗 ───
+  const [piOpen, setPiOpen] = useState(false);
+  const [piDirs, setPiDirs] = useState<string[]>([]);
+  const [piBusy, setPiBusy] = useState(false); // 使用默认目录/选择其他目录…进行中
+  const piRef = useRef<HTMLDivElement>(null);
+  useDismissOnOutsideClick(piRef, piOpen, () => setPiOpen(false));
+
+  // 打开时拉取：会话目录（按最近活动去重降序）∪ localStorage __piDirs，cap 50
+  useEffect(() => {
+    if (!piOpen) return;
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch("/api/sessions");
+        const d = (await r.json()) as { sessions?: { cwd: string; modified: string }[] };
+        const byCwd = new Map<string, string>();
+        for (const s of d.sessions ?? []) {
+          const prev = byCwd.get(s.cwd);
+          if (!prev || new Date(s.modified) > new Date(prev)) byCwd.set(s.cwd, s.modified);
+        }
+        const sessionDirs = Array.from(byCwd.entries())
+          .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+          .map(([cwd]) => cwd);
+        let stored: string[] = [];
+        try {
+          stored = JSON.parse(localStorage.getItem("__piDirs") ?? "[]");
+        } catch {}
+        const merged = [...sessionDirs];
+        for (const c of stored) if (!merged.includes(c)) merged.push(c);
+        if (alive) setPiDirs(merged.slice(0, 50));
+      } catch {
+        /* 拉取失败留空列表 */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [piOpen]);
+
+  const piSelect = useCallback(
+    (cwd: string) => {
+      onNewSessionCwdChange?.(cwd);
+      setPiOpen(false);
+      try {
+        const cur: string[] = JSON.parse(localStorage.getItem("__piDirs") ?? "[]");
+        const next = [cwd, ...cur.filter((c) => c !== cwd)].slice(0, 50);
+        localStorage.setItem("__piDirs", JSON.stringify(next));
+      } catch {}
+    },
+    [onNewSessionCwdChange],
+  );
+
+  const piUseDefault = useCallback(async () => {
+    try {
+      setPiBusy(true);
+      const r = await fetch("/api/default-cwd", { method: "POST" });
+      const d = (await r.json()) as { cwd?: string };
+      if (d.cwd) piSelect(d.cwd);
+    } catch {
+      /* 忽略，用户可重试 */
+    } finally {
+      setPiBusy(false);
+    }
+  }, [piSelect]);
+
+  const piPickOther = useCallback(async () => {
+    try {
+      setPiBusy(true);
+      const path = await pickDirectoryFromHost();
+      if (path) piSelect(path);
+    } catch {
+      /* 忽略，用户可重试 */
+    } finally {
+      setPiBusy(false);
+    }
+  }, [piSelect]);
+
   return (
     <div
       style={{
@@ -380,6 +462,111 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
         }}
       />
       <div style={{ maxWidth: 820, margin: "0 auto" }}>
+        {/* P17：新会话态目录行（文件夹图标 + 目录名 + ▾，弹窗向上展开） */}
+        {isNew && (
+          <div ref={piRef} style={{ position: "relative", marginBottom: 8, maxWidth: "fit-content" }}>
+            <button
+              onClick={() => setPiOpen((v) => !v)}
+              title="切换目录"
+              style={{
+                display: "flex", alignItems: "center", gap: 6, background: "transparent",
+                border: "none", padding: "4px 6px", margin: 0, cursor: "pointer",
+                borderRadius: 6, fontSize: 13, color: "var(--text-muted)",
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
+              </svg>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)", fontSize: 12, maxWidth: 280,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}
+                title={currentCwd ?? ""}
+              >
+                {currentCwd ? currentCwd.split("/").filter(Boolean).pop() : "未选择目录"}
+              </span>
+              <svg
+                width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transform: piOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s", flexShrink: 0 }}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {piOpen && (
+              <div
+                style={{
+                  position: "absolute", bottom: "calc(100% + 6px)", left: 0,
+                  background: "var(--bg)", border: "1px solid var(--border)",
+                  borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+                  minWidth: 280, maxWidth: 360, maxHeight: 320, overflowY: "auto", zIndex: 200,
+                }}
+              >
+                <div style={{ padding: "8px 12px", fontSize: 13, fontWeight: 600, color: "var(--text-strong)" }}>
+                  已添加目录
+                </div>
+                {piDirs.length === 0 && (
+                  <div style={{ padding: "4px 12px 10px", fontSize: 13, color: "var(--text-dim)" }}>暂无记录</div>
+                )}
+                {piDirs.map((cwd) => {
+                  const active = cwd === currentCwd;
+                  return (
+                    <button
+                      key={cwd}
+                      onClick={() => piSelect(cwd)}
+                      title={cwd}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8, width: "100%",
+                        padding: "7px 12px", background: "transparent", border: "none",
+                        cursor: "pointer", textAlign: "left", fontSize: 13,
+                        color: active ? "var(--accent)" : "var(--text)",
+                      }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
+                      </svg>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {cwd.split("/").filter(Boolean).slice(-2).join("/")}
+                      </span>
+                      {active && (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+                <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
+                <button
+                  onClick={() => void piUseDefault()}
+                  disabled={piBusy}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8, width: "100%",
+                    padding: "7px 12px", background: "transparent", border: "none",
+                    cursor: piBusy ? "default" : "pointer", textAlign: "left", fontSize: 13,
+                    color: "var(--text-muted)", opacity: piBusy ? 0.6 : 1,
+                  }}
+                >
+                  使用默认目录
+                </button>
+                <button
+                  onClick={() => void piPickOther()}
+                  disabled={piBusy}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8, width: "100%",
+                    padding: "7px 12px 10px", background: "transparent", border: "none",
+                    cursor: piBusy ? "default" : "pointer", textAlign: "left", fontSize: 13,
+                    color: "var(--text-muted)", opacity: piBusy ? 0.6 : 1,
+                  }}
+                >
+                  选择其他目录…
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Retry banner */}
         {retryInfo && (
           <div style={{
