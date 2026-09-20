@@ -2,9 +2,20 @@
 
 import { useState, useCallback, useRef } from "react";
 import type { SessionInfo } from "@/lib/types";
-import { formatRelativeTime, type SessionTreeNode } from "./helpers";
+import { type SessionTreeNode } from "./helpers";
 import { useI18n } from "../I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
+
+// P15：紧凑相对时间——now(<1min) / Nm / Nh / Nd（补丁版同款）
+function compactTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 interface SessionTreeItemProps {
   node: SessionTreeNode;
@@ -16,6 +27,7 @@ interface SessionTreeItemProps {
   onCloneSession?: (s: SessionInfo) => void;
   onExportSession?: (s: SessionInfo) => void;
   depth: number;
+  isRunning?: boolean; // P15：运行中绿点
 }
 
 export function SessionTreeItem({
@@ -28,6 +40,7 @@ export function SessionTreeItem({
   onCloneSession,
   onExportSession,
   depth,
+  isRunning,
 }: SessionTreeItemProps) {
   const [collapsed, setCollapsed] = useState(false);
   const hasChildren = node.children.length > 0;
@@ -57,6 +70,7 @@ export function SessionTreeItem({
           hasChildren={hasChildren}
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed((v) => !v)}
+          isRunning={isRunning}
         />
       </div>
       {hasChildren && (
@@ -100,6 +114,7 @@ interface SessionItemProps {
   hasChildren?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  isRunning?: boolean; // P15
 }
 
 function SessionItem({
@@ -115,8 +130,9 @@ function SessionItem({
   hasChildren = false,
   collapsed = false,
   onToggleCollapse,
+  isRunning = false,
 }: SessionItemProps) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const [hovered, setHovered] = useState(false);
   const [rowFocused, setRowFocused] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -220,11 +236,11 @@ function SessionItem({
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`relative h-[52px] flex items-center pr-2 transition-[background-color,border-color,opacity] duration-150 gap-1.5 overflow-hidden ${bgClass} ${borderClass} ${
+      className={`relative h-[40px] flex items-center pr-2 transition-[background-color,border-color,opacity] duration-150 gap-1.5 overflow-hidden ${bgClass} ${borderClass} ${
         confirmDelete || renaming ? "cursor-default" : "cursor-pointer"
       } ${deleting ? "opacity-50" : "opacity-100"}`}
       style={{
-        paddingLeft: depth > 0 ? depth * 12 + 14 : 14,
+        paddingLeft: depth > 0 ? depth * 12 : 0, // P15：悬停背景整行贯通；缩进只留层级差
       }}
     >
       {confirmDelete ? (
@@ -271,6 +287,15 @@ function SessionItem({
       ) : (
         /* ── Normal view ── */
         <>
+          {/* P15：固定宽圆点槽——运行中绿点居中；空闲不渲染圆点但占位不变，
+              标题恒从同一起点（与组头文件夹图标列对齐），切换不跳动 */}
+          <span
+            style={{ width: 21, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {isRunning && (
+              <span title="运行中" style={{ width: 8, height: 8, borderRadius: 9999, background: "#22e06b" }} />
+            )}
+          </span>
           {/* Fork indicator for child sessions */}
           {depth > 0 && (
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="stroke-text-dim shrink-0">
@@ -280,19 +305,23 @@ function SessionItem({
               <path d="M18 9a9 9 0 0 1-9 9" />
             </svg>
           )}
-          <div className="flex-1 min-w-0">
+          <div className="flex flex-1 min-w-0 items-baseline gap-2">
             <div
-              className={`text-[13px] leading-[1.4] overflow-hidden text-ellipsis whitespace-nowrap ${
+              className={`min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] leading-[1.4] ${
                 isSelected ? "font-semibold text-text-strong" : "font-medium text-text"
               }`}
               title={title}
             >
               {title}
             </div>
-            <div className="mt-0.5 flex gap-2 text-text-dim text-[12px]">
-              <span title={session.modified}>{formatRelativeTime(session.modified, locale)}</span>
-              <span>{t("common.messages", { count: session.messageCount })}</span>
-            </div>
+            {/* P15：标题右紧凑相对时间（tabular-nums 防跳动；悬停看完整时间） */}
+            <span
+              className="shrink-0 text-[11px] text-text-dim"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+              title={new Date(session.modified).toLocaleString()}
+            >
+              {compactTime(session.modified)}
+            </span>
           </div>
 
           {/* Collapse toggle — always visible when has children */}

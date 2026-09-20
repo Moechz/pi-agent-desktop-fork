@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import type { SessionInfo } from "@/lib/types";
 import { FileExplorer } from "./FileExplorer";
 import { SidebarHeader } from "./session-sidebar/SidebarHeader";
@@ -49,7 +49,7 @@ export function SessionSidebar({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const selectedCwd = selectedCwdProp ?? null;
-  const [explorerOpen, setExplorerOpen] = useState(true);
+  const [explorerOpen, setExplorerOpen] = useState(false); // P18：默认收起（不持久化，重启回默认）
   const [explorerKey, setExplorerKey] = useState(0);
   const [sessionRefreshDone, setSessionRefreshDone] = useState(false);
   const [explorerRefreshDone, setExplorerRefreshDone] = useState(false);
@@ -121,12 +121,56 @@ export function SessionSidebar({
     };
   }, []);
 
-  const filteredSessions = selectedCwd
-    ? allSessions.filter((s) => s.cwd === selectedCwd)
-    : allSessions;
+  // P3-2 定制：不按 selectedCwd 过滤，改为按目录分组展示全部会话（最新活跃组在前）
+  const groups = useMemo(() => {
+    const byCwd = new Map<string, SessionInfo[]>();
+    for (const s of allSessions) {
+      const arr = byCwd.get(s.cwd);
+      if (arr) arr.push(s);
+      else byCwd.set(s.cwd, [s]);
+    }
+    const list = Array.from(byCwd.entries()).map(([cwd, sessions]) => ({
+      cwd,
+      sessions,
+      latest: Math.max(...sessions.map((s) => new Date(s.modified).getTime() || 0)),
+    }));
+    list.sort((a, b) => b.latest - a.latest);
+    return list;
+  }, [allSessions]);
 
-  // Build parent-child tree within the filtered set
-  const sessionTree = buildSessionTree(filteredSessions);
+  // P3-2：组折叠状态（cwd→收起；默认全展开，不持久化）
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  // P3-2 运行点：轮询 /api/sessions，modified 在两次轮询间变化 ≈ 会话正在运行（绿点）
+  const [runningIds, setRunningIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let alive = true;
+    let prev = new Map<string, string>();
+    const tick = async () => {
+      try {
+        const r = await fetch("/api/sessions");
+        if (!r.ok) return;
+        const d = (await r.json()) as { sessions?: SessionInfo[] };
+        const next = new Map<string, string>();
+        const running = new Set<string>();
+        for (const s of d.sessions ?? []) {
+          const p = prev.get(s.id);
+          if (p !== undefined && p !== s.modified) running.add(s.id);
+          next.set(s.id, s.modified);
+        }
+        prev = next;
+        if (alive) setRunningIds(running);
+      } catch {
+        /* 轮询失败忽略，下轮重试 */
+      }
+    };
+    tick(); // 首轮建基线，不产生绿点
+    const iv = setInterval(tick, 4000);
+    return () => {
+      alive = false;
+      clearInterval(iv);
+    };
+  }, []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -161,28 +205,73 @@ export function SessionSidebar({
             {error}
           </div>
         )}
-        {!loading && !error && filteredSessions.length === 0 && (
+        {!loading && !error && allSessions.length === 0 && (
           <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 13 }}>
             {t("sidebar.noSessions")}
           </div>
         )}
-        {sessionTree.map((node) => (
-          <SessionTreeItem
-            key={node.session.id}
-            node={node}
-            selectedSessionId={selectedSessionId}
-            onSelectSession={onSelectSession}
-            onRenamed={loadSessions}
-            onSessionDeleted={(id) => {
-              onSessionDeleted?.(id);
-              loadSessions();
-            }}
-            onBranchSession={onBranchSession}
-            onCloneSession={onCloneSession}
-            onExportSession={onExportSession}
-            depth={0}
-          />
-        ))}
+        {groups.map((g) => {
+          const groupTree = buildSessionTree(g.sessions);
+          const collapsed = !!collapsedGroups[g.cwd];
+          const lastSegs = g.cwd.split("/").filter(Boolean).slice(-2).join("/");
+          return (
+            <div key={g.cwd}>
+              {/* P3-2 组头：文件夹图标（收起=闭合/展开=打开）+ 目录末两段 + 计数徽章；
+                  点图标切换折叠，点正文选为当前项目 */}
+              <button
+                onClick={() => onCwdChange?.(g.cwd)}
+                title={g.cwd}
+                className={`flex w-full items-center gap-0.5 border-none bg-transparent px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors duration-150 hover:bg-bg-hover ${
+                  selectedCwd === g.cwd ? "text-text-strong font-semibold" : "text-text-muted font-medium"
+                }`}
+              >
+                <span
+                  role="button"
+                  aria-label={collapsed ? "展开分组" : "收起分组"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCollapsedGroups((m) => ({ ...m, [g.cwd]: !m[g.cwd] }));
+                  }}
+                  className="flex shrink-0 cursor-pointer items-center justify-center bg-transparent p-0.5 text-text-dim hover:text-text-muted"
+                >
+                  {collapsed ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 14l1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  )}
+                </span>
+                <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{lastSegs}</span>
+                <span className="shrink-0 px-1 text-[11px] tabular-nums text-text-dim">{g.sessions.length}</span>
+              </button>
+              {!collapsed && (
+                <div style={{ paddingLeft: 14 }}>
+                  {groupTree.map((node) => (
+                    <SessionTreeItem
+                      key={node.session.id}
+                      node={node}
+                      selectedSessionId={selectedSessionId}
+                      onSelectSession={onSelectSession}
+                      onRenamed={loadSessions}
+                      onSessionDeleted={(id) => {
+                        onSessionDeleted?.(id);
+                        loadSessions();
+                      }}
+                      onBranchSession={onBranchSession}
+                      onCloneSession={onCloneSession}
+                      onExportSession={onExportSession}
+                      depth={0}
+                      isRunning={runningIds.has(node.session.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* File Explorer section */}
