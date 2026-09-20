@@ -72,8 +72,9 @@
 
 :root {
   --bg: #f8f9fc;
-  --bg-panel: rgba(243, 245, 248, 0.65);
-  --bg-elevated: rgba(255, 255, 255, 0.65);
+  /* P6 定制：panel/elevated 去 alpha（65% 半透明表面变实，保留色调） */
+  --bg-panel: rgb(243, 245, 248);
+  --bg-elevated: rgb(255, 255, 255);
   --bg-hover: #e9edf3;
   --bg-selected: #dde5ef;
   --border: rgba(0, 0, 0, 0.08);
@@ -116,7 +117,8 @@
   --divider: var(--border-subtle);
   --material-sidebar: rgba(241, 243, 247, 0.88);
   --material-toolbar: rgba(250, 251, 253, 0.78);
-  --material-popover: rgba(255, 255, 255, 0.86);
+  /* P6 定制：弹窗/下拉/toast 全不透明（原 0.86 alpha 靠 backdrop blur 混底） */
+  --material-popover: var(--bg);
   --material-input: rgba(255, 255, 255, 0.82);
 
   /* Shared motion scale — transitions.dev semantics. */
@@ -172,8 +174,9 @@
 
 html.dark {
   --bg: #050505;
-  --bg-panel: rgba(16, 21, 29, 0.65);
-  --bg-elevated: rgba(12, 17, 24, 0.65);
+  /* P6 定制：panel/elevated 去 alpha */
+  --bg-panel: rgb(16, 21, 29);
+  --bg-elevated: rgb(12, 17, 24);
   --bg-hover: #171e28;
   --bg-selected: #202838;
   --border: rgba(255, 255, 255, 0.08);
@@ -212,7 +215,8 @@ html.dark {
   --divider: var(--border-subtle);
   --material-sidebar: rgba(18, 22, 29, 0.9);
   --material-toolbar: rgba(12, 15, 20, 0.8);
-  --material-popover: rgba(22, 27, 35, 0.9);
+  /* P6 定制：弹窗/下拉/toast 全不透明 */
+  --material-popover: var(--bg);
   --material-input: rgba(17, 21, 28, 0.84);
 }
 
