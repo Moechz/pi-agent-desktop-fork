@@ -382,7 +382,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
           >
             <div
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: isNearest ? "var(--text)" : "var(--text-muted)",
                 lineHeight: 1.4,
                 whiteSpace: "nowrap",

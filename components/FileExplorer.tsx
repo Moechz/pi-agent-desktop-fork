@@ -142,7 +142,7 @@ function TreeNode({
         </span>
         <span
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: "var(--text)",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -181,7 +181,7 @@ function TreeNode({
               borderRadius: "var(--radius-control)",
               color: "var(--accent)",
               cursor: "pointer",
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 600,
               letterSpacing: 0,
               whiteSpace: "nowrap",
@@ -201,7 +201,7 @@ function TreeNode({
             <TreeNode key={child.fullPath} node={child} depth={depth + 1} cwd={cwd} onOpenFile={onOpenFile} onAtMention={onAtMention} expandedPaths={expandedPaths} onToggleExpanded={onToggleExpanded} refreshKey={refreshKey} />
           ))}
           {children.length === 0 && loaded && (
-            <div style={{ paddingLeft: 8 + (depth + 1) * 14, fontSize: 11, color: "var(--text-dim)", height: 22, display: "flex", alignItems: "center" }}>
+            <div style={{ paddingLeft: 8 + (depth + 1) * 14, fontSize: 12, color: "var(--text-dim)", height: 22, display: "flex", alignItems: "center" }}>
               empty
             </div>
           )}
@@ -243,7 +243,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
 
   if (loading) {
     return (
-      <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--text-dim)" }}>
+      <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-dim)" }}>
         Loading files...
       </div>
     );
@@ -251,7 +251,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
 
   if (error) {
     return (
-      <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--danger)" }}>
+      <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--danger)" }}>
         {error}
       </div>
     );
@@ -273,7 +273,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
         />
       ))}
       {roots.length === 0 && (
-        <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--text-dim)" }}>
+        <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-dim)" }}>
           No files found
         </div>
       )}

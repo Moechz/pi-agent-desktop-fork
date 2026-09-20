@@ -251,7 +251,7 @@ export function ChatWindow({ session, newSessionCwd, onAgentEnd, onSessionCreate
       />
       {extensionUiNotify && (
         <div
-          className="t-toast is-open material-popover absolute top-3 left-1/2 z-[60] rounded-panel border border-border px-3 py-2 text-[12px] text-text shadow-popover"
+          className="t-toast is-open material-popover absolute top-3 left-1/2 z-[60] rounded-panel border border-border px-3 py-2 text-[13px] text-text shadow-popover"
           style={{ "--toast-x": "-50%" } as React.CSSProperties}
           role="status"
         >
@@ -259,7 +259,7 @@ export function ChatWindow({ session, newSessionCwd, onAgentEnd, onSessionCreate
         </div>
       )}
       {connectionStatus === "failed" && (
-        <div className="bg-danger-bg border-b border-danger-border px-4 py-2.5 flex items-center justify-between text-[12px] text-danger shrink-0 z-50">
+        <div className="bg-danger-bg border-b border-danger-border px-4 py-2.5 flex items-center justify-between text-[13px] text-danger shrink-0 z-50">
           <div className="flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
               <circle cx="12" cy="12" r="10" />
@@ -270,7 +270,7 @@ export function ChatWindow({ session, newSessionCwd, onAgentEnd, onSessionCreate
           </div>
           <button
             onClick={handleReconnect}
-            className="px-2.5 py-1 bg-danger text-accent-contrast rounded-control cursor-pointer hover:bg-danger-hover transition-colors font-medium text-[11px]"
+            className="px-2.5 py-1 bg-danger text-accent-contrast rounded-control cursor-pointer hover:bg-danger-hover transition-colors font-medium text-[12px]"
           >
             {t("chat.reconnect")}
           </button>
@@ -289,7 +289,7 @@ export function ChatWindow({ session, newSessionCwd, onAgentEnd, onSessionCreate
             </div>
             <div>
               <div className="text-[13px] font-medium text-text">{t("branch.addConversation")}</div>
-              <div className="mt-0.5 text-[11px] text-text-muted">{t("chat.dropHint")}</div>
+              <div className="mt-0.5 text-[12px] text-text-muted">{t("chat.dropHint")}</div>
             </div>
           </div>
         </div>

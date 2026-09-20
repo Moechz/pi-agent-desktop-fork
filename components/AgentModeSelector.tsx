@@ -92,13 +92,13 @@ export function AgentModeSelector({ mode, disabled, onChange }: Props) {
                   border: "none",
                   color: isActive ? "var(--text)" : "var(--text-muted)",
                   cursor: "pointer",
-                  fontSize: 12,
+                  fontSize: 13,
                   textAlign: "left",
                 }}
                 className={isActive ? "" : "hover:bg-[var(--bg-hover)]"}
               >
                 <span style={{ fontWeight: isActive ? 600 : 400 }}>{m.label}</span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{m.desc}</span>
+                <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{m.desc}</span>
               </button>
             );
           })}

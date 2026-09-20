@@ -33,7 +33,7 @@ export function ProviderDetail({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <SectionTitle>{t("provider.provider")}</SectionTitle>
         <button onClick={onDelete}
-          style={{ padding: "3px 8px", background: "none", border: "1px solid var(--danger-border)", borderRadius: 4, color: "var(--danger)", cursor: "pointer", fontSize: 11 }}>
+          style={{ padding: "3px 8px", background: "none", border: "1px solid var(--danger-border)", borderRadius: 4, color: "var(--danger)", cursor: "pointer", fontSize: 12 }}>
           {t("common.delete")}
         </button>
       </div>
@@ -42,7 +42,7 @@ export function ProviderDetail({
         <TextInput value={editingName} onChange={setEditingName} placeholder="provider-name" mono />
         {editingName !== name && editingName.trim() && (
           <button onClick={() => onRename(editingName.trim())}
-            style={{ marginTop: 4, padding: "3px 10px", background: "var(--accent)", border: "none", borderRadius: 4, color: "var(--accent-contrast)", cursor: "pointer", fontSize: 11, alignSelf: "flex-start" }}>
+            style={{ marginTop: 4, padding: "3px 10px", background: "var(--accent)", border: "none", borderRadius: 4, color: "var(--accent-contrast)", cursor: "pointer", fontSize: 12, alignSelf: "flex-start" }}>
             {t("common.rename")}
           </button>
         )}
@@ -56,7 +56,7 @@ export function ProviderDetail({
       <Field label={t("provider.apiKey")}>
         <SecretTextInput value={provider.apiKey ?? ""} onChange={(v) => set("apiKey", v || undefined)}
           placeholder="ENV_VAR_NAME, !shell-command, or literal key" mono />
-        <span style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>
+        <span style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>
           {t("provider.apiKeyHint")}
         </span>
       </Field>

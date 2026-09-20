@@ -48,12 +48,12 @@ export function ProjectTrustDialog({ payload, onChoose, onCancel }: Props) {
         }}
       >
         <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t("trust.question")}</div>
-        <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
           {t("trust.description")}
         </p>
         <code
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: "var(--text-dim)",
             wordBreak: "break-all",
             fontFamily: "var(--font-mono)",
@@ -75,7 +75,7 @@ export function ProjectTrustDialog({ payload, onChoose, onCancel }: Props) {
                 background: opt.trusted ? "var(--bg-panel)" : "transparent",
                 color: "var(--text)",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 13,
               }}
             >
               {opt.id === "trust"
@@ -101,7 +101,7 @@ export function ProjectTrustDialog({ payload, onChoose, onCancel }: Props) {
               background: "transparent",
               color: "var(--text-dim)",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: 13,
             }}
           >
             {t("common.cancel")}

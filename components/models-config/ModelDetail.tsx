@@ -116,7 +116,7 @@ export function ModelDetail({
                 borderRadius: 4,
                 background: testState.phase === "error" ? "#fee2e2" : testState.phase === "success" ? "#dcfce7" : "#e5e7eb",
                 color: "#111827",
-                fontSize: 11,
+                fontSize: 12,
                 display: "inline-flex",
                 alignItems: "center",
                 whiteSpace: "nowrap",
@@ -140,7 +140,7 @@ export function ModelDetail({
               borderRadius: 4,
               color: testState.phase === "success" ? "var(--accent-contrast)" : (!model.id.trim() || testState.phase === "testing") ? "var(--text-dim)" : "var(--text-muted)",
               cursor: (!model.id.trim() || testState.phase === "testing") ? "not-allowed" : "pointer",
-              fontSize: 11,
+              fontSize: 12,
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -156,7 +156,7 @@ export function ModelDetail({
             {testState.phase === "testing" ? t("provider.testing") : testState.phase === "success" ? t("common.success") : t("common.test")}
           </button>
           <button onClick={onDelete}
-            style={{ height: 24, padding: "0 8px", background: "none", border: "1px solid var(--danger-border)", borderRadius: 4, color: "var(--danger)", cursor: "pointer", fontSize: 11, boxSizing: "border-box" }}>
+            style={{ height: 24, padding: "0 8px", background: "none", border: "1px solid var(--danger-border)", borderRadius: 4, color: "var(--danger)", cursor: "pointer", fontSize: 12, boxSizing: "border-box" }}>
             {t("common.remove")}
           </button>
         </div>
@@ -190,7 +190,7 @@ export function ModelDetail({
               {model.thinkingLevelMap && (
                 <button
                   onClick={() => set("thinkingLevelMap", undefined)}
-                  style={{ fontSize: 10, padding: "2px 7px", background: "none", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-dim)", cursor: "pointer" }}
+                  style={{ fontSize: 11, padding: "2px 7px", background: "none", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-dim)", cursor: "pointer" }}
                 >
                   {t("provider.clearAll")}
                 </button>

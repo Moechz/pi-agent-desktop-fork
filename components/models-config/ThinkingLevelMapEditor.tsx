@@ -46,7 +46,7 @@ export function ThinkingLevelMapEditor({
 
         const btnBase: React.CSSProperties = {
           padding: "4px 10px",
-          fontSize: 10,
+          fontSize: 11,
           border: "none",
           cursor: "pointer",
           fontWeight: 400,
@@ -83,7 +83,7 @@ export function ThinkingLevelMapEditor({
             <div style={{ display: "flex", alignItems: "center", gap: 5, width: 68, flexShrink: 0 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, opacity: state === "null" ? 0.3 : 1 }} />
               <span style={{
-                fontSize: 11,
+                fontSize: 12,
                 fontFamily: "var(--font-mono)",
                 color: state === "null" ? "var(--text-dim)" : "var(--text-muted)",
                 textDecoration: state === "null" ? "line-through" : "none",
@@ -129,7 +129,7 @@ export function ThinkingLevelMapEditor({
                   outline: "none",
                   color: state === "string" ? "var(--text)" : "var(--text-dim)",
                   fontFamily: "var(--font-mono)",
-                  fontSize: 11,
+                  fontSize: 12,
                   padding: "4px 7px",
                   transition: "background 0.1s, color 0.1s",
                 }}

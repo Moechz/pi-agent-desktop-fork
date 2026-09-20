@@ -26,7 +26,7 @@ export function ExecutePlanBar({ visible, disabled, onExecute }: Props) {
         background: "var(--bg-panel)",
       }}
     >
-      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+      <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
         {t("plan.ready")}
       </span>
       <button
@@ -40,7 +40,7 @@ export function ExecutePlanBar({ visible, disabled, onExecute }: Props) {
           background: disabled ? "var(--border)" : "var(--accent)",
           color: "var(--accent-contrast, #fff)",
           cursor: disabled ? "not-allowed" : "pointer",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           whiteSpace: "nowrap",
         }}

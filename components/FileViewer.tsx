@@ -128,7 +128,7 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
   const hasChanges = diff.some((l) => l.type !== "unchanged");
   if (!hasChanges) {
     return (
-      <div style={{ padding: "12px 16px", fontSize: 12, color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
+      <div style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
         {t("file.noChanges")}
       </div>
     );
@@ -188,7 +188,7 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
                 padding: "2px 16px",
                 color: "var(--text-dim)",
                 background: "var(--bg-panel)",
-                fontSize: 11,
+                fontSize: 12,
                 borderTop: "1px solid var(--border)",
                 borderBottom: "1px solid var(--border)",
               }}
@@ -233,7 +233,7 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
                   textAlign: "right",
                   color: "var(--text-dim)",
                   userSelect: "none",
-                  fontSize: 11,
+                  fontSize: 12,
                   lineHeight: 1.6,
                   borderRight: "1px solid var(--border)",
                   background: "var(--bg-panel)",
@@ -334,7 +334,7 @@ function ImageViewer({ filePath, cwd }: { filePath: string; cwd?: string }) {
           minHeight: 32,
           padding: "4px 16px",
           borderBottom: "1px solid var(--divider)",
-          fontSize: 11,
+          fontSize: 12,
           color: "var(--text-dim)",
           background: "var(--bg-elevated)",
           flexShrink: 0,
@@ -470,7 +470,7 @@ function AudioViewer({ filePath, cwd }: { filePath: string; cwd?: string }) {
           minHeight: 32,
           padding: "4px 16px",
           borderBottom: "1px solid var(--divider)",
-          fontSize: 11,
+          fontSize: 12,
           color: "var(--text-dim)",
           background: "var(--bg-elevated)",
           flexShrink: 0,
@@ -598,7 +598,7 @@ function PlainTextViewer({
       }}
     >
       {showLargeFileNotice && (
-        <div style={{ padding: "8px 12px", color: "var(--text-dim)", borderBottom: "1px solid var(--border)", fontSize: 12, lineHeight: 1.4 }}>
+        <div style={{ padding: "8px 12px", color: "var(--text-dim)", borderBottom: "1px solid var(--border)", fontSize: 13, lineHeight: 1.4 }}>
           {t("file.largeFileNotice")}
         </div>
       )}
@@ -835,7 +835,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
           minHeight: 32,
           padding: "4px 16px",
           borderBottom: "1px solid var(--divider)",
-          fontSize: 11,
+          fontSize: 12,
           color: "var(--text-dim)",
           background: "var(--bg-elevated)",
           flexShrink: 0,
@@ -873,7 +873,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
               onClick={() => setViewMode("source")}
               aria-label={t("file.showSource")}
               style={{
-                padding: "2px 8px", fontSize: 11, border: "none", cursor: "pointer",
+                padding: "2px 8px", fontSize: 12, border: "none", cursor: "pointer",
                 background: viewMode === "source" ? "var(--bg-selected)" : "var(--bg-hover)",
                 color: viewMode === "source" ? "var(--text)" : "var(--text-muted)",
                 fontWeight: viewMode === "source" ? 600 : 400,
@@ -885,7 +885,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
               onClick={() => setViewMode("diff")}
               aria-label={t("file.showDiff")}
               style={{
-                padding: "2px 8px", fontSize: 11, border: "none", borderLeft: "1px solid var(--border)", cursor: "pointer",
+                padding: "2px 8px", fontSize: 12, border: "none", borderLeft: "1px solid var(--border)", cursor: "pointer",
                 background: viewMode === "diff" ? "var(--bg-selected)" : "var(--bg-hover)",
                 color: viewMode === "diff" ? "var(--text)" : "var(--text-muted)",
                 fontWeight: viewMode === "diff" ? 600 : 400,
@@ -903,7 +903,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
             title={wrapLines ? t("file.disableWrap") : t("file.enableWrap")}
             aria-label={wrapLines ? t("file.disableWrap") : t("file.enableWrap")}
             style={{
-              padding: "2px 8px", fontSize: 11, cursor: "pointer",
+              padding: "2px 8px", fontSize: 12, cursor: "pointer",
               background: wrapLines ? "var(--bg-selected)" : "var(--bg-hover)",
               color: wrapLines ? "var(--text)" : "var(--text-muted)",
               border: "1px solid var(--border)", borderRadius: "var(--radius-control)",
@@ -921,7 +921,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
             title={t("file.edit")}
             aria-label={t("file.edit")}
             style={{
-              padding: "2px 8px", fontSize: 11, cursor: "pointer",
+              padding: "2px 8px", fontSize: 12, cursor: "pointer",
               background: "var(--bg-hover)", color: "var(--text-muted)",
               border: "1px solid var(--border)", borderRadius: "var(--radius-control)",
               fontWeight: 400,
@@ -938,7 +938,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
               onClick={() => setPreviewMode(false)}
               aria-label={t("file.showHtmlCode")}
               style={{
-                padding: "2px 8px", fontSize: 11, border: "none", cursor: "pointer",
+                padding: "2px 8px", fontSize: 12, border: "none", cursor: "pointer",
                 background: !previewMode ? "var(--bg-selected)" : "var(--bg-hover)",
                 color: !previewMode ? "var(--text)" : "var(--text-muted)",
                 fontWeight: !previewMode ? 600 : 400,
@@ -950,7 +950,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
               onClick={() => setPreviewMode(true)}
               aria-label={t("file.previewHtml")}
               style={{
-                padding: "2px 8px", fontSize: 11, border: "none", borderLeft: "1px solid var(--border)", cursor: "pointer",
+                padding: "2px 8px", fontSize: 12, border: "none", borderLeft: "1px solid var(--border)", cursor: "pointer",
                 background: previewMode ? "var(--bg-selected)" : "var(--bg-hover)",
                 color: previewMode ? "var(--text)" : "var(--text-muted)",
                 fontWeight: previewMode ? 600 : 400,
@@ -968,7 +968,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
               onClick={() => setPreviewMode(true)}
               aria-label={t("file.previewMarkdown")}
               style={{
-                padding: "2px 8px", fontSize: 11, border: "none", cursor: "pointer",
+                padding: "2px 8px", fontSize: 12, border: "none", cursor: "pointer",
                 background: previewMode ? "var(--bg-selected)" : "var(--bg-hover)",
                 color: previewMode ? "var(--text)" : "var(--text-muted)",
                 fontWeight: previewMode ? 600 : 400,
@@ -980,7 +980,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
               onClick={() => setPreviewMode(false)}
               aria-label={t("file.rawMarkdown")}
               style={{
-                padding: "2px 8px", fontSize: 11, border: "none", borderLeft: "1px solid var(--border)", cursor: "pointer",
+                padding: "2px 8px", fontSize: 12, border: "none", borderLeft: "1px solid var(--border)", cursor: "pointer",
                 background: !previewMode ? "var(--bg-selected)" : "var(--bg-hover)",
                 color: !previewMode ? "var(--text)" : "var(--text-muted)",
                 fontWeight: !previewMode ? 600 : 400,
@@ -1006,13 +1006,13 @@ function TextFileViewer({ filePath, cwd }: Props) {
               flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>{t("file.editing")}</span>
+            <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 600 }}>{t("file.editing")}</span>
             <span style={{ flex: 1 }} />
             <button
               onClick={handleSave}
               disabled={saving}
               style={{
-                padding: "3px 12px", fontSize: 11, cursor: "pointer",
+                padding: "3px 12px", fontSize: 12, cursor: "pointer",
                 background: "var(--accent)", color: "#fff",
                 border: "none", borderRadius: "var(--radius-control)",
                 fontWeight: 600, opacity: saving ? 0.6 : 1,
@@ -1023,7 +1023,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
             <button
               onClick={handleCancelEdit}
               style={{
-                padding: "3px 12px", fontSize: 11, cursor: "pointer",
+                padding: "3px 12px", fontSize: 12, cursor: "pointer",
                 background: "var(--bg-hover)", color: "var(--text-muted)",
                 border: "1px solid var(--border)", borderRadius: "var(--radius-control)",
                 fontWeight: 400,

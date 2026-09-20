@@ -259,14 +259,14 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-divider bg-bg-elevated shrink-0">
         <div>
           <h3 className="font-semibold text-text text-[14px]">{t("mcp.servers")}</h3>
-          <p className="text-[11px] text-text-muted">
+          <p className="text-[12px] text-text-muted">
             {t("mcp.description")}
           </p>
         </div>
         {!editingServer && (
           <button
             onClick={openAddForm}
-            className="px-3 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[12px]"
+            className="px-3 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[13px]"
           >
             {t("mcp.addServer")}
           </button>
@@ -274,7 +274,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
       </div>
 
       {error && (
-        <div className="mx-4 mt-3 px-3 py-2 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[12px] flex items-center justify-between">
+        <div className="mx-4 mt-3 px-3 py-2 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-red-400 font-bold ml-2">
             ×
@@ -293,7 +293,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1">
+                <label className="block text-[12px] font-medium text-text-muted mb-1">
                   {t("mcp.serverId")}
                 </label>
                 <input
@@ -302,12 +302,12 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                   onChange={(e) => setFormId(e.target.value)}
                   disabled={!isNew}
                   placeholder="e.g. github"
-                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent disabled:opacity-50"
+                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent disabled:opacity-50"
                   required
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1">
+                <label className="block text-[12px] font-medium text-text-muted mb-1">
                   {t("mcp.displayName")}
                 </label>
                 <input
@@ -315,33 +315,33 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="e.g. GitHub MCP"
-                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[12px] focus:outline-none focus:border-accent"
+                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1">
+                <label className="block text-[12px] font-medium text-text-muted mb-1">
                   {t("mcp.scope")}
                 </label>
                 <select
                   value={formScope}
                   onChange={(e) => setFormScope(e.target.value as "global" | "project")}
-                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[12px] focus:outline-none focus:border-accent"
+                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
                 >
                   <option value="project">{t("scope.project")} (.pi/mcp.json)</option>
                   <option value="global">{t("scope.global")} (~/.pi/agent/mcp.json)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1">
+                <label className="block text-[12px] font-medium text-text-muted mb-1">
                   {t("mcp.transport")}
                 </label>
                 <select
                   value={formTransport}
                   onChange={(e) => setFormTransport(e.target.value as "stdio" | "sse")}
-                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[12px] focus:outline-none focus:border-accent"
+                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
                 >
                   <option value="stdio">{t("mcp.stdioTransport")}</option>
                   <option value="sse">{t("mcp.sseTransport")}</option>
@@ -352,7 +352,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
             {formTransport === "stdio" ? (
               <>
                 <div>
-                  <label className="block text-[11px] font-medium text-text-muted mb-1">
+                  <label className="block text-[12px] font-medium text-text-muted mb-1">
                     {t("mcp.command")}
                   </label>
                   <input
@@ -360,11 +360,11 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     value={formCommand}
                     onChange={(e) => setFormCommand(e.target.value)}
                     placeholder="e.g. npx or node"
-                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-text-muted mb-1">
+                  <label className="block text-[12px] font-medium text-text-muted mb-1">
                     {t("mcp.arguments")}
                   </label>
                   <input
@@ -372,11 +372,11 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     value={formArgs}
                     onChange={(e) => setFormArgs(e.target.value)}
                     placeholder="e.g. -y @modelcontextprotocol/server-github"
-                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-text-muted mb-1">
+                  <label className="block text-[12px] font-medium text-text-muted mb-1">
                     {t("mcp.environment")}
                   </label>
                   <textarea
@@ -384,13 +384,13 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     onChange={(e) => setFormEnv(e.target.value)}
                     rows={3}
                     placeholder="GITHUB_PERSONAL_ACCESS_TOKEN=ghp_..."
-                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent resize-y"
+                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent resize-y"
                   />
                 </div>
               </>
             ) : (
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1">
+                <label className="block text-[12px] font-medium text-text-muted mb-1">
                   {t("mcp.endpoint")}
                 </label>
                 <input
@@ -398,7 +398,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
                   placeholder="https://mcp-server.example.com/sse"
-                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                 />
               </div>
             )}
@@ -406,7 +406,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
             {/* Test connection output in form */}
             {testResult && (
               <div
-                className={`p-2.5 rounded-control text-[12px] border ${
+                className={`p-2.5 rounded-control text-[13px] border ${
                   testResult.success
                     ? "bg-green-500/10 border-green-500/20 text-green-400"
                     : "bg-red-500/10 border-red-500/20 text-red-400"
@@ -421,7 +421,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                 type="button"
                 onClick={handleTestFormServer}
                 disabled={testingForm}
-                className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors cursor-pointer text-[12px] disabled:opacity-50"
+                className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors cursor-pointer text-[13px] disabled:opacity-50"
               >
                 {testingForm ? t("mcp.testing") : t("mcp.testConnection")}
               </button>
@@ -433,13 +433,13 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     setEditingServer(null);
                     setTestResult(null);
                   }}
-                  className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors cursor-pointer text-[12px]"
+                  className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors cursor-pointer text-[13px]"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[12px]"
+                  className="px-4 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[13px]"
                 >
                   {t("mcp.saveServer")}
                 </button>
@@ -453,12 +453,12 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
         ) : servers.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-text-muted gap-2 border border-dashed border-border rounded-panel p-6">
             <span className="text-[14px]">{t("mcp.none")}</span>
-            <p className="text-[12px] text-text-dim text-center max-w-sm">
+            <p className="text-[13px] text-text-dim text-center max-w-sm">
               {t("mcp.noneHint")}
             </p>
             <button
               onClick={openAddForm}
-              className="mt-2 px-3 py-1.5 rounded-control bg-accent text-accent-contrast text-[12px] font-medium hover:opacity-90"
+              className="mt-2 px-3 py-1.5 rounded-control bg-accent text-accent-contrast text-[13px] font-medium hover:opacity-90"
             >
               {t("mcp.addFirst")}
             </button>
@@ -467,7 +467,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
           <div className="flex flex-col gap-3">
             {testResult && (
               <div
-                className={`p-2.5 rounded-control text-[12px] border ${
+                className={`p-2.5 rounded-control text-[13px] border ${
                   testResult.success
                     ? "bg-green-500/10 border-green-500/20 text-green-400"
                     : "bg-red-500/10 border-red-500/20 text-red-400"
@@ -496,14 +496,14 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                         {server.name || server.id}
                       </span>
                       {server.name && (
-                        <span className="font-mono text-[11px] text-text-dim">
+                        <span className="font-mono text-[12px] text-text-dim">
                           ({server.id})
                         </span>
                       )}
 
                       {/* Scope Badge */}
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono border uppercase tracking-wider ${
+                        className={`px-1.5 py-0.5 rounded text-[11px] font-mono border uppercase tracking-wider ${
                           server.scope === "global"
                             ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
                             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -513,13 +513,13 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                       </span>
 
                       {/* Transport Badge */}
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-bg-elevated text-text-dim border border-border">
+                      <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-bg-elevated text-text-dim border border-border">
                         {server.transport || "stdio"}
                       </span>
 
                       {/* Status Badge */}
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium border flex items-center gap-1 ${
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-medium border flex items-center gap-1 ${
                           isDisabled
                             ? "bg-gray-500/10 text-gray-400 border-gray-500/20"
                             : server.status === "connected"
@@ -551,7 +551,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     </div>
 
                     {/* Command / URL details */}
-                    <div className="font-mono text-[11px] text-text-muted truncate max-w-lg mt-0.5">
+                    <div className="font-mono text-[12px] text-text-muted truncate max-w-lg mt-0.5">
                       {server.transport === "sse" ? (
                         <span>{server.url}</span>
                       ) : (
@@ -562,7 +562,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     </div>
 
                     {server.errorMessage && !isDisabled && (
-                      <div className="text-[11px] text-red-400 mt-1">
+                      <div className="text-[12px] text-red-400 mt-1">
                         {server.errorMessage}
                       </div>
                     )}
@@ -573,13 +573,13 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     <button
                       onClick={() => handleTestServer(server)}
                       disabled={isTesting || isDisabled}
-                      className="px-2.5 py-1 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[11px] disabled:opacity-40 cursor-pointer"
+                      className="px-2.5 py-1 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[12px] disabled:opacity-40 cursor-pointer"
                     >
                       {isTesting ? t("mcp.testing") : t("common.test")}
                     </button>
                     <button
                       onClick={() => handleToggle(server)}
-                      className={`px-2.5 py-1 rounded-control text-[11px] font-medium transition-colors cursor-pointer border ${
+                      className={`px-2.5 py-1 rounded-control text-[12px] font-medium transition-colors cursor-pointer border ${
                         isDisabled
                           ? "bg-accent/10 text-accent border-accent/30 hover:bg-accent/20"
                           : "bg-bg-elevated text-text-muted border-border hover:text-text"
@@ -589,13 +589,13 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     </button>
                     <button
                       onClick={() => openEditForm(server)}
-                      className="px-2.5 py-1 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[11px] cursor-pointer"
+                      className="px-2.5 py-1 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[12px] cursor-pointer"
                     >
                       {t("common.edit")}
                     </button>
                     <button
                       onClick={() => handleDelete(server)}
-                      className="px-2.5 py-1 rounded-control border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-[11px] cursor-pointer"
+                      className="px-2.5 py-1 rounded-control border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-[12px] cursor-pointer"
                     >
                       {t("common.delete")}
                     </button>

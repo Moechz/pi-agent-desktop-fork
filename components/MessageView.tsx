@@ -151,7 +151,7 @@ const CustomMessageView = React.memo(function CustomMessageView({
     <div className="mb-[18px] flex flex-col items-center">
       <div className="bg-bg-elevated border border-border rounded-panel px-4 py-2 text-[13px] text-text-muted whitespace-pre-wrap max-w-[90%] shadow-sm">
         {message.customType && (
-          <div className="text-[11px] font-semibold mb-2 text-text-dim uppercase tracking-wider text-center">
+          <div className="text-[12px] font-semibold mb-2 text-text-dim uppercase tracking-wider text-center">
             {message.customType.replace(/_/g, " ")}
           </div>
         )}
@@ -159,7 +159,7 @@ const CustomMessageView = React.memo(function CustomMessageView({
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
       </div>
-      {time && <span className="text-[10px] text-text-dim mt-1">{time}</span>}
+      {time && <span className="text-[11px] text-text-dim mt-1">{time}</span>}
     </div>
   );
 });
@@ -269,7 +269,7 @@ const UserMessageView = React.memo(function UserMessageView({
               onClick={copyContent}
               title={t("message.copy")}
               aria-label={t("message.copy")}
-              className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[11px] font-normal whitespace-nowrap transition-colors duration-120 ${
+              className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[12px] font-normal whitespace-nowrap transition-colors duration-120 ${
                 copied ? "text-accent" : "text-text-dim hover:text-accent"
               }`}
             >
@@ -300,7 +300,7 @@ const UserMessageView = React.memo(function UserMessageView({
                   }}
                   title={t("message.editFromHereTitle")}
                   aria-label={t("message.editFromHere")}
-                  className="flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control text-text-dim hover:text-accent cursor-pointer text-[11px] font-normal whitespace-nowrap transition-colors duration-120"
+                  className="flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control text-text-dim hover:text-accent cursor-pointer text-[12px] font-normal whitespace-nowrap transition-colors duration-120"
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="15 10 20 15 15 20" />
@@ -317,7 +317,7 @@ const UserMessageView = React.memo(function UserMessageView({
                   disabled={forking}
                   title={forking ? t("message.creatingSession") : t("message.newSessionHere")}
                   aria-label={t("message.newSessionHere")}
-                  className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[11px] font-normal whitespace-nowrap transition-colors duration-120 ${
+                  className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[12px] font-normal whitespace-nowrap transition-colors duration-120 ${
                     forking ? "text-accent cursor-not-allowed" : "text-text-dim hover:text-accent"
                   }`}
                 >
@@ -335,7 +335,7 @@ const UserMessageView = React.memo(function UserMessageView({
                   onClick={() => onBranchMessage(entryId)}
                   title={t("message.branchHere")}
                   aria-label={t("message.branchHere")}
-                  className="flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[11px] font-normal text-text-dim hover:text-accent whitespace-nowrap transition-colors duration-120"
+                  className="flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[12px] font-normal text-text-dim hover:text-accent whitespace-nowrap transition-colors duration-120"
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="6" y1="3" x2="6" y2="15" />
@@ -348,7 +348,7 @@ const UserMessageView = React.memo(function UserMessageView({
               )}
             </div>
           )}
-          {time && <span className="text-[10px] text-text-dim">{time}</span>}
+          {time && <span className="text-[11px] text-text-dim">{time}</span>}
         </div>
       )}
     </div>
@@ -486,7 +486,7 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
       onMouseLeave={() => setHovered(false)}
     >
       {/* Model label */}
-      <div className="text-[11px] text-text-dim mb-1 flex items-center gap-1.5">
+      <div className="text-[12px] text-text-dim mb-1 flex items-center gap-1.5">
         {message.provider && (
           <span>
             {modelNames?.[`${message.provider}:${message.model}`] ??
@@ -507,7 +507,7 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
               <>
                 {est > 0 && (
                   <span className="flex items-center gap-1 text-text" title={t("message.estimatedTokens")}>
-                    <span className="flex items-center gap-0.5 text-[11px] font-normal">
+                    <span className="flex items-center gap-0.5 text-[12px] font-normal">
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="5" y1="1.5" x2="5" y2="8.5" />
                         <polyline points="2 6 5 8.5 8 6" />
@@ -526,7 +526,7 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
                             : "var(--danger)";
                         return (
                           <span
-                            className="ml-1.5 px-1.5 py-[1px] rounded-[4px] text-accent-contrast text-[11px] font-normal"
+                            className="ml-1.5 px-1.5 py-[1px] rounded-[4px] text-accent-contrast text-[12px] font-normal"
                             style={{ background: bg }}
                           >
                             {tps.toFixed(1)} t/s
@@ -557,14 +557,14 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
 
       <div className="flex items-center gap-2 mt-1">
         {message.usage && !isStreaming && (
-          <div className="text-[11px] text-text-dim">{formatUsage(message.usage)}</div>
+          <div className="text-[12px] text-text-dim">{formatUsage(message.usage)}</div>
         )}
         {textContent && !isStreaming && (
           <button
             onClick={copyContent}
             title={t("message.copy")}
             aria-label={t("message.copy")}
-            className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[11px] font-normal whitespace-nowrap transition-colors duration-120 opacity-0 pointer-events-none group-hover/msg:opacity-100 group-hover/msg:pointer-events-auto group-focus-within/msg:opacity-100 group-focus-within/msg:pointer-events-auto ${
+            className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[12px] font-normal whitespace-nowrap transition-colors duration-120 opacity-0 pointer-events-none group-hover/msg:opacity-100 group-hover/msg:pointer-events-auto group-focus-within/msg:opacity-100 group-focus-within/msg:pointer-events-auto ${
               copied ? "text-accent" : "text-text-dim hover:text-accent"
             } ${hovered ? "opacity-100 pointer-events-auto" : ""}`}
           >
@@ -586,7 +586,7 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
             onClick={() => onBranchMessage(entryId)}
             title={t("message.branchHere")}
             aria-label={t("message.branchHere")}
-            className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[11px] font-normal text-text-dim hover:text-accent whitespace-nowrap transition-colors duration-120 opacity-0 pointer-events-none group-hover/msg:opacity-100 group-hover/msg:pointer-events-auto group-focus-within/msg:opacity-100 group-focus-within/msg:pointer-events-auto ${
+            className={`flex items-center gap-1 px-2 py-[3px] h-[22px] bg-transparent border-none rounded-control cursor-pointer text-[12px] font-normal text-text-dim hover:text-accent whitespace-nowrap transition-colors duration-120 opacity-0 pointer-events-none group-hover/msg:opacity-100 group-hover/msg:pointer-events-auto group-focus-within/msg:opacity-100 group-focus-within/msg:pointer-events-auto ${
               hovered ? "opacity-100 pointer-events-auto" : ""
             }`}
           >
@@ -600,7 +600,7 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
           </button>
         )}
         {time && !isStreaming && (
-          <span className="text-[10px] text-text-dim ml-auto">{time}</span>
+          <span className="text-[11px] text-text-dim ml-auto">{time}</span>
         )}
       </div>
     </div>
@@ -677,11 +677,11 @@ function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?:
         aria-label={expanded ? t("message.collapseThinking") : t("message.expandThinking")}
         aria-expanded={expanded}
         aria-controls={panelId}
-        className="flex w-full cursor-pointer items-center gap-1.5 border-none bg-code-header-bg px-2.5 py-1.5 text-left text-[12px] text-text-muted"
+        className="flex w-full cursor-pointer items-center gap-1.5 border-none bg-code-header-bg px-2.5 py-1.5 text-left text-[13px] text-text-muted"
       >
         <span>{t("message.thinking")}</span>
         {duration !== undefined && (
-          <span className="ml-auto text-[11px] text-text-dim tabular-nums">{duration}s</span>
+          <span className="ml-auto text-[12px] text-text-dim tabular-nums">{duration}s</span>
         )}
         <span className="t-acc-chevron text-text-dim" aria-hidden="true">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -691,7 +691,7 @@ function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?:
       </button>
       <div id={panelId} className="t-acc-panel" aria-hidden={!expanded}>
         <div className="t-acc-panel-inner">
-          <div className="border-t border-border bg-bg-panel px-2.5 py-2 text-[12px] leading-[1.6] whitespace-pre-wrap text-text-muted">
+          <div className="border-t border-border bg-bg-panel px-2.5 py-2 text-[13px] leading-[1.6] whitespace-pre-wrap text-text-muted">
             {block.thinking}
           </div>
         </div>
@@ -724,7 +724,7 @@ function ToolCallBlock({
 
   return (
     <div
-      className={`rounded-panel overflow-hidden text-[12px] border ${
+      className={`rounded-panel overflow-hidden text-[13px] border ${
         isError ? "border-danger-border bg-danger-bg" : "border-success-border bg-success-bg"
       }`}
     >
@@ -732,16 +732,16 @@ function ToolCallBlock({
       <button
         onClick={() => setExpanded((v) => !v)}
         aria-label={expanded ? t("message.collapseTool", { tool: block.toolName }) : t("message.expandTool", { tool: block.toolName })}
-        className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-transparent border-none text-text-muted cursor-pointer text-[12px] text-left min-w-0"
+        className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-transparent border-none text-text-muted cursor-pointer text-[13px] text-left min-w-0"
       >
-        <span className={`font-mono font-semibold text-[11px] shrink-0 ${isError ? "text-danger" : "text-success"}`}>
+        <span className={`font-mono font-semibold text-[12px] shrink-0 ${isError ? "text-danger" : "text-success"}`}>
           {block.toolName}
         </span>
-        <span className="text-text-dim font-mono text-[11px] overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0">
+        <span className="text-text-dim font-mono text-[12px] overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0">
           {getToolPreview(block)}
         </span>
         {duration !== undefined && (
-          <span className="text-[11px] text-text-dim shrink-0 tabular-nums">{duration}s</span>
+          <span className="text-[12px] text-text-dim shrink-0 tabular-nums">{duration}s</span>
         )}
         <svg
           width="10"
@@ -762,7 +762,7 @@ function ToolCallBlock({
       {/* ── Expanded: input args ── */}
       {expanded && (
         <pre
-          className={`m-0 px-2.5 py-2 text-text-muted text-[12px] leading-[1.5] overflow-auto bg-bg-subtle border-t whitespace-pre-wrap break-all ${
+          className={`m-0 px-2.5 py-2 text-text-muted text-[13px] leading-[1.5] overflow-auto bg-bg-subtle border-t whitespace-pre-wrap break-all ${
             isError ? "border-danger-border" : "border-success-border"
           }`}
         >
@@ -794,7 +794,7 @@ function PairedResult({
       }`}
     >
       <pre
-        className={`m-0 px-2.5 py-2 text-[12px] leading-[1.5] overflow-auto max-h-[400px] bg-bg whitespace-pre-wrap break-all ${
+        className={`m-0 px-2.5 py-2 text-[13px] leading-[1.5] overflow-auto max-h-[400px] bg-bg whitespace-pre-wrap break-all ${
           isError ? "text-danger" : isEmpty ? "text-text-dim italic opacity-60" : "text-text-muted normal-case opacity-100"
         }`}
       >
@@ -855,12 +855,12 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
 
   return (
     <div className="relative my-1 rounded-panel overflow-hidden border border-border">
-      <div className="px-2.5 py-[3px] bg-bg-panel border-b border-border text-[11px] text-text-dim flex justify-between items-center">
+      <div className="px-2.5 py-[3px] bg-bg-panel border-b border-border text-[12px] text-text-dim flex justify-between items-center">
         <span>{lang}</span>
         <button
           onClick={copy}
           aria-label={t("message.copyCode")}
-          className="bg-transparent border-none text-text-muted hover:text-text cursor-pointer text-[11px] rounded-control px-1.5 py-[2px] transition-colors duration-120"
+          className="bg-transparent border-none text-text-muted hover:text-text cursor-pointer text-[12px] rounded-control px-1.5 py-[2px] transition-colors duration-120"
         >
           {copied ? t("common.copied") : t("common.copy")}
         </button>
@@ -873,7 +873,7 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
         customStyle={{
           margin: 0,
           padding: "10px 12px",
-          fontSize: 12.5,
+          fontSize: 12,
           lineHeight: 1.6,
           borderRadius: 0,
           background: "var(--code-bg)",

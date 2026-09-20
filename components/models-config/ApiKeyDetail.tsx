@@ -68,13 +68,13 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
         <SectionTitle>{t("provider.apiKey")}</SectionTitle>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: provider.configured ? "var(--success)" : "var(--border)", display: "inline-block" }} />
-          <span style={{ fontSize: 11, color: provider.configured ? "var(--success)" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 12, color: provider.configured ? "var(--success)" : "var(--text-dim)" }}>
             {provider.configured ? t("common.configured") : t("common.notConfigured")}
           </span>
         </div>
       </div>
 
-      <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
         {provider.configured
           ? t("provider.apiKeyStored")
           : t(provider.modelCount === 1 ? "provider.apiKeyEnableModel" : "provider.apiKeyEnableModels", {
@@ -104,7 +104,7 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
               border: "none", borderRadius: 5,
               color: (apiKey.trim() || savedOk) ? "var(--accent-contrast)" : "var(--text-dim)",
               cursor: (saving || !apiKey.trim() || savedOk) ? "not-allowed" : "pointer",
-              fontSize: 12, fontWeight: 600, flexShrink: 0,
+              fontSize: 13, fontWeight: 600, flexShrink: 0,
               display: "flex", alignItems: "center", gap: 5,
             }}
           >
@@ -118,7 +118,7 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
         </div>
       </Field>
 
-      {error && <p style={{ margin: 0, fontSize: 12, color: "var(--danger)" }}>{error}</p>}
+      {error && <p style={{ margin: 0, fontSize: 13, color: "var(--danger)" }}>{error}</p>}
 
       {provider.configured && (
         <button
@@ -128,7 +128,7 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
             alignSelf: "flex-start", padding: "5px 12px",
             background: "none", border: "1px solid var(--danger-border)",
             borderRadius: 5, color: "var(--danger)",
-            cursor: removing ? "not-allowed" : "pointer", fontSize: 12,
+            cursor: removing ? "not-allowed" : "pointer", fontSize: 13,
           }}
         >
           {removing ? t("common.removing") : t("common.disconnect")}

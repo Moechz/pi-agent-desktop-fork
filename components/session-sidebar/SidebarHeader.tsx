@@ -112,7 +112,7 @@ export function SidebarHeader({
             onClick={handleNewSession}
             disabled={!selectedCwd}
             aria-label={t("sidebar.newSession")}
-            className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[11px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
+            className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[12px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
               selectedCwd
                 ? "bg-chrome-button-bg border-border text-text-muted cursor-pointer hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
                 : "bg-chrome-button-bg border-border text-text-dim cursor-not-allowed"
@@ -153,12 +153,12 @@ export function SidebarHeader({
       <div ref={dropdownRef} className="relative">
         <button
           onClick={() => setDropdownOpen((v) => !v)}
-          className={`w-full flex items-center px-2.5 py-1.5 rounded-control cursor-pointer text-[12px] text-text text-left transition-[background-color,border-color,color] duration-150 border ${
+          className={`w-full flex items-center px-2.5 py-1.5 rounded-control cursor-pointer text-[13px] text-text text-left transition-[background-color,border-color,color] duration-150 border ${
             selectedCwd ? "bg-bg-hover border-border" : "bg-warning-bg border-warning-border"
           }`}
         >
           <span
-            className={`flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11px] ${
+            className={`flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[12px] ${
               selectedCwd ? "text-text" : "text-text-dim"
             }`}
             title={selectedCwd ?? ""}
@@ -184,7 +184,7 @@ export function SidebarHeader({
                   setCustomPathOpen(false);
                   setDropdownOpen(false);
                 }}
-                className={`flex items-center gap-[7px] w-full px-2.5 py-2 border-none border-b border-divider text-left text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-[7px] w-full px-2.5 py-2 border-none border-b border-divider text-left text-[12px] font-mono overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer ${
                   cwd === selectedCwd ? "bg-bg-selected text-text" : "bg-transparent text-text-muted hover:bg-bg-hover"
                 }`}
                 title={cwd}
@@ -206,7 +206,7 @@ export function SidebarHeader({
                   e.stopPropagation();
                   handleDefaultCwd();
                 }}
-                className="flex items-center gap-[7px] w-full px-2.5 py-2 bg-transparent border-none border-t border-divider text-text-muted hover:bg-bg-hover cursor-pointer text-left text-[11px]"
+                className="flex items-center gap-[7px] w-full px-2.5 py-2 bg-transparent border-none border-t border-divider text-text-muted hover:bg-bg-hover cursor-pointer text-left text-[12px]"
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                   <path d="M1 3A1 1 0 0 1 2 2H4L5 3.5H8.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 1 8V3Z" />
@@ -222,7 +222,7 @@ export function SidebarHeader({
                   e.stopPropagation();
                   void handleCustomPath();
                 }}
-                className="flex items-center gap-[7px] w-full px-2.5 py-2 bg-transparent border-none text-text-muted hover:bg-bg-hover cursor-pointer text-left text-[11px]"
+                className="flex items-center gap-[7px] w-full px-2.5 py-2 bg-transparent border-none text-text-muted hover:bg-bg-hover cursor-pointer text-left text-[12px]"
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" className="shrink-0">
                   <line x1="5" y1="1" x2="5" y2="9" />
@@ -231,7 +231,7 @@ export function SidebarHeader({
                 <span>{t("sidebar.customPath")}</span>
               </button>
             ) : (
-              <div className="px-2.5 py-2 text-text-muted text-[11px] border-t border-divider">
+              <div className="px-2.5 py-2 text-text-muted text-[12px] border-t border-divider">
                 {t("sidebar.openingFolderPicker")}
               </div>
             )}
@@ -239,7 +239,7 @@ export function SidebarHeader({
         )}
       </div>
       {cwdPickerError && (
-        <div className="mt-1.5 color-danger text-[11px]">
+        <div className="mt-1.5 color-danger text-[12px]">
           {cwdPickerError}
         </div>
       )}

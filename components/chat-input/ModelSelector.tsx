@@ -77,7 +77,7 @@ export function ModelSelector({
           borderRadius: "var(--radius-control)",
           color: "var(--text-muted)",
           cursor: isStreaming ? "not-allowed" : "pointer",
-          fontSize: 12,
+          fontSize: 13,
           opacity: isStreaming ? 0.5 : 1,
         }}
         className={isStreaming ? "" : "hover:bg-[var(--bg-hover)] hover:text-[var(--text)] active:scale-95 transition-[background-color,color,transform] duration-150"}
@@ -112,7 +112,7 @@ export function ModelSelector({
                 {(modelsByProvider.length > 1) && (
                   <div style={{
                     padding: "6px 12px 4px",
-                    fontSize: 10, fontWeight: 600, color: "var(--text-dim)",
+                    fontSize: 11, fontWeight: 600, color: "var(--text-dim)",
                     textTransform: "uppercase", letterSpacing: "0.07em",
                     borderTop: gi > 0 ? "1px solid var(--border)" : "none",
                   }}>
@@ -131,7 +131,7 @@ export function ModelSelector({
                         background: isActive ? "var(--bg-selected)" : "none",
                         border: "none",
                         color: isActive ? "var(--text)" : "var(--text-muted)",
-                        cursor: "pointer", fontSize: 12, textAlign: "left",
+                        cursor: "pointer", fontSize: 13, textAlign: "left",
                         fontWeight: isActive ? 600 : 400,
                         whiteSpace: "nowrap",
                       }}

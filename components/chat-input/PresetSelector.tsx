@@ -47,7 +47,7 @@ export function PresetSelector({
           borderRadius: "var(--radius-control)",
           color: "var(--text-muted)",
           cursor: isStreaming ? "not-allowed" : "pointer",
-          fontSize: 12,
+          fontSize: 13,
           opacity: isStreaming ? 0.5 : 1,
         }}
         className={isStreaming ? "" : "hover:bg-[var(--bg-hover)] hover:text-[var(--text)] active:scale-95 transition-[background-color,color,transform] duration-150"}
@@ -82,7 +82,7 @@ export function PresetSelector({
                   background: isActive ? "var(--bg-selected)" : "none",
                   border: "none",
                   color: isActive ? "var(--text)" : "var(--text-muted)",
-                  cursor: "pointer", fontSize: 12, textAlign: "left",
+                  cursor: "pointer", fontSize: 13, textAlign: "left",
                   fontWeight: isActive ? 600 : 400,
                   whiteSpace: "nowrap",
                 }}
@@ -92,7 +92,7 @@ export function PresetSelector({
                   ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="1.5 5 4 7.5 8.5 2.5" /></svg>
                   : <span style={{ width: 10, flexShrink: 0 }} />}
                 <span style={{ flex: 1 }}>{label}</span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: 8 }}>{desc}</span>
+                <span style={{ fontSize: 12, color: "var(--text-dim)", marginLeft: 8 }}>{desc}</span>
               </button>
             );
           })}

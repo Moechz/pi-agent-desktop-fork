@@ -59,12 +59,12 @@ export function SessionExportModal({ isOpen, onClose, sessionId }: SessionExport
 
         {/* Content Body */}
         <div className="p-4 flex flex-col gap-4">
-          <p className="text-[12px] text-text-muted">
+          <p className="text-[13px] text-text-muted">
             {t("export.description", { session: sessionId })}
           </p>
 
           {error && (
-            <div className="p-2.5 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[12px]">
+            <div className="p-2.5 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[13px]">
               {error}
             </div>
           )}
@@ -91,7 +91,7 @@ export function SessionExportModal({ isOpen, onClose, sessionId }: SessionExport
                 <span className="font-semibold text-[13px] text-text">
                   {t("export.html.title")}
                 </span>
-                <span className="text-[11px] text-text-muted leading-relaxed">
+                <span className="text-[12px] text-text-muted leading-relaxed">
                   {t("export.html.desc")}
                 </span>
               </div>
@@ -117,7 +117,7 @@ export function SessionExportModal({ isOpen, onClose, sessionId }: SessionExport
                 <span className="font-semibold text-[13px] text-text">
                   {t("export.markdown.title")}
                 </span>
-                <span className="text-[11px] text-text-muted leading-relaxed">
+                <span className="text-[12px] text-text-muted leading-relaxed">
                   {t("export.markdown.desc")}
                 </span>
               </div>
@@ -129,14 +129,14 @@ export function SessionExportModal({ isOpen, onClose, sessionId }: SessionExport
         <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-divider bg-bg-elevated">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[12px] cursor-pointer"
+            className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[13px] cursor-pointer"
           >
             {t("common.cancel")}
           </button>
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="px-4 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[12px] disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[13px] disabled:opacity-50 flex items-center gap-1.5"
           >
             {downloading ? t("export.preparing") : t("export.download", { format: format.toUpperCase() })}
           </button>

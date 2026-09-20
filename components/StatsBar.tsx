@@ -69,7 +69,7 @@ export const StatsBar = React.memo(function StatsBar({
   return (
     <div
       title={tooltip}
-      className="flex items-center gap-2.5 px-3 h-full text-[11px] text-text-muted whitespace-nowrap cursor-default tabular-nums"
+      className="flex items-center gap-2.5 px-3 h-full text-[12px] text-text-muted whitespace-nowrap cursor-default tabular-nums"
     >
       {t && t.input > 0 && (
         <span className="flex items-center gap-1">

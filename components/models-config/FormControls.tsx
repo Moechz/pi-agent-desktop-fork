@@ -9,7 +9,7 @@ export const inputStyle = {
   border: "1px solid var(--border)",
   borderRadius: 5,
   color: "var(--text)",
-  fontSize: 12,
+  fontSize: 13,
   outline: "none",
   width: "100%",
   boxSizing: "border-box" as const,
@@ -21,7 +21,7 @@ export const API_OPTIONS = ["openai-completions", "openai-responses", "anthropic
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <label style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500 }}>{label}</label>
+      <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{label}</label>
       {children}
     </div>
   );
@@ -143,7 +143,7 @@ export function Select({ value, onChange, options, required }: { value: string; 
 
 export function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: "var(--text-muted)" }}>
+    <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, color: "var(--text-muted)" }}>
       <input
         type="checkbox"
         checked={checked}
@@ -157,7 +157,7 @@ export function Check({ label, checked, onChange }: { label: string; checked: bo
 
 export function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>
+    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>
       {children}
     </div>
   );

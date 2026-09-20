@@ -85,7 +85,7 @@ export function AgentThinkingOrb({ phase, thinking = "" }: Props) {
         aria-label={hasThinking ? (expanded ? t("message.collapseThinking") : t("message.expandThinking")) : activeLabel}
       >
         <LiquidOrbCanvas />
-        <span className="t-think text-[12px]" role="status" aria-live="polite">
+        <span className="t-think text-[13px]" role="status" aria-live="polite">
           <span className="t-think-sizer" aria-hidden="true">{sizerLabel}</span>
           {previousLabel && (
             <span className="t-think-text is-exit" data-text={previousLabel} aria-hidden="true">
@@ -112,7 +112,7 @@ export function AgentThinkingOrb({ phase, thinking = "" }: Props) {
         <div className="t-acc-panel-inner pl-14 pr-2 pb-2">
           <div
             ref={thinkingContentRef}
-            className="max-h-56 overflow-y-auto rounded-panel border border-border bg-bg-panel px-3 py-2.5 text-[12px] leading-[1.65] whitespace-pre-wrap text-text-muted"
+            className="max-h-56 overflow-y-auto rounded-panel border border-border bg-bg-panel px-3 py-2.5 text-[13px] leading-[1.65] whitespace-pre-wrap text-text-muted"
           >
             {thinking}
           </div>

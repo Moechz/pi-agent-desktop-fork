@@ -65,7 +65,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
       >
         <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{request.title}</div>
         {request.method === "confirm" && (
-          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
             {request.message}
           </p>
         )}
@@ -84,7 +84,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                   background: "var(--bg-panel)",
                   color: "var(--text)",
                   cursor: "pointer",
-                  fontSize: 12,
+                  fontSize: 13,
                 }}
               >
                 {opt}
@@ -103,7 +103,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                 width: "100%",
                 resize: "vertical",
                 fontFamily: "var(--font-mono)",
-                fontSize: 12,
+                fontSize: 13,
                 padding: 10,
                 borderRadius: 8,
                 border: "1px solid var(--border)",
@@ -118,7 +118,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
               placeholder={request.placeholder ?? ""}
               style={{
                 width: "100%",
-                fontSize: 12,
+                fontSize: 13,
                 padding: "8px 10px",
                 borderRadius: 8,
                 border: "1px solid var(--border)",
@@ -139,7 +139,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
               background: "transparent",
               color: "var(--text-muted)",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: 13,
             }}
           >
             取消
@@ -156,7 +156,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                   background: "var(--bg-panel)",
                   color: "var(--text)",
                   cursor: "pointer",
-                  fontSize: 12,
+                  fontSize: 13,
                 }}
               >
                 拒绝
@@ -171,7 +171,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                   background: "var(--accent)",
                   color: "var(--accent-contrast, #fff)",
                   cursor: "pointer",
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 600,
                 }}
               >
@@ -190,7 +190,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                 background: "var(--accent)",
                 color: "var(--accent-contrast, #fff)",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 600,
               }}
             >

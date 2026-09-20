@@ -138,7 +138,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
         <SectionTitle>{t("provider.subscription")}</SectionTitle>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: provider.loggedIn ? "var(--success)" : "var(--border)", display: "inline-block" }} />
-          <span style={{ fontSize: 11, color: provider.loggedIn ? "var(--success)" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 12, color: provider.loggedIn ? "var(--success)" : "var(--text-dim)" }}>
             {provider.loggedIn ? t("common.connected") : t("common.notConnected")}
           </span>
         </div>
@@ -147,16 +147,16 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
       {/* Status */}
       <div style={{ minHeight: 48 }}>
         {loginState.phase === "idle" && (
-          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
             {provider.loggedIn ? "Already connected. You can re-login or disconnect." : `Connect your ${provider.name} account.`}
           </p>
         )}
         {loginState.phase === "connecting" && (
-          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>{t("common.openingBrowser")}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>{t("common.openingBrowser")}</p>
         )}
         {loginState.phase === "select" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
               {loginState.message}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -164,7 +164,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
                 <button
                   key={option.id}
                   onClick={() => submitSelection(loginState.token, option.id)}
-                  style={{ padding: "6px 9px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text)", cursor: "pointer", fontSize: 12, textAlign: "left" }}
+                  style={{ padding: "6px 9px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text)", cursor: "pointer", fontSize: 13, textAlign: "left" }}
                 >
                   {option.label}
                 </button>
@@ -174,13 +174,13 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
         )}
         {(loginState.phase === "auth" || loginState.phase === "prompt") && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
               {loginState.phase === "auth"
                 ? "Complete sign-in in the browser, then copy the redirect URL from the address bar and paste it below."
                 : loginState.message}
             </p>
             {loginState.phase === "auth" && (
-              <p style={{ margin: 0, fontSize: 11, color: "var(--text-dim)", lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)", lineHeight: 1.5 }}>
                 If the browser window did not open,{" "}
                 <a href={loginState.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", wordBreak: "break-all" }}>
                   click here to open the login page
@@ -195,12 +195,12 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") submitCode(loginState.token, inputValue); }}
                 placeholder={loginState.phase === "auth" ? "http://localhost:1455/auth/callback?code=…" : (loginState.placeholder ?? "Enter value…")}
-                style={{ flex: 1, padding: "6px 9px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text)", fontSize: 12, outline: "none", fontFamily: "var(--font-mono)", boxSizing: "border-box" }}
+                style={{ flex: 1, padding: "6px 9px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font-mono)", boxSizing: "border-box" }}
               />
               <button
                 onClick={() => submitCode(loginState.token, inputValue)}
                 disabled={!inputValue.trim()}
-                style={{ padding: "6px 12px", background: inputValue.trim() ? "var(--accent)" : "var(--bg-panel)", border: "none", borderRadius: 5, color: inputValue.trim() ? "var(--accent-contrast)" : "var(--text-dim)", cursor: inputValue.trim() ? "pointer" : "not-allowed", fontSize: 12, fontWeight: 600, flexShrink: 0 }}
+                style={{ padding: "6px 12px", background: inputValue.trim() ? "var(--accent)" : "var(--bg-panel)", border: "none", borderRadius: 5, color: inputValue.trim() ? "var(--accent-contrast)" : "var(--text-dim)", cursor: inputValue.trim() ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 600, flexShrink: 0 }}
               >
                 {t("common.submit")}
               </button>
@@ -209,13 +209,13 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
         )}
         {loginState.phase === "device_code" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
               Open the verification page and enter this code:
             </p>
             <div style={{ padding: "8px 10px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text)", fontSize: 16, fontWeight: 700, fontFamily: "var(--font-mono)", letterSpacing: 0 }}>
               {loginState.userCode}
             </div>
-            <p style={{ margin: 0, fontSize: 11, color: "var(--text-dim)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)", lineHeight: 1.5 }}>
               <a href={loginState.verificationUri} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", wordBreak: "break-all" }}>
                 {loginState.verificationUri}
               </a>
@@ -224,13 +224,13 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
           </div>
         )}
         {loginState.phase === "progress" && (
-          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>{loginState.message}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>{loginState.message}</p>
         )}
         {loginState.phase === "success" && (
-          <p style={{ margin: 0, fontSize: 12, color: "var(--success)" }}>{t("provider.connected")}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--success)" }}>{t("provider.connected")}</p>
         )}
         {loginState.phase === "error" && (
-          <p style={{ margin: 0, fontSize: 12, color: "var(--danger)" }}>{loginState.message}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--danger)" }}>{loginState.message}</p>
         )}
       </div>
 
@@ -239,7 +239,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
         {isWorking ? (
           <button
             onClick={() => { eventSourceRef.current?.close(); setLoginState({ phase: "idle" }); }}
-            style={{ padding: "5px 12px", background: "none", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text-muted)", cursor: "pointer", fontSize: 12 }}
+            style={{ padding: "5px 12px", background: "none", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text-muted)", cursor: "pointer", fontSize: 13 }}
           >
             {t("common.cancel")}
           </button>
@@ -247,14 +247,14 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
           <>
             <button
               onClick={handleLogin}
-              style={{ padding: "5px 14px", background: "var(--accent)", border: "none", borderRadius: 5, color: "var(--accent-contrast)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+              style={{ padding: "5px 14px", background: "var(--accent)", border: "none", borderRadius: 5, color: "var(--accent-contrast)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
             >
               {provider.loggedIn ? t("common.relogin") : t("common.login")}
             </button>
             {provider.loggedIn && (
               <button
                 onClick={handleLogout}
-                style={{ padding: "5px 12px", background: "none", border: "1px solid var(--danger-border)", borderRadius: 5, color: "var(--danger)", cursor: "pointer", fontSize: 12 }}
+                style={{ padding: "5px 12px", background: "none", border: "1px solid var(--danger-border)", borderRadius: 5, color: "var(--danger)", cursor: "pointer", fontSize: 13 }}
               >
                 {t("common.disconnect")}
               </button>

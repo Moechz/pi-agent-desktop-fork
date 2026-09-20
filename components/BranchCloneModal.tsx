@@ -170,31 +170,31 @@ export function BranchCloneModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-3.5">
           {error && (
-            <div className="p-2.5 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[12px]">
+            <div className="p-2.5 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[13px]">
               {error}
             </div>
           )}
 
-          <p className="text-[12px] text-text-muted">
+          <p className="text-[13px] text-text-muted">
             {mode === "branch" ? t("branch.description") : t("branch.cloneDescription")}
           </p>
 
           {mode === "branch" && targetEntryId && (
             <div>
-              <label className="block text-[11px] font-medium text-text-muted mb-1">
+              <label className="block text-[12px] font-medium text-text-muted mb-1">
                 {t("branch.point")}
               </label>
               <input
                 type="text"
                 value={targetEntryId}
                 readOnly
-                className="w-full px-2.5 py-1.5 rounded-control bg-bg-panel border border-border text-text-muted font-mono text-[11px] cursor-not-allowed opacity-80"
+                className="w-full px-2.5 py-1.5 rounded-control bg-bg-panel border border-border text-text-muted font-mono text-[12px] cursor-not-allowed opacity-80"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[11px] font-medium text-text-muted mb-1">
+            <label className="block text-[12px] font-medium text-text-muted mb-1">
               {mode === "branch" ? t("branch.name") : t("branch.cloneName")}
             </label>
             <input
@@ -202,7 +202,7 @@ export function BranchCloneModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={mode === "branch" ? "e.g. Feature Exploration" : "e.g. Refactor Fork"}
-              className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[12px] focus:outline-none focus:border-accent"
+              className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
               autoFocus
             />
           </div>
@@ -210,7 +210,7 @@ export function BranchCloneModal({
           {mode === "clone" && (
             <>
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1.5">
+                <label className="block text-[12px] font-medium text-text-muted mb-1.5">
                   {t("branch.workspaceMode")}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -219,7 +219,7 @@ export function BranchCloneModal({
                     disabled={submitting}
                     aria-pressed={workspaceMode === "directory"}
                     onClick={() => selectWorkspaceMode("directory")}
-                    className={`px-3 py-2 rounded-control border text-[12px] text-left transition-colors cursor-pointer disabled:opacity-50 ${
+                    className={`px-3 py-2 rounded-control border text-[13px] text-left transition-colors cursor-pointer disabled:opacity-50 ${
                       workspaceMode === "directory"
                         ? "border-accent bg-accent/10 text-text"
                         : "border-border bg-bg text-text-muted hover:text-text hover:bg-bg-hover"
@@ -232,7 +232,7 @@ export function BranchCloneModal({
                     disabled={submitting}
                     aria-pressed={workspaceMode === "worktree"}
                     onClick={() => selectWorkspaceMode("worktree")}
-                    className={`px-3 py-2 rounded-control border text-[12px] text-left transition-colors cursor-pointer disabled:opacity-50 ${
+                    className={`px-3 py-2 rounded-control border text-[13px] text-left transition-colors cursor-pointer disabled:opacity-50 ${
                       workspaceMode === "worktree"
                         ? "border-accent bg-accent/10 text-text"
                         : "border-border bg-bg text-text-muted hover:text-text hover:bg-bg-hover"
@@ -242,14 +242,14 @@ export function BranchCloneModal({
                   </button>
                 </div>
                 {workspaceMode === "worktree" && (
-                  <p className="mt-1.5 text-[11px] text-text-muted">
+                  <p className="mt-1.5 text-[12px] text-text-muted">
                     {t("branch.worktreeHint")}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-text-muted mb-1">
+                <label className="block text-[12px] font-medium text-text-muted mb-1">
                   {t("branch.targetDirectory")}
                 </label>
                 <input
@@ -261,20 +261,20 @@ export function BranchCloneModal({
                       ? t("branch.worktreeDirectoryPlaceholder")
                       : t("branch.currentDirectoryPlaceholder")
                   }
-                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                  className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                 />
               </div>
 
               {workspaceMode === "worktree" && (
                 <div>
-                  <label className="block text-[11px] font-medium text-text-muted mb-1">
+                  <label className="block text-[12px] font-medium text-text-muted mb-1">
                     {t("branch.name")}
                   </label>
                   <input
                     type="text"
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                    className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                   />
                 </div>
               )}
@@ -286,14 +286,14 @@ export function BranchCloneModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[12px] cursor-pointer"
+              className="px-3 py-1.5 rounded-control border border-border text-text-muted hover:text-text hover:bg-bg-hover transition-colors text-[13px] cursor-pointer"
             >
               {t("common.cancel")}
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[12px] disabled:opacity-50"
+              className="px-4 py-1.5 rounded-control bg-accent text-accent-contrast font-medium hover:opacity-90 transition-opacity cursor-pointer text-[13px] disabled:opacity-50"
             >
               {submitting
                 ? t("branch.processing")

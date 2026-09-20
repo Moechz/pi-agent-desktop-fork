@@ -251,7 +251,7 @@ export function ExtensionsConfigModal({
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-3 py-2 text-[12px] font-medium border-b-2 transition-[background-color,border-color,color] duration-150 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-[background-color,border-color,color] duration-150 cursor-pointer flex items-center gap-1.5 ${
                 activeTab === t.id
                   ? "border-accent text-accent bg-bg"
                   : "border-transparent text-text-muted hover:text-text hover:bg-bg-hover"
@@ -260,7 +260,7 @@ export function ExtensionsConfigModal({
               {t.label}
               {t.count !== undefined && (
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  className={`px-1.5 py-0.2 rounded-full text-[11px] ${
                     activeTab === t.id
                       ? "bg-accent/20 text-accent"
                       : "bg-bg-elevated text-text-dim"
@@ -276,7 +276,7 @@ export function ExtensionsConfigModal({
         {/* Tab Content Body */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {error && (
-            <div className="m-4 p-3 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[12px] flex items-center justify-between">
+            <div className="m-4 p-3 rounded-control bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] flex items-center justify-between">
               <span>{error}</span>
               <button
                 onClick={() => setError(null)}
@@ -292,7 +292,7 @@ export function ExtensionsConfigModal({
           {activeTab === "extensions" && (
             <div className="p-4 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] text-text-muted">
+                <span className="text-[13px] text-text-muted">
                   {t("extension.manageHint")}
                 </span>
                 <button
@@ -300,7 +300,7 @@ export function ExtensionsConfigModal({
                     setAddType("extension");
                     setShowAddForm(!showAddForm);
                   }}
-                  className="px-3 py-1.5 rounded-control bg-accent text-accent-contrast font-medium text-[12px] hover:opacity-90 transition-opacity cursor-pointer"
+                  className="px-3 py-1.5 rounded-control bg-accent text-accent-contrast font-medium text-[13px] hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   {t("extension.addAction")}
                 </button>
@@ -311,7 +311,7 @@ export function ExtensionsConfigModal({
                   onSubmit={handleAddSubmit}
                   className="p-3 rounded-panel bg-bg-panel border border-border flex flex-col gap-3"
                 >
-                  <h4 className="text-[12px] font-semibold text-text">
+                  <h4 className="text-[13px] font-semibold text-text">
                     {t("extension.add")}
                   </h4>
                   <div className="grid grid-cols-3 gap-2">
@@ -320,7 +320,7 @@ export function ExtensionsConfigModal({
                       value={addNameOrPath}
                       onChange={(e) => setAddNameOrPath(e.target.value)}
                       placeholder={t("extension.addPlaceholder")}
-                      className="col-span-2 px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                      className="col-span-2 px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                       required
                     />
                     <select
@@ -328,7 +328,7 @@ export function ExtensionsConfigModal({
                       onChange={(e) =>
                         setAddScope(e.target.value as "global" | "project")
                       }
-                      className="px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[12px] focus:outline-none focus:border-accent"
+                      className="px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
                     >
                       <option value="project">{t("scope.project")}</option>
                       <option value="global">{t("scope.global")}</option>
@@ -338,14 +338,14 @@ export function ExtensionsConfigModal({
                     <button
                       type="button"
                       onClick={() => setShowAddForm(false)}
-                      className="px-3 py-1 text-[11px] rounded-control border border-border text-text-muted"
+                      className="px-3 py-1 text-[12px] rounded-control border border-border text-text-muted"
                     >
                       {t("common.cancel")}
                     </button>
                     <button
                       type="submit"
                       disabled={adding}
-                      className="px-3 py-1 text-[11px] rounded-control bg-accent text-accent-contrast font-medium"
+                      className="px-3 py-1 text-[12px] rounded-control bg-accent text-accent-contrast font-medium"
                     >
                       {adding ? t("common.adding") : t("common.add")}
                     </button>
@@ -354,11 +354,11 @@ export function ExtensionsConfigModal({
               )}
 
               {loading ? (
-                <div className="text-center py-10 text-text-muted text-[12px]">
+                <div className="text-center py-10 text-text-muted text-[13px]">
                   {t("extension.loading")}
                 </div>
               ) : extensions.length === 0 ? (
-                <div className="text-center py-12 text-text-muted text-[12px] border border-dashed border-border rounded-panel">
+                <div className="text-center py-12 text-text-muted text-[13px] border border-dashed border-border rounded-panel">
                   {t("extension.none")}
                 </div>
               ) : (
@@ -373,11 +373,11 @@ export function ExtensionsConfigModal({
                           <span className="font-semibold text-text text-[13px]">
                             {ext.name}
                           </span>
-                          <span className="font-mono text-[11px] text-text-dim">
+                          <span className="font-mono text-[12px] text-text-dim">
                             ({ext.id})
                           </span>
                           <span
-                            className={`px-1.5 py-0.2 rounded text-[10px] font-mono uppercase ${
+                            className={`px-1.5 py-0.2 rounded text-[11px] font-mono uppercase ${
                               ext.scope === "global"
                                 ? "bg-indigo-500/10 text-indigo-400"
                                 : "bg-amber-500/10 text-amber-400"
@@ -391,7 +391,7 @@ export function ExtensionsConfigModal({
                           </span>
                         </div>
                         {ext.path && (
-                          <span className="font-mono text-[10px] text-text-dim">
+                          <span className="font-mono text-[11px] text-text-dim">
                             {ext.path}
                           </span>
                         )}
@@ -400,7 +400,7 @@ export function ExtensionsConfigModal({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleToggleExtension(ext)}
-                          className={`px-2.5 py-1 rounded-control text-[11px] font-medium border cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-control text-[12px] font-medium border cursor-pointer ${
                             ext.enabled
                               ? "bg-green-500/10 text-green-400 border-green-500/20"
                               : "bg-bg-elevated text-text-muted border-border"
@@ -412,7 +412,7 @@ export function ExtensionsConfigModal({
                         </button>
                         <button
                           onClick={() => handleRemoveExtension(ext)}
-                          className="px-2.5 py-1 rounded-control border border-red-500/30 text-red-400 hover:bg-red-500/10 text-[11px] cursor-pointer"
+                          className="px-2.5 py-1 rounded-control border border-red-500/30 text-red-400 hover:bg-red-500/10 text-[12px] cursor-pointer"
                         >
                           {t("common.remove")}
                         </button>
@@ -427,7 +427,7 @@ export function ExtensionsConfigModal({
           {activeTab === "skills" && (
             <div className="p-4 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] text-text-muted">
+                <span className="text-[13px] text-text-muted">
                   {t("extension.skillsHint")}
                 </span>
                 <button
@@ -435,7 +435,7 @@ export function ExtensionsConfigModal({
                     setAddType("skill");
                     setShowAddForm(!showAddForm);
                   }}
-                  className="px-3 py-1.5 rounded-control bg-accent text-accent-contrast font-medium text-[12px] hover:opacity-90 transition-opacity cursor-pointer"
+                  className="px-3 py-1.5 rounded-control bg-accent text-accent-contrast font-medium text-[13px] hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   {t("extension.addSkillAction")}
                 </button>
@@ -446,7 +446,7 @@ export function ExtensionsConfigModal({
                   onSubmit={handleAddSubmit}
                   className="p-3 rounded-panel bg-bg-panel border border-border flex flex-col gap-3"
                 >
-                  <h4 className="text-[12px] font-semibold text-text">
+                  <h4 className="text-[13px] font-semibold text-text">
                     {t("extension.addSkill")}
                   </h4>
                   <div className="grid grid-cols-3 gap-2">
@@ -455,7 +455,7 @@ export function ExtensionsConfigModal({
                       value={addNameOrPath}
                       onChange={(e) => setAddNameOrPath(e.target.value)}
                       placeholder={t("extension.skillPlaceholder")}
-                      className="col-span-2 px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[12px] focus:outline-none focus:border-accent"
+                      className="col-span-2 px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                       required
                     />
                     <select
@@ -463,7 +463,7 @@ export function ExtensionsConfigModal({
                       onChange={(e) =>
                         setAddScope(e.target.value as "global" | "project")
                       }
-                      className="px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[12px] focus:outline-none focus:border-accent"
+                      className="px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
                     >
                       <option value="project">{t("scope.project")}</option>
                       <option value="global">{t("scope.global")}</option>
@@ -473,14 +473,14 @@ export function ExtensionsConfigModal({
                     <button
                       type="button"
                       onClick={() => setShowAddForm(false)}
-                      className="px-3 py-1 text-[11px] rounded-control border border-border text-text-muted"
+                      className="px-3 py-1 text-[12px] rounded-control border border-border text-text-muted"
                     >
                       {t("common.cancel")}
                     </button>
                     <button
                       type="submit"
                       disabled={adding}
-                      className="px-3 py-1 text-[11px] rounded-control bg-accent text-accent-contrast font-medium"
+                      className="px-3 py-1 text-[12px] rounded-control bg-accent text-accent-contrast font-medium"
                     >
                       {adding ? t("common.adding") : t("common.add")}
                     </button>
@@ -489,11 +489,11 @@ export function ExtensionsConfigModal({
               )}
 
               {loading ? (
-                <div className="text-center py-10 text-text-muted text-[12px]">
+                <div className="text-center py-10 text-text-muted text-[13px]">
                   {t("extension.skillsLoading")}
                 </div>
               ) : skills.length === 0 ? (
-                <div className="text-center py-12 text-text-muted text-[12px] border border-dashed border-border rounded-panel">
+                <div className="text-center py-12 text-text-muted text-[13px] border border-dashed border-border rounded-panel">
                   {t("extension.skillsNone")}
                 </div>
               ) : (
@@ -509,7 +509,7 @@ export function ExtensionsConfigModal({
                             {skill.name}
                           </span>
                           <span
-                            className={`px-1.5 py-0.2 rounded text-[10px] font-mono uppercase ${
+                            className={`px-1.5 py-0.2 rounded text-[11px] font-mono uppercase ${
                               skill.scope === "global"
                                 ? "bg-indigo-500/10 text-indigo-400"
                                 : "bg-amber-500/10 text-amber-400"
@@ -523,12 +523,12 @@ export function ExtensionsConfigModal({
                           </span>
                         </div>
                         {skill.description && (
-                          <span className="text-[11px] text-text-muted">
+                          <span className="text-[12px] text-text-muted">
                             {skill.description}
                           </span>
                         )}
                         {skill.filePath && (
-                          <span className="font-mono text-[10px] text-text-dim">
+                          <span className="font-mono text-[11px] text-text-dim">
                             {skill.filePath}
                           </span>
                         )}
@@ -537,7 +537,7 @@ export function ExtensionsConfigModal({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleToggleSkill(skill)}
-                          className={`px-2.5 py-1 rounded-control text-[11px] font-medium border cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-control text-[12px] font-medium border cursor-pointer ${
                             !skill.disableModelInvocation
                               ? "bg-green-500/10 text-green-400 border-green-500/20"
                               : "bg-bg-elevated text-text-muted border-border"
@@ -549,7 +549,7 @@ export function ExtensionsConfigModal({
                         </button>
                         <button
                           onClick={() => handleRemoveSkill(skill)}
-                          className="px-2.5 py-1 rounded-control border border-red-500/30 text-red-400 hover:bg-red-500/10 text-[11px] cursor-pointer"
+                          className="px-2.5 py-1 rounded-control border border-red-500/30 text-red-400 hover:bg-red-500/10 text-[12px] cursor-pointer"
                         >
                           {t("common.remove")}
                         </button>
@@ -563,12 +563,12 @@ export function ExtensionsConfigModal({
 
           {activeTab === "diagnostics" && (
             <div className="p-4 flex flex-col gap-3">
-              <span className="text-[12px] text-text-muted">
+              <span className="text-[13px] text-text-muted">
                 {t("extension.diagnosticsHint")}
               </span>
 
               {diagnostics.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 border border-dashed border-border rounded-panel text-green-400 text-[12px] gap-1">
+                <div className="flex flex-col items-center justify-center h-40 border border-dashed border-border rounded-panel text-green-400 text-[13px] gap-1">
                   <span>✓ {t("extension.diagnosticsClean")}</span>
                 </div>
               ) : (
@@ -576,14 +576,14 @@ export function ExtensionsConfigModal({
                   {diagnostics.map((diag, index) => (
                     <div
                       key={index}
-                      className={`p-3 rounded-panel border text-[12px] flex flex-col gap-1 ${
+                      className={`p-3 rounded-panel border text-[13px] flex flex-col gap-1 ${
                         diag.type === "error"
                           ? "bg-red-500/10 border-red-500/20 text-red-400"
                           : "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
                       }`}
                     >
                       <div className="flex items-center gap-2 font-semibold">
-                        <span className="uppercase text-[10px] px-1.5 py-0.2 rounded bg-black/20">
+                        <span className="uppercase text-[11px] px-1.5 py-0.2 rounded bg-black/20">
                           {t(
                             diag.type === "error"
                               ? "extension.diagnosticError"
@@ -609,7 +609,7 @@ export function ExtensionsConfigModal({
         <div className="flex items-center justify-end px-4 py-3 border-t border-divider bg-bg-elevated shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-control bg-bg-elevated border border-border text-text hover:bg-bg-hover transition-colors text-[12px] cursor-pointer"
+            className="px-4 py-1.5 rounded-control bg-bg-elevated border border-border text-text hover:bg-bg-hover transition-colors text-[13px] cursor-pointer"
           >
             {t("common.close")}
           </button>

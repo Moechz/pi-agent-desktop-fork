@@ -152,17 +152,17 @@ export function SessionSidebar({
         }}
       >
         {loading && (
-          <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 12 }}>
+          <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 13 }}>
             {t("common.loading")}
           </div>
         )}
         {error && (
-          <div style={{ padding: "12px 14px", color: "var(--danger)", fontSize: 12 }}>
+          <div style={{ padding: "12px 14px", color: "var(--danger)", fontSize: 13 }}>
             {error}
           </div>
         )}
         {!loading && !error && filteredSessions.length === 0 && (
-          <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 12 }}>
+          <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 13 }}>
             {t("sidebar.noSessions")}
           </div>
         )}
@@ -210,7 +210,7 @@ export function SessionSidebar({
                 border: "none",
                 color: "var(--text-muted)",
                 cursor: "pointer",
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 600,
                 letterSpacing: "0.04em",
                 textTransform: "uppercase",

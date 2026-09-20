@@ -49,7 +49,7 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab }: Props) {
               borderTop: "2px solid transparent",
               background: isActive ? "color-mix(in srgb, var(--bg-selected) 58%, transparent)" : "transparent",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: 13,
               color: isActive ? "var(--text)" : "var(--text-muted)",
               whiteSpace: "nowrap",
               maxWidth: 180,

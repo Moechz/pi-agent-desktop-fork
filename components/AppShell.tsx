@@ -457,7 +457,7 @@ export function AppShell() {
             disabled={disabled}
             title={label}
             aria-label={label}
-            className={`flex-1 flex items-center justify-center gap-1.5 h-control-height p-0 bg-transparent border-none rounded-control text-[12px] transition-[background-color,color,opacity,transform] duration-150 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 h-control-height p-0 bg-transparent border-none rounded-control text-[13px] transition-[background-color,color,opacity,transform] duration-150 ${
               disabled
                 ? "cursor-default opacity-35 text-text-muted"
                 : "cursor-pointer text-text-muted hover:bg-bg-hover hover:text-text active:scale-95"
@@ -531,7 +531,7 @@ export function AppShell() {
                 </svg>
               )}
             </button>
-            <div className="hidden min-w-0 items-center gap-1.5 px-3 text-[11px] select-none md:flex">
+            <div className="hidden min-w-0 items-center gap-1.5 px-3 text-[12px] select-none md:flex">
               <span className="max-w-36 truncate font-medium text-text">{getPathName(activeCwd)}</span>
               {showChat && (
                 <>
@@ -609,7 +609,7 @@ export function AppShell() {
                       setShellMenuOpen(false);
                       toggleTheme({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
                     }}
-                    className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[12px] text-text hover:bg-bg-hover"
+                    className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[13px] text-text hover:bg-bg-hover"
                   >
                     <span className="w-4 text-center">{isDark ? "☀" : "◐"}</span>
                     {isDark ? t("shell.lightAppearance") : t("shell.darkAppearance")}
@@ -619,7 +619,7 @@ export function AppShell() {
                       type="button"
                       role="menuitem"
                       onClick={() => { setShellMenuOpen(false); toggleTopPanel("system"); }}
-                      className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[12px] text-text hover:bg-bg-hover"
+                      className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[13px] text-text hover:bg-bg-hover"
                     >
                       <span className={`w-4 text-center ${systemPrompt ? "text-accent" : "text-text-dim"}`}>⌘</span> {t("shell.systemPrompt")}
                     </button>
@@ -628,7 +628,7 @@ export function AppShell() {
                     type="button"
                     role="menuitem"
                     onClick={() => { setShellMenuOpen(false); setExtensionsModalOpen(true); }}
-                    className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[12px] text-text hover:bg-bg-hover"
+                    className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[13px] text-text hover:bg-bg-hover"
                   >
                     <span className="w-4 text-center">⌘</span> {t("shell.extensionsMcp")}
                   </button>
@@ -641,19 +641,19 @@ export function AppShell() {
                       setExportSessionId(selectedSession?.id ?? null);
                       setExportModalOpen(true);
                     }}
-                    className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[12px] text-text hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-35"
+                    className="flex w-full items-center gap-2 rounded-control border-none bg-transparent px-2.5 py-2 text-left text-[13px] text-text hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <span className="w-4 text-center">⇩</span> {t("shell.exportSession")}
                   </button>
                   <div className="my-1 border-t border-divider" />
-                  <label className="flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-[12px] text-text">
+                  <label className="flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-[13px] text-text">
                     <span className="w-4 text-center" aria-hidden="true">文</span>
                     <span className="flex-1">{t("language.label")}</span>
                     <select
                       value={localePreference}
                       onChange={(event) => setLocalePreference(event.target.value as "system" | "en" | "zh-CN")}
                       aria-label={t("language.label")}
-                      className="max-w-28 rounded-control border border-border bg-bg-panel px-1.5 py-1 text-[11px] text-text outline-none focus:border-focus-ring"
+                      className="max-w-28 rounded-control border border-border bg-bg-panel px-1.5 py-1 text-[12px] text-text outline-none focus:border-focus-ring"
                     >
                       <option value="system">{t("language.system")}</option>
                       <option value="en">{t("language.english")}</option>
@@ -692,15 +692,15 @@ export function AppShell() {
                 {activeTopPanel === "system" && (
                   <div className="t-dropdown is-open material-popover border-b border-divider shadow-popover" data-origin="top-center">
                     {systemPrompt ? (
-                      <div className="max-h-[min(600px,75vh)] overflow-y-auto px-4 py-3 text-text-muted text-[12px] leading-[1.6] whitespace-pre-wrap font-mono">
+                      <div className="max-h-[min(600px,75vh)] overflow-y-auto px-4 py-3 text-text-muted text-[13px] leading-[1.6] whitespace-pre-wrap font-mono">
                         {systemPrompt}
                       </div>
                     ) : systemPrompt === "" ? (
-                      <div className="px-4 py-2.5 text-[12px] text-text-muted italic">
+                      <div className="px-4 py-2.5 text-[13px] text-text-muted italic">
                         {t("shell.systemPromptEmpty")}
                       </div>
                     ) : (
-                      <div className="px-4 py-2.5 text-[12px] text-text-muted italic">
+                      <div className="px-4 py-2.5 text-[13px] text-text-muted italic">
                         {t("shell.systemPromptLoadHint")}
                       </div>
                     )}
@@ -738,7 +738,7 @@ export function AppShell() {
                     π
                   </div>
                   <div className="text-[15px] font-medium text-text">{t("shell.openProject")}</div>
-                  <div className="mt-1 max-w-64 text-[12px] leading-[1.6] text-text-muted">
+                  <div className="mt-1 max-w-64 text-[13px] leading-[1.6] text-text-muted">
                     {t("shell.openProjectHint")}
                   </div>
                 </div>
@@ -794,7 +794,7 @@ export function AppShell() {
             {activeFileTab?.filePath ? (
               <FileViewer filePath={activeFileTab.filePath} cwd={activeCwd ?? undefined} />
             ) : (
-              <div className="h-full flex items-center justify-center text-text-dim text-[12px]">{t("shell.noFileOpen")}</div>
+              <div className="h-full flex items-center justify-center text-text-dim text-[13px]">{t("shell.noFileOpen")}</div>
             )}
           </div>
         </div>

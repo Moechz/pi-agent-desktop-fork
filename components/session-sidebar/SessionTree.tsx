@@ -230,13 +230,13 @@ function SessionItem({
       {confirmDelete ? (
         /* ── Delete confirmation: same height, two flat buttons ── */
         <>
-          <div className="flex-1 min-w-0 text-[12px] text-text overflow-hidden text-ellipsis whitespace-nowrap">
+          <div className="flex-1 min-w-0 text-[13px] text-text overflow-hidden text-ellipsis whitespace-nowrap">
             {t("sidebar.deleteSession", { name: `${title.slice(0, 22)}${title.length > 22 ? "…" : ""}` })}
           </div>
           <div className="flex gap-1.25 shrink-0">
             <button
               onClick={handleDeleteConfirm}
-              className="flex items-center justify-center gap-1 h-[30px] px-[11px] bg-danger border-none rounded-control text-accent-contrast cursor-pointer text-[12px] font-semibold whitespace-nowrap active:scale-95 transition-[background-color,color,transform] duration-150"
+              className="flex items-center justify-center gap-1 h-[30px] px-[11px] bg-danger border-none rounded-control text-accent-contrast cursor-pointer text-[13px] font-semibold whitespace-nowrap active:scale-95 transition-[background-color,color,transform] duration-150"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
@@ -248,7 +248,7 @@ function SessionItem({
             </button>
             <button
               onClick={handleDeleteCancel}
-              className="flex items-center justify-center h-[30px] px-[11px] bg-bg hover:bg-bg-hover border border-border rounded-control text-text-muted cursor-pointer text-[12px] font-medium whitespace-nowrap active:scale-95 transition-[background-color,border-color,color,transform] duration-150"
+              className="flex items-center justify-center h-[30px] px-[11px] bg-bg hover:bg-bg-hover border border-border rounded-control text-text-muted cursor-pointer text-[13px] font-medium whitespace-nowrap active:scale-95 transition-[background-color,border-color,color,transform] duration-150"
             >
               {t("common.cancel")}
             </button>
@@ -266,7 +266,7 @@ function SessionItem({
             if (e.key === "Escape") setRenaming(false);
           }}
           autoFocus
-          className="flex-1 text-[12px] py-1.25 px-2 border border-accent rounded-control outline-none bg-bg text-text h-[30px]"
+          className="flex-1 text-[13px] py-1.25 px-2 border border-accent rounded-control outline-none bg-bg text-text h-[30px]"
         />
       ) : (
         /* ── Normal view ── */
@@ -282,14 +282,14 @@ function SessionItem({
           )}
           <div className="flex-1 min-w-0">
             <div
-              className={`text-[12px] leading-[1.4] overflow-hidden text-ellipsis whitespace-nowrap ${
+              className={`text-[13px] leading-[1.4] overflow-hidden text-ellipsis whitespace-nowrap ${
                 isSelected ? "font-semibold text-text-strong" : "font-medium text-text"
               }`}
               title={title}
             >
               {title}
             </div>
-            <div className="mt-0.5 flex gap-2 text-text-dim text-[11px]">
+            <div className="mt-0.5 flex gap-2 text-text-dim text-[12px]">
               <span title={session.modified}>{formatRelativeTime(session.modified, locale)}</span>
               <span>{t("common.messages", { count: session.messageCount })}</span>
             </div>
@@ -351,7 +351,7 @@ function SessionItem({
                 left: menuPos.x,
                 zIndex: 1000,
               }}
-              className="t-dropdown is-open material-popover w-44 border border-divider rounded-panel shadow-popover py-1 text-[12px] text-text"
+              className="t-dropdown is-open material-popover w-44 border border-divider rounded-panel shadow-popover py-1 text-[13px] text-text"
               data-origin="top-left"
             >
               {onBranchSession && (

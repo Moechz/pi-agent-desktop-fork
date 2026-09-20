@@ -109,7 +109,7 @@ function SkillDetail({
       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
         <span
           style={{
-            fontSize: 10,
+            fontSize: 11,
             padding: "1px 5px",
             borderRadius: 3,
             flexShrink: 0,
@@ -126,7 +126,7 @@ function SkillDetail({
         <span
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: 11,
+            fontSize: 12,
             color: "var(--text-dim)",
             flex: 1,
             overflow: "hidden",
@@ -142,7 +142,7 @@ function SkillDetail({
           onToggle={() => onToggle(skill)}
         />
         {saveError && (
-          <span style={{ fontSize: 12, color: "var(--danger)", flexShrink: 0 }}>
+          <span style={{ fontSize: 13, color: "var(--danger)", flexShrink: 0 }}>
             {saveError}
           </span>
         )}
@@ -150,7 +150,7 @@ function SkillDetail({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <span
-          style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}
+          style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}
         >
           {t("provider.name")}
         </span>
@@ -167,7 +167,7 @@ function SkillDetail({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <span
-          style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}
+          style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}
         >
           {t("common.description")}
         </span>
@@ -325,7 +325,7 @@ function AddSkillPanel({
               borderRadius: 5,
               border: "1px solid var(--border)",
               overflow: "hidden",
-              fontSize: 12,
+              fontSize: 13,
               flexShrink: 0,
             }}
           >
@@ -350,7 +350,7 @@ function AddSkillPanel({
           </div>
           <span
             style={{
-              fontSize: 12,
+              fontSize: 13,
               color: "var(--text-dim)",
               fontFamily: "var(--font-mono)",
               overflow: "hidden",
@@ -364,11 +364,11 @@ function AddSkillPanel({
 
         {/* Errors */}
         {searchError && (
-          <div style={{ fontSize: 12, color: "var(--danger)" }}>{searchError}</div>
+          <div style={{ fontSize: 13, color: "var(--danger)" }}>{searchError}</div>
         )}
         {installError && (
           <div
-            style={{ fontSize: 12, color: "var(--danger)", wordBreak: "break-word" }}
+            style={{ fontSize: 13, color: "var(--danger)", wordBreak: "break-word" }}
           >
             {installError}
           </div>
@@ -420,7 +420,7 @@ function AddSkillPanel({
                     <span
                       style={{
                         fontFamily: "var(--font-mono)",
-                        fontSize: 11,
+                        fontSize: 12,
                         color: "var(--text-dim)",
                       }}
                     >
@@ -428,7 +428,7 @@ function AddSkillPanel({
                     </span>
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 13,
                         color: "var(--text-muted)",
                         fontWeight: 500,
                       }}
@@ -441,7 +441,7 @@ function AddSkillPanel({
                         target="_blank"
                         rel="noreferrer"
                         style={{
-                          fontSize: 12,
+                          fontSize: 13,
                           color: "var(--accent)",
                           textDecoration: "none",
                         }}
@@ -459,7 +459,7 @@ function AddSkillPanel({
                   style={{
                     flexShrink: 0,
                     padding: "5px 14px",
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 500,
                     borderRadius: 5,
                     border: "1px solid var(--border)",
@@ -638,7 +638,7 @@ export function SkillsConfig({
             </span>
             <code
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "var(--text-muted)",
                 fontFamily: "var(--font-mono)",
                 maxWidth: 320,
@@ -684,7 +684,7 @@ export function SkillsConfig({
                 <div
                   style={{
                     padding: "10px 8px",
-                    fontSize: 12,
+                    fontSize: 13,
                     color: "var(--text-muted)",
                   }}
                 >
@@ -694,7 +694,7 @@ export function SkillsConfig({
                 <div
                   style={{
                     padding: "10px 8px",
-                    fontSize: 11,
+                    fontSize: 12,
                     color: "var(--danger)",
                   }}
                 >
@@ -704,7 +704,7 @@ export function SkillsConfig({
                 <div
                   style={{
                     padding: "10px 8px",
-                    fontSize: 11,
+                    fontSize: 12,
                     color: "var(--text-dim)",
                   }}
                 >
@@ -726,7 +726,7 @@ export function SkillsConfig({
                         <div
                           style={{
                             padding: "4px 8px 3px",
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: 600,
                             color: "var(--text-dim)",
                             textTransform: "uppercase",
@@ -785,7 +785,7 @@ export function SkillsConfig({
                               />
                               <span
                                 style={{
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: isSelected ? 600 : 400,
                                   color: disabled
                                     ? "var(--text-dim)"
@@ -827,7 +827,7 @@ export function SkillsConfig({
                   cursor: "pointer",
                   background: addMode ? "var(--bg-selected)" : "none",
                   color: addMode ? "var(--accent)" : "var(--text-dim)",
-                  fontSize: 12,
+                  fontSize: 13,
                 }}
                 onMouseEnter={(e) => {
                   if (!addMode)

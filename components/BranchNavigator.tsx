@@ -163,7 +163,7 @@ function TreeNodeView({ node, activePathIds, depth, isLast, parentLines, onSelec
         {/* Role badge */}
         {role && (
           <span style={{
-            fontSize: 9,
+            fontSize: 11,
             fontFamily: "var(--font-mono)",
             color: role === "user" ? "var(--accent)" : "var(--text-dim)",
             background: role === "user" ? "var(--user-bg)" : "var(--bg-hover)",
@@ -180,14 +180,14 @@ function TreeNodeView({ node, activePathIds, depth, isLast, parentLines, onSelec
 
         {/* Skipped indicator */}
         {skipped > 0 && (
-          <span style={{ fontSize: 10, color: "var(--text-dim)", marginRight: 5, flexShrink: 0 }}>
+          <span style={{ fontSize: 11, color: "var(--text-dim)", marginRight: 5, flexShrink: 0 }}>
             +{skipped}
           </span>
         )}
 
         {/* Label */}
         <span style={{
-          fontSize: 11,
+          fontSize: 12,
           color: isActive ? "var(--text)" : isOnPath ? "var(--text-muted)" : "var(--text-dim)",
           fontWeight: isActive ? 500 : 400,
           overflow: "hidden",
@@ -292,7 +292,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
             borderRight: "1px solid var(--divider)",
             cursor: "pointer",
             color: open ? "var(--text)" : "var(--text-muted)",
-            fontSize: 11,
+            fontSize: 12,
             whiteSpace: "nowrap",
             transition: "color var(--duration-quick), background var(--duration-quick)",
           }}
@@ -322,7 +322,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
                       if (!inline) setOpenInternal(false);
                     }}
                     title={t("branch.create")}
-                    className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
+                    className="flex items-center gap-1 px-2 py-1 text-[12px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="6" y1="3" x2="6" y2="15" />
@@ -340,7 +340,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
                       if (!inline) setOpenInternal(false);
                     }}
                     title={t("branch.clone")}
-                    className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
+                    className="flex items-center gap-1 px-2 py-1 text-[12px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -366,7 +366,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
                 ))}
               </div>
             ) : (
-              <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
+              <div style={{ padding: "10px 16px", fontSize: 13, color: "var(--text-muted)", fontStyle: "italic" }}>
                 {noBranchReason}
               </div>
             )}
@@ -391,7 +391,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
           border: "none",
           cursor: "pointer",
           color: "var(--text-muted)",
-          fontSize: 11,
+          fontSize: 12,
           textAlign: "left",
         }}
       >
@@ -421,7 +421,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
                     setOpenInternal(false);
                   }}
                   title={t("branch.create")}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
+                  className="flex items-center gap-1 px-2 py-1 text-[12px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="6" y1="3" x2="6" y2="15" />
@@ -439,7 +439,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
                     setOpenInternal(false);
                   }}
                   title={t("branch.clone")}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
+                  className="flex items-center gap-1 px-2 py-1 text-[12px] font-medium rounded-control border border-border bg-bg-elevated text-text hover:bg-bg-hover hover:border-focus-ring cursor-pointer transition-all"
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -465,7 +465,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, onBranch, on
               ))}
             </div>
           ) : (
-            <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
+            <div style={{ padding: "10px 16px", fontSize: 13, color: "var(--text-muted)", fontStyle: "italic" }}>
               {noBranchReason ?? t("branch.noSession")}
             </div>
           )}
