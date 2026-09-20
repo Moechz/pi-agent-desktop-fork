@@ -114,8 +114,8 @@ export function SidebarHeader({
         </div>
       </div>
 
-      {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右（标题下方空两行） */}
-      <div className="flex items-center justify-between" style={{ marginTop: 68 }}>
+      {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右（标题下方空一行） */}
+      <div className="flex items-center justify-between" style={{ marginTop: 44 }}>
         <button
           onClick={handleNewSession}
           disabled={!selectedCwd}
