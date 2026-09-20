@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 2026-09-20 — C 批：首枚自构建 DMG
+
+- `Pi-Agent-Desktop-0.8.8-mac-universal.dmg`（universal 298MB，含 P1–P21 全部定制）
+- 冒烟（smoke-packaged-standalone）通过；归档旧仓库 backup/installer/
+- 构建环境坑入档：NODE_ENV=development 不可带入 next build；electron-builder 下载需代理
+
 ## 2026-09-20 — B 批组件逻辑移植完成（P1–P21 全量入源码）
 
 - `1e96de3` P15+P3-2+P18：侧边栏按目录分组、40px 紧凑行、运行绿点轮询、explorer 默认收起
