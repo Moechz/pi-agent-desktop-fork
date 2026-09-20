@@ -32,6 +32,22 @@ export const MessageList = React.memo(function MessageList({
   return (
     <>
       {messages.map((msg, idx) => {
+        // P1（列表级）：非运行中，assistant 消息后（跳过 toolResult/custom）还有更晚的
+        // assistant → 本条是轮次中间叙述 → 隐藏（错误消息例外，由 MessageView 红条接管）
+        const piHiddenNarrative =
+          !agentRunning &&
+          msg.role === "assistant" &&
+          !(msg as { errorMessage?: string }).errorMessage &&
+          (() => {
+            for (let j = idx + 1; j < messages.length; j++) {
+              const r = messages[j].role;
+              if (r === "user") return false;
+              if (r === "assistant") return true;
+              // toolResult / custom 等中间角色跳过
+            }
+            return false;
+          })();
+        if (piHiddenNarrative) return null;
         const isFirstUserMessage = idx === 0 && msg.role === "user";
         const canFork = !agentRunning && !isNew && !isFirstUserMessage;
         const canNavigate = !agentRunning;

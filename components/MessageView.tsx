@@ -103,6 +103,37 @@ export const MessageView = React.memo(function MessageView({
     );
   }
   if (message.role === "assistant") {
+    // P1（消息级）：完成态的 assistant 消息一个 text 块都没有 → 不渲染
+    // P13：但带 errorMessage 时改为红色错误条（避免「错误被吞、输入没反应」）
+    if (!isStreaming && !(message.content ?? []).some((b) => b.type === "text")) {
+      if ((message as AssistantMessage).errorMessage) {
+        return (
+          <div
+            className="mx-2"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              margin: "4px 0",
+              borderRadius: 6,
+              fontSize: 13,
+              color: "var(--danger)",
+              background: "var(--danger-bg)",
+              border: "1px solid var(--danger-border)",
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>模型请求失败：{(message as AssistantMessage).errorMessage}</span>
+          </div>
+        );
+      }
+      return null;
+    }
     return (
       <AssistantMessageView
         message={message as AssistantMessage}
@@ -377,6 +408,13 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
   const { t } = useI18n();
   const time = showTimestamp ? formatTime(message.timestamp) : null;
   const blocks = useMemo(() => message.content ?? [], [message.content]);
+
+  // P1（块级）：完成态只保留最后一个 text 块（thinking/toolCall 隐藏）；
+  // 流式消息（尾部独立调用点传 isStreaming）不受影响，全过程实时可见
+  const piDone = !isStreaming;
+  const piLastTextIdx = piDone
+    ? blocks.map((b) => b.type).lastIndexOf("text")
+    : -1;
   const [hovered, setHovered] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -541,18 +579,21 @@ const AssistantMessageView = React.memo(function AssistantMessageView({
       </div>
 
       <div className="flex flex-col gap-2">
-        {blocks.map((block, i) => (
-          <BlockView
-            key={i}
-            block={block}
-            toolResults={toolResults}
-            streamingDuration={
-              streamingDurations.get(i) ??
-              (block.type === "thinking" ? thinkingDurationFromFile : undefined)
-            }
-            toolCallDurations={toolCallDurations}
-          />
-        ))}
+        {blocks.map((block, i) =>
+          // P1（块级）：完成态只留末尾 text 块
+          piDone && (block.type !== "text" || i !== piLastTextIdx) ? null : (
+            <BlockView
+              key={i}
+              block={block}
+              toolResults={toolResults}
+              streamingDuration={
+                streamingDurations.get(i) ??
+                (block.type === "thinking" ? thinkingDurationFromFile : undefined)
+              }
+              toolCallDurations={toolCallDurations}
+            />
+          )
+        )}
       </div>
 
       <div className="flex items-center gap-2 mt-1">
