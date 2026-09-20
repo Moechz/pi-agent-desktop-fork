@@ -18,7 +18,7 @@
 | P6 | 弹窗/面板背景不透明 | globals.css `t-dropdown` 类 | 弹窗背后内容不可透见 |
 | P8 | 字号阶梯 12→13、11→12（原 P8/P8b/P8c） | 全局字号 token / 组件内联 | 与补丁版字号一致 |
 | P15 | 会话行高 40px + 相对时间 + tabular-nums | 会话列表组件样式 | 行高 40，时间右对齐等宽数字 |
-| P19 | `/_next/static/*` 响应头 no-cache（替代 immutable） | `next.config.ts` 的 `headers()` | curl -I 显示 `Cache-Control: no-cache` |
+| P19 | ~~`/_next/static/*` 响应头 no-cache~~ **不移植（D-008）** | 无需改 | fork 每次构建生成新内容哈希文件名，immutable 缓存天然失效，补丁期问题不复存在 |
 | P20 | 字号五档制 11/12/13/14/15（含散档归并 21 处） | 全局 token + 组件内联清理 | 全 UI 无 9/9.5/10/10.5/12.5 散档 |
 
 ## B 批：组件逻辑类（核心，逐条移植 + 验收）

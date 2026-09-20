@@ -44,3 +44,9 @@
 **Decision:** 先 P2/P3/P6/P8/P15/P19/P20（低风险快见效），再逐条移植逻辑类，每条一 commit。
 **Consequences:**
 - 任意时刻失败可 `git revert` 单条；里程碑 tag 提供粗粒度回滚点。
+
+### D-008: P19（服务器 no-cache）不移植——补丁期问题在 fork 架构下自然消失
+**Decision:** 不在 next.config.ts 加 headers() 覆写；保留上游对静态资源的 immutable 缓存策略。
+**Consequences:**
+- 补丁期需要 no-cache 是因为「改内容不改文件名」；fork 每次 `next build` 生成新内容哈希文件名，缓存 busting 天然生效， immutable 反而是最优策略（每次发版零回源开销）。
+- 若将来又出现「改了没生效」，检查的是构建/安装链路而非缓存头。
