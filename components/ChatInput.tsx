@@ -559,7 +559,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               ? "var(--focus-ring)"
               : isStreaming && (onSteer || onFollowUp)
                 ? "var(--warning-border)"
-                : "color-mix(in srgb, var(--border) 70%, transparent)"}`,
+                : "color-mix(in srgb, var(--text) 24%, transparent)"}`,
             borderRadius: 18,
             padding: "7px 7px 7px 15px",
           } as React.CSSProperties}
