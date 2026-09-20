@@ -104,7 +104,8 @@ export function SidebarHeader({
   const recentCwds = getRecentCwds(allSessions);
 
   return (
-    <div className="p-2.5 pb-[10px] border-b border-divider shrink-0">
+    <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 40 }}>
+      {/* macOS 隐藏标题栏时红绿灯悬浮在窗口左上（约 y0-38），头部下移 40px 避让 */}
       <div className="sidebar-title-row flex items-center justify-between gap-2 mb-2.5">
         {/* 红 π logo（无背景，取自应用图标重制）+ 标题 */}
         <div className="flex items-center gap-2 min-w-0">
