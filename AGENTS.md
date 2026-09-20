@@ -1,131 +1,62 @@
-# Pi Agent Desktop - Development Notes
+# Agent Instructions — pi-agent-desktop-fork
 
-## Quick Start
+## 1. 项目是什么
+个人定制的 **Pi Agent Desktop** 源码 fork（上游 [Chasen-Liao/pi-agent-desktop](https://github.com/Chasen-Liao/pi-agent-desktop)，MIT）。
+从 **v0.8.8 tag** 分叉，目标：把此前以「编译产物补丁」方式维护的 21 项 UI 定制（P1–P21，详见 `REQUIREMENTS.md`）
+移植为**源码级修改**，此后自建自装，不再依赖上游封装的桌面 UI。
+目标平台：macOS（Windows 见 D-005，暂不做）。唯一用户：仓库所有者本人。
 
-```bash
-npm run dev          # Web dev server (port 30141)
-npm run dev:electron # Electron desktop (dev mode)
-npm run dist         # Package: NSIS (Win) / DMG+ZIP (macOS) / DEB (Linux)
-npm run dist:mac     # Universal macOS (Intel + Apple Silicon)
+## 2. 新会话阅读顺序
+```
+AGENTS.md → HANDOFF.md → REQUIREMENTS.md → docs/TASK_STATE.md
+        → docs/DESIGN_DECISIONS.md → docs/MIGRATION-patches-to-source.md → docs/CHANGELOG.md
 ```
 
-Typecheck: `npx tsc --noEmit` | Lint: `npm run lint`
-Test: `npm test`（含 `middleware.test.ts`；不要去掉 `--test-force-exit`）
-Subsets: `npm run test:windows` / `npm run test:macos`
-**Never run `next build` during dev** — 污染 `.next/` 并破坏 `npm run dev`。
+## 3. 架构摘要
+- Next.js 16（App Router，standalone 输出）+ React + TypeScript + Tailwind；Electron 壳打包（electron-builder）。
+- **Agent 核心是独立 npm 依赖**：`@earendil-works/{pi-agent-core,pi-ai,pi-client,pi-coding-agent,pi-protocol,pi-telemetry,pi-tui}`，当前锁 0.84.3。升核心≠合并上游 UI。
+- 渲染进程加载内嵌 Next 服务器（dev 端口 30141）。
+- 历史定制原为对编译 chunk 的补丁（旧仓库 `~/Documents/projects/pi-agent-UI-change-memo`，P1–P21 编号沿用）。
 
-Release: 按 [docs/RELEASING.md](docs/RELEASING.md)，推 `vX.Y.Z` tag → CI 打包；不用 `npm run release`。
-Branch: `dev/`（日常）/ `future/`（大功能），默认 merge commit，见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+## 4. 目录布局与禁止触碰路径
+- `app/` 页面与 API 路由；`components/` UI 组件（移植主战场）；`hooks/`、`lib/` 逻辑；`electron/` 主进程；`scripts/` 构建辅助。
+- **禁止触碰**：`node_modules/`、`.next/`（构建产物）、`electron/dist/`、`~/.pi/`（agent 运行时数据）、
+  `~/Library/Application Support/@chasen-liao/pi-agent-desktop/`（正式应用用户数据）、任何凭据文件。
 
----
+## 5. 开发约定
+- TypeScript，注释与文档用中文；不重命名上游导出符号（降低将来 cherry-pick 冲突面）。
+- 每移植一个 P 编号 = 一个 commit，消息格式 `P-XX: 简述（源码落点文件）`。
+- 用户可见行为变更必须同步更新 `docs/CHANGELOG.md` 与 `docs/TASK_STATE.md`（同一提交）。
+- 网络访问需代理：`export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890`。
 
-## CodeGraph MCP
+## 6. 如何跑测试
+```bash
+npm ci                # 首次安装（需代理）
+npx tsc --noEmit      # 类型检查
+npm test              # 仓库自带 node --test 套件
+```
 
-`.codegraph/` 存在时，优先用这些工具代替 grep/find：
+## 7. 如何构建/打包
+```bash
+npm run dev           # 开发模式（Next dev :30141，与已装正式应用共存，移植期一律先在此验证）
+npm run build         # standalone 构建（链尾自动跑 smoke-standalone-server）
+npx electron-builder --mac   # 出 DMG（详见 electron-builder.yml；appId 保持 com.agegr.pi-agent-desktop）
+```
 
-- **`codegraph_explore`** — 自然语言查询，返回源码 + 调用链（**首选**）
-- **`codegraph_node`** — 文件读取（替代 view_file）或单符号深度查询
-- **`codegraph_search`** — 快速符号名 → 位置查找
+## 8. Git 规则
+- 工作分支 `custom/main`（当前）；`main` 跟随上游不直接提交；`upstream` remote 指上游仓库。
+- 里程碑打 tag：`baseline-v0.8.8`、`port-css`、`port-logic`、`switch-v1` …
+- 不 push 到 upstream；自有远端建立后 push `custom/main` 与 tags。
 
-初始化：`codegraph init`（用户决策，勿自动执行）。
+## 9. 硬性技术约束
+- 移植完成前**不得升级** `@earendil-works/*` 依赖版本（D-003）。
+- 不得改动 appId/productName（D-004，切换日数据无缝）。
+- 端口 30141 为 dev 固定端口，勿占用。
+- 每次打包的 DMG 归档到 `~/Documents/projects/pi-agent-UI-change-memo/backup/installer/`（沿用旧习惯，回滚用）。
 
----
+## 10. 已定决策要点索引
+见 `docs/DESIGN_DECISIONS.md`：D-001 分叉点 / D-002 不换栈 / D-003 升级模式 B / D-004 保 appId /
+D-005 暂不做 Windows / D-006 旧补丁体系保留至切换日 / D-007 移植顺序。
 
-## Architecture
-
-> 📖 详细架构文档：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-
-**双模式**
-
-- **Web**：浏览器 ──HTTP/SSE──▶ Next.js(:30141) ──进程内──▶ AgentSession
-- **Desktop**：Electron 主进程托管 Next.js standalone `server.js`（macOS: `utilityProcess`；Win/Linux: `ELECTRON_RUN_AS_NODE=1`）
-
-**关键入口**
-
-| 功能 | 路径 |
-| --- | --- |
-| 发送消息 | `POST /api/agent/[id]` → `startRpcSession()` → `AgentSessionWrapper` |
-| 模型 / 认证 | `createPiRuntime()` → `createAgentSessionServices`（含扩展注册的 provider） |
-| 历史浏览 | `GET /api/sessions/*` → `session-reader.ts`（只读，不建 Session） |
-| 会话克隆 | `POST /api/sessions/[id]/clone` → 普通目录或 Git Worktree |
-| SSE 流 | `GET /api/agent/[id]/events`（30s 心跳） |
-| UI 主入口 | `page.tsx` → `AppShell` → `ChatWindow` → `useAgentSession` |
-| LTM | `lib/ltm` · `/api/memory/*` · tools: `memory_save/recall/forget` |
-| 运行中消息 | Enter=立即 steer，Alt+Enter=Follow-up Queue（可重排） |
-
-**顶层目录**
-
-| 目录 | 内容 |
-| --- | --- |
-| `app/api/` | 38 条 API 路由 |
-| `lib/` | `rpc-manager` / `session-reader` / `session-branch-clone` / `git-worktree` / `ltm` / `i18n` 等服务端库 |
-| `components/` | 27 个顶层组件 + 3 个子目录（`chat-input` / `models-config` / `session-sidebar`） |
-| `hooks/` | 7 个顶层 hook + `agent-session/` 15 个模块 |
-| `electron/` | `main.ts` + `preload.ts` + `tray.ts` + 13 个辅助模块 |
-| `bin/pi-web.js` | CLI 入口 |
-
----
-
-## globalThis 状态（HMR 安全，必须挂全局）
-
-| 变量 | 用途 | 来源文件 |
-| --- | --- | --- |
-| `__piSessions` | `Map<sessionId, AgentSessionWrapper>` 活跃会话表 | `rpc-manager.ts` |
-| `__piSessionPathCacheState` | sessionId → .jsonl 路径缓存状态 | `session-reader.ts` |
-| `__piStartLocks` | 并发启动共享 Promise 锁 | `rpc-manager.ts` |
-| `__piWriteLocks` | per-file 写入锁 | `session-lock.ts` |
-| `__piAllowedRootsCache` | 文件访问白名单（5s TTL） | `allowed-roots.ts` |
-| `__piLtmService` | LTM `MemoryService` 单例 | `ltm/service.ts` |
-| `__piSessionOnlyTrust` | per-session 信任状态 | `rpc-manager.ts` |
-| `__piGitWorktreeLocks` | Worktree 创建/清理并发锁 | `git-worktree.ts` |
-| `__piLoginCallbacks` | OAuth 手动输入回调注册表 | `auth/login/[provider]/route.ts` |
-
----
-
-## Key Traps
-
-> 完整列表见 [ARCHITECTURE.md §14](docs/ARCHITECTURE.md#14-关键设计决策与陷阱)
-
-### 1. Fork 预注册顺序
-
-`send("fork")` → 创建新 `.jsonl` → `startRpcSession(newId)` 预注册 → `destroy()` 旧 wrapper。中途出错旧 wrapper **保持可用**；孤儿 `.jsonl` 删除与路径缓存失效是 **best-effort**（失败不阻断，随后 rethrow）。
-
-### 2. 分支与工作区别混淆
-
-- **Fork**（消息 Fork 按钮）→ 新 `.jsonl` + 侧边栏子节点
-- **会话内分支**（Continue / BranchNavigator）→ 同文件 `navigate_tree`，切换用 `?leafId=`
-- **Git Worktree Clone** → 在源 Git 仓库外创建新 worktree 和分支后再 Clone 会话；目标、分支与 worktree 身份无法证明时 fail closed
-
-### 3. ToolCall 字段归一化
-
-SDK 存 `{id, name, arguments}`，前端用 `{toolCallId, toolName, input}`。`normalizeToolCalls()` 在文件加载和 SSE 流两处都转换。
-
-### 3b. 模型列表不要退回 ModelRuntime.create-only
-
-`createPiRuntime` 必须再走 `createAgentSessionServices`，否则扩展注册的模型从选择器消失。详见 [ARCHITECTURE.md §14.17](docs/ARCHITECTURE.md#1417-模型列表必须走-createagentsessionservices2026-09-08-34)。
-
-### 4–6. 打包陷阱（摘要）
-
-- `node_modules` 须独立 extraResources 条目（`filter:["**/*"]` 静默排除它）
-- Frontend 依赖放 `devDependencies`；`outputFileTracingExcludes` 排除 `release/`/`.git/`/`dist/`/`*.test.*`
-- `build:standalone` 须补齐 Next turbo runtime；macOS Universal 须双架构 Sharp
-
----
-
-## Misc
-
-**Session 文件**：`~/.pi/agent/sessions/<encoded-cwd>/<timestamp>_<uuid>.jsonl`（详见 [ARCHITECTURE.md §9](docs/ARCHITECTURE.md#9-pi-会话文件格式)）。`SessionContext.entryIds[]` 与 `messages[]` 一一对应，用于 fork 和 navigate_tree。
-
-**CSS 变量**：完整变量表见 [`app/globals.css`](app/globals.css)，含 `material-*` / `shadow-*` / `duration-*` / `ease-*` / `toast-*` / `think-*` 等动画 token 体系。
-
-**UI 文案**：走 `lib/i18n`（`en` / `zh-CN`）。改文案须同步 `lib/i18n/dictionaries.ts` 双语，不硬编码。
-
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+## 11. 版本同步清单
+一次用户可见改动需同时更新：`package.json` version → `docs/CHANGELOG.md` → 设置页显示版本（如涉及）→ `docs/TASK_STATE.md`。
