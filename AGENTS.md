@@ -28,6 +28,9 @@ AGENTS.md → HANDOFF.md → REQUIREMENTS.md → docs/TASK_STATE.md
 - 每移植一个 P 编号 = 一个 commit，消息格式 `P-XX: 简述（源码落点文件）`。
 - 用户可见行为变更必须同步更新 `docs/CHANGELOG.md` 与 `docs/TASK_STATE.md`（同一提交）。
 - 网络访问需代理：`export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890`。
+- ⚠ **会话环境陷阱**：助手运行在 Pi Agent Desktop 内，其 shell 继承 `NODE_ENV=production`，
+  会导致 `npm ci` 只装 16 个包（跳过全部 devDependencies）。任何 npm 安装/构建前必须
+  `export NODE_ENV=development`（已踩过：2026-09-20）。
 
 ## 6. 如何跑测试
 ```bash
