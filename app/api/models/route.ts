@@ -15,12 +15,17 @@ export async function GET() {
     const agentDir = getAgentDir();
     const { registry } = await createPiRuntime();
     const available = registry.getAvailable();
-    modelList = available.map((m: { id: string; name: string; provider: string }) => ({
+    // P14：deepseek 目录仅留 V4.1 Flash（deepseek-flash；官方已下线 v4-flash/v4-pro）
+    const filtered = available.filter(
+      (m: { id: string; provider: string }) =>
+        !(m.provider === "deepseek" && m.id !== "deepseek-flash"),
+    );
+    modelList = filtered.map((m: { id: string; name: string; provider: string }) => ({
       id: m.id,
       name: m.name,
       provider: m.provider,
     }));
-    for (const m of available) {
+    for (const m of filtered) {
       const key = `${m.provider}:${m.id}`;
       nameMap.set(key, m.name);
       thinkingLevels[key] = getSupportedThinkingLevels(m);
