@@ -107,23 +107,67 @@ export function SidebarHeader({
     <div className="p-2.5 pb-[10px] border-b border-divider shrink-0">
       <div className="sidebar-title-row flex items-center justify-between mb-2.5">
         <PiAgentTitle />
-        <div className="ml-auto flex gap-1">
+      </div>
+
+      {/* P16 四钮行（右对齐）：新建目录 ▾ 新会话 刷新 */}
+      <div className="flex items-center gap-1 justify-end" style={{ marginTop: 24 }}>
+        <button
+          onClick={() => void handleCustomPath()}
+          disabled={customPathOpen}
+          title="新建目录（选择本地文件夹）"
+          aria-label="新建目录（选择本地文件夹）"
+          className={`sidebar-new-dir-button flex h-7 w-7 shrink-0 items-center justify-center rounded-control border p-0 bg-chrome-button-bg border-border text-text-muted hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring cursor-pointer transition-[background-color,border-color,color,transform] duration-150 ${
+            customPathOpen ? "opacity-60" : ""
+          }`}
+        >
+          {/* lucide folder-plus：闭合文件夹轮廓 + 内部加号（与组头图标同源） */}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
+            <path d="M12 10v6" />
+            <path d="M9 13h6" />
+          </svg>
+        </button>
+        <button
+          onClick={() => setDropdownOpen((v) => !v)}
+          title="历史目录列表"
+          aria-label="历史目录列表"
+          className={`sidebar-dir-dropdown-button flex h-7 w-7 shrink-0 items-center justify-center rounded-control border p-0 transition-[background-color,border-color,color,transform] duration-150 cursor-pointer ${
+            dropdownOpen
+              ? "bg-chrome-button-hover border-border text-accent"
+              : "bg-chrome-button-bg border-border text-text-muted hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
+          }`}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ transform: dropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
           <button
             onClick={handleNewSession}
             disabled={!selectedCwd}
             aria-label={t("sidebar.newSession")}
-            className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[12px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
+            className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[13px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
               selectedCwd
                 ? "bg-chrome-button-bg border-border text-text-muted cursor-pointer hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
                 : "bg-chrome-button-bg border-border text-text-dim cursor-not-allowed"
             }`}
             title={selectedCwd ? t("sidebar.newSessionIn", { path: selectedCwd }) : t("sidebar.selectProjectFirst")}
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <line x1="6" y1="1" x2="6" y2="11" />
-              <line x1="1" y1="6" x2="11" y2="6" />
+            {/* P16 七调：加号改小改细（11px 画框/描边 1.6/十字收进 2.5..9.5） */}
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+              <line x1="6" y1="2.5" x2="6" y2="9.5" />
+              <line x1="2.5" y1="6" x2="9.5" y2="6" />
             </svg>
-            {t("common.new")}
+            新会话
           </button>
           <button
             onClick={() => loadSessions(false)}
@@ -147,30 +191,9 @@ export function SidebarHeader({
             )}
           </button>
         </div>
-      </div>
 
-      {/* CWD picker */}
+      {/* CWD 下拉（P16 后由 ▾ 钮唤起，不再占常驻行） */}
       <div ref={dropdownRef} className="relative">
-        <button
-          onClick={() => setDropdownOpen((v) => !v)}
-          className={`w-full flex items-center px-2.5 py-1.5 rounded-control cursor-pointer text-[13px] text-text text-left transition-[background-color,border-color,color] duration-150 border ${
-            selectedCwd ? "bg-bg-hover border-border" : "bg-warning-bg border-warning-border"
-          }`}
-        >
-          <span
-            className={`flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[12px] ${
-              selectedCwd ? "text-text" : "text-text-dim"
-            }`}
-            title={selectedCwd ?? ""}
-          >
-            {selectedCwd
-              ? shortenCwd(selectedCwd, homeDir)
-              : initialSessionId && !restoredRef.current
-              ? ""
-              : t("sidebar.selectProject")}
-          </span>
-        </button>
-
         {dropdownOpen && (
           <div className="t-dropdown is-open material-popover absolute top-[calc(100%+4px)] left-0 right-0 z-[100] border border-border rounded-panel shadow-popover overflow-hidden" data-origin="top-left">
             {recentCwds.map((cwd) => (
