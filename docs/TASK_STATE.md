@@ -11,14 +11,14 @@
 - [x] 关键前提验证：源码公开(MIT) / 核心依赖在公共 npm(0.84.3 锁定版可装，最新 0.86.0) / electron-builder 双平台目标现成
 - [x] `npm ci` 依赖安装：1319 包 / 1.3G（⚠ 必须 `NODE_ENV=development`，否则只装 16 个）
 - [x] `npx tsc --noEmit` 零错误（基线健康）
-- [ ] 基线运行：`npm run dev` 启动无修改跑通（下一步）
-- [ ] A 批 CSS/配置移植（P2/P3/P6/P8/P15/P19/P20）——P2 锚点已在源码定位：components/ChatInput.tsx:562
+- [x] 基线运行：`npx next dev -p 30199` HTTP 200（30141 被正式应用占用；须先 unset 宿主注入的 __NEXT_PRIVATE_* 环境变量）
+- [~] A 批 CSS/配置移植：已完成 P6（globals.css 四变量）、P2（ChatInput.tsx:562）、P19（决策不移植，D-008）；剩 P3/P8/P15/P20
 - [ ] B 批组件逻辑移植（P1/P5/P13/P7/P10/P11/P12/P14/P16/P17/P18/P21）
 - [ ] C 批打包切换
 
 ## 3. 最近一次验证
 2026-09-20：`NODE_ENV=development npm ci` → added 1319 packages；`npx tsc --noEmit` 零错误。
-尚未跑 `npm run dev` / `npm run build`。
+2026-09-20：dev 服务器跑通（HTTP 200）；P6/P2 已移植并经 dev CSS 输出验证（--material-popover: var(--bg) 等）。⚠ dev 的 Turbopack 文件缓存偶发不热更 CSS：改样式没生效就 rm -rf .next 重启。
 
 ## 4. 测试环境状态
 macOS（Apple Silicon）；Node v24.21.0（仓库无版本声明，暂用系统版，tsc 已通过）；
@@ -30,7 +30,7 @@ macOS（Apple Silicon）；Node v24.21.0（仓库无版本声明，暂用系统�
 |---|---|
 | ~~仓库无 Node 版本声明~~ 已用系统 Node v24，tsc 通过 | 跑 build 时若遇引擎问题再锁版本 |
 | Electron 二进制下载需代理 | 安装/构建前 `export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890`（AGENTS.md §5） |
-| npm 命令装不全依赖（只装 16 个包） | **已解**：环境继承 NODE_ENV=production；须先 `NODE_ENV=development`（AGENTS.md §5 有记录） |
+| npm 装不全（16 包）/ next dev 崩（canonicalize /Users/runner） | **均已解**：宿主注入 NODE_ENV=production 与 __NEXT_PRIVATE_STANDALONE_CONFIG 等；一次性 unset+export 公式见 AGENTS.md §5 |
 | P14 deepseek 目录过滤落点未知（可能在 core 包） | 移植 P14 时先查数据来源；若在 core 侧，改为 UI 层过滤并在 DESIGN_DECISIONS 记录 |
 
 ## 6. 发布闸门
