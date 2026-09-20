@@ -105,12 +105,16 @@ export function SidebarHeader({
 
   return (
     <div className="p-2.5 pb-[10px] border-b border-divider shrink-0">
-      <div className="sidebar-title-row flex items-center justify-between mb-2.5">
-        <PiAgentTitle />
+      <div className="sidebar-title-row flex items-center justify-between gap-2 mb-2.5">
+        {/* 红 π logo（无背景，取自应用图标重制）+ 标题 */}
+        <div className="flex items-center gap-2 min-w-0">
+          <img src="/logo-red.png" alt="Pi" width={20} height={20} style={{ width: 20, height: 20, flexShrink: 0 }} />
+          <PiAgentTitle />
+        </div>
       </div>
 
-      {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右 */}
-      <div className="flex items-center justify-between" style={{ marginTop: 24 }}>
+      {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右（标题下方空两行） */}
+      <div className="flex items-center justify-between" style={{ marginTop: 68 }}>
         <button
           onClick={handleNewSession}
           disabled={!selectedCwd}
