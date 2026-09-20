@@ -109,20 +109,38 @@ export function SidebarHeader({
         <PiAgentTitle />
       </div>
 
-      {/* P16 四钮行（右对齐）：新建目录 ▾ 新会话 刷新 */}
+      {/* P16 四钮行（右对齐）：新会话 新建目录 ▾ 刷新 */}
       <div className="flex items-center gap-1 justify-end" style={{ marginTop: 24 }}>
+        <button
+          onClick={handleNewSession}
+          disabled={!selectedCwd}
+          aria-label={t("sidebar.newSession")}
+          className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[13px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
+            selectedCwd
+              ? "bg-chrome-button-bg border-border text-text-muted cursor-pointer hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
+              : "bg-chrome-button-bg border-border text-text-dim cursor-not-allowed"
+          }`}
+          title={selectedCwd ? t("sidebar.newSessionIn", { path: selectedCwd }) : t("sidebar.selectProjectFirst")}
+        >
+          {/* P16 七调：加号改小改细（11px 画框/描边 1.6/十字收进 2.5..9.5） */}
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <line x1="6" y1="2.5" x2="6" y2="9.5" />
+            <line x1="2.5" y1="6" x2="9.5" y2="6" />
+          </svg>
+          新会话
+        </button>
         <button
           onClick={() => void handleCustomPath()}
           disabled={customPathOpen}
-          title="新建目录（选择本地文件夹）"
-          aria-label="新建目录（选择本地文件夹）"
+          title="新建目录（选择本地文件夹作为工作目录）"
+          aria-label="新建目录（选择本地文件夹作为工作目录）"
           className={`sidebar-new-dir-button flex h-7 w-7 shrink-0 items-center justify-center rounded-control border p-0 bg-chrome-button-bg border-border text-text-muted hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring cursor-pointer transition-[background-color,border-color,color,transform] duration-150 ${
             customPathOpen ? "opacity-60" : ""
           }`}
         >
           {/* lucide folder-plus：闭合文件夹轮廓 + 内部加号（与组头图标同源） */}
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
             <path d="M12 10v6" />
             <path d="M9 13h6" />
           </svg>
@@ -138,58 +156,40 @@ export function SidebarHeader({
           }`}
         >
           <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
+            width="12"
+            height="12"
+            viewBox="0 0 10 10"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.2"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ transform: dropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
+            style={{ transform: dropdownOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}
           >
-            <path d="M6 9l6 6 6-6" />
+            <polyline points="2 3.5 5 6.5 8 3.5" />
           </svg>
         </button>
-          <button
-            onClick={handleNewSession}
-            disabled={!selectedCwd}
-            aria-label={t("sidebar.newSession")}
-            className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[13px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
-              selectedCwd
-                ? "bg-chrome-button-bg border-border text-text-muted cursor-pointer hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
-                : "bg-chrome-button-bg border-border text-text-dim cursor-not-allowed"
-            }`}
-            title={selectedCwd ? t("sidebar.newSessionIn", { path: selectedCwd }) : t("sidebar.selectProjectFirst")}
-          >
-            {/* P16 七调：加号改小改细（11px 画框/描边 1.6/十字收进 2.5..9.5） */}
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-              <line x1="6" y1="2.5" x2="6" y2="9.5" />
-              <line x1="2.5" y1="6" x2="9.5" y2="6" />
+        <button
+          onClick={() => loadSessions(false)}
+          aria-label={t("sidebar.refreshSessions")}
+          className={`sidebar-refresh-button flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 transition-[background-color,border-color,color,transform] duration-250 ${
+            sessionRefreshDone
+              ? "bg-success-bg border-success-border text-success"
+              : "bg-chrome-button-bg border-border text-text-muted hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
+          }`}
+          title={t("common.refresh")}
+        >
+          {sessionRefreshDone ? (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
-            新会话
-          </button>
-          <button
-            onClick={() => loadSessions(false)}
-            aria-label={t("sidebar.refreshSessions")}
-            className={`sidebar-refresh-button flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 transition-[background-color,border-color,color,transform] duration-250 ${
-              sessionRefreshDone
-                ? "bg-success-bg border-success-border text-success"
-                : "bg-chrome-button-bg border-border text-text-muted hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
-            }`}
-            title={t("common.refresh")}
-          >
-            {sessionRefreshDone ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <path d="M3 3v5h5" />
-              </svg>
-            )}
-          </button>
+          ) : (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+          )}
+        </button>
         </div>
 
       {/* CWD 下拉（P16 后由 ▾ 钮唤起，不再占常驻行） */}

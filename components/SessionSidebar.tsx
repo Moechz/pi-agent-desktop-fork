@@ -238,14 +238,18 @@ export function SessionSidebar({
                     e.stopPropagation();
                     setCollapsedGroups((m) => ({ ...m, [g.cwd]: !m[g.cwd] }));
                   }}
-                  className="flex shrink-0 cursor-pointer items-center justify-center bg-transparent p-0.5 text-text-dim hover:text-text-muted"
+                  className="flex shrink-0 cursor-pointer items-center justify-center bg-transparent p-0.5"
+                  style={{
+                    color: collapsed ? "var(--accent)" : "var(--text-muted)",
+                    marginRight: 2,
+                  }}
                 >
                   {collapsed ? (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
                     </svg>
                   ) : (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M6 14l1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
                     </svg>
                   )}

@@ -317,8 +317,8 @@ function SessionItem({
             </div>
             {/* P15：标题右紧凑相对时间（tabular-nums 防跳动；悬停看完整时间） */}
             <span
-              className="shrink-0 text-[11px] text-text-dim"
-              style={{ fontVariantNumeric: "tabular-nums" }}
+              className="shrink-0 text-text-dim"
+              style={{ fontVariantNumeric: "tabular-nums", fontSize: 10.5 }}
               title={new Date(session.modified).toLocaleString()}
             >
               {compactTime(session.modified)}

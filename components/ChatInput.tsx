@@ -389,8 +389,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
         try {
           stored = JSON.parse(localStorage.getItem("__piDirs") ?? "[]");
         } catch {}
-        const merged = [...sessionDirs];
-        for (const c of stored) if (!merged.includes(c)) merged.push(c);
+        const merged = [...stored];
+        for (const c of sessionDirs) if (!merged.includes(c)) merged.push(c);
         if (alive) setPiDirs(merged.slice(0, 50));
       } catch {
         /* 拉取失败留空列表 */
@@ -407,8 +407,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
       setPiOpen(false);
       try {
         const cur: string[] = JSON.parse(localStorage.getItem("__piDirs") ?? "[]");
-        const next = [cwd, ...cur.filter((c) => c !== cwd)].slice(0, 50);
-        localStorage.setItem("__piDirs", JSON.stringify(next));
+        if (cwd && !cur.includes(cwd)) {
+          cur.push(cwd);
+          localStorage.setItem("__piDirs", JSON.stringify(cur.slice(-50)));
+        }
       } catch {}
     },
     [onNewSessionCwdChange],
@@ -462,108 +464,96 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
         }}
       />
       <div style={{ maxWidth: 820, margin: "0 auto" }}>
-        {/* P17：新会话态目录行（文件夹图标 + 目录名 + ▾，弹窗向上展开） */}
+        {/* P17：新会话态目录行——folder 13px + 目录名 + 独立 ▾ 小钮（点 ▾ 弹窗向上展开） */}
         {isNew && (
-          <div ref={piRef} style={{ position: "relative", marginBottom: 8, maxWidth: "fit-content" }}>
-            <button
-              onClick={() => setPiOpen((v) => !v)}
-              title="切换目录"
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-dim)", flexShrink: 0 }}>
+              <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+            </svg>
+            <span
               style={{
-                display: "flex", alignItems: "center", gap: 6, background: "transparent",
-                border: "none", padding: "4px 6px", margin: 0, cursor: "pointer",
-                borderRadius: 6, fontSize: 13, color: "var(--text-muted)",
+                fontSize: 13, fontFamily: "var(--font-mono)", color: "var(--text-dim)",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}
+              title={currentCwd ?? ""}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
-              </svg>
-              <span
+              {currentCwd ? currentCwd.split("/").filter(Boolean).slice(-1)[0] : "未选择目录"}
+            </span>
+            <div ref={piRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => setPiOpen((v) => !v)}
+                title="切换目录"
                 style={{
-                  fontFamily: "var(--font-mono)", fontSize: 12, maxWidth: 280,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}
-                title={currentCwd ?? ""}
-              >
-                {currentCwd ? currentCwd.split("/").filter(Boolean).pop() : "未选择目录"}
-              </span>
-              <svg
-                width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transform: piOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s", flexShrink: 0 }}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-            {piOpen && (
-              <div
-                style={{
-                  position: "absolute", bottom: "calc(100% + 6px)", left: 0,
-                  background: "var(--bg)", border: "1px solid var(--border)",
-                  borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,.12)",
-                  minWidth: 280, maxWidth: 360, maxHeight: 320, overflowY: "auto", zIndex: 200,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  gap: 2, padding: "1px 4px", background: "none", border: "none",
+                  borderRadius: 4, color: "var(--text-muted)", cursor: "pointer",
                 }}
               >
-                <div style={{ padding: "8px 12px", fontSize: 13, fontWeight: 600, color: "var(--text-strong)" }}>
-                  已添加目录
-                </div>
-                {piDirs.length === 0 && (
-                  <div style={{ padding: "4px 12px 10px", fontSize: 13, color: "var(--text-dim)" }}>暂无记录</div>
-                )}
-                {piDirs.map((cwd) => {
-                  const active = cwd === currentCwd;
-                  return (
-                    <button
-                      key={cwd}
-                      onClick={() => piSelect(cwd)}
-                      title={cwd}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 8, width: "100%",
-                        padding: "7px 12px", background: "transparent", border: "none",
-                        cursor: "pointer", textAlign: "left", fontSize: 13,
-                        color: active ? "var(--accent)" : "var(--text)",
-                      }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                        <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 0-1.69.9L9.6 8.9a2 2 0 0 1-1.69.9H4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 2 2Z" />
-                      </svg>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {cwd.split("/").filter(Boolean).slice(-2).join("/")}
-                      </span>
-                      {active && (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <polyline points="20 6 9 17 4 12" />
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="2 3.5 5 6.5 8 3.5" />
+                </svg>
+              </button>
+              {piOpen && (
+                <div
+                  className="t-dropdown is-open"
+                  style={{
+                    position: "absolute", left: 0, bottom: "calc(100% + 6px)", zIndex: 200,
+                    minWidth: 240, maxHeight: 340, overflowY: "auto",
+                    background: "var(--bg)", border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-panel)", boxShadow: "var(--shadow-popover)", padding: 4,
+                  }}
+                >
+                  <div style={{ padding: "5px 8px 6px", fontSize: 13, fontWeight: 600, color: "var(--text-strong)" }}>
+                    已添加目录
+                  </div>
+                  {piDirs.length === 0 && (
+                    <div style={{ padding: "6px 8px", fontSize: 13, color: "var(--text-dim)" }}>暂无记录</div>
+                  )}
+                  {piDirs.map((cwd) => {
+                    const active = cwd === currentCwd;
+                    return (
+                      <button
+                        key={cwd}
+                        onClick={() => piSelect(cwd)}
+                        title={cwd}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent"
+                        style={{ borderRadius: 6, fontSize: 13, color: active ? "var(--accent)" : "var(--text)" }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
                         </svg>
-                      )}
-                    </button>
-                  );
-                })}
-                <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
-                <button
-                  onClick={() => void piUseDefault()}
-                  disabled={piBusy}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8, width: "100%",
-                    padding: "7px 12px", background: "transparent", border: "none",
-                    cursor: piBusy ? "default" : "pointer", textAlign: "left", fontSize: 13,
-                    color: "var(--text-muted)", opacity: piBusy ? 0.6 : 1,
-                  }}
-                >
-                  使用默认目录
-                </button>
-                <button
-                  onClick={() => void piPickOther()}
-                  disabled={piBusy}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8, width: "100%",
-                    padding: "7px 12px 10px", background: "transparent", border: "none",
-                    cursor: piBusy ? "default" : "pointer", textAlign: "left", fontSize: 13,
-                    color: "var(--text-muted)", opacity: piBusy ? 0.6 : 1,
-                  }}
-                >
-                  选择其他目录…
-                </button>
-              </div>
-            )}
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {cwd.split("/").filter(Boolean).slice(-2).join("/")}
+                        </span>
+                        {active && (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
+                  <button
+                    onClick={() => void piUseDefault()}
+                    disabled={piBusy}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent text-text"
+                    style={{ borderRadius: 6, fontSize: 13, opacity: piBusy ? 0.6 : 1 }}
+                  >
+                    使用默认目录
+                  </button>
+                  <button
+                    onClick={() => void piPickOther()}
+                    disabled={piBusy}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent text-text"
+                    style={{ borderRadius: 6, fontSize: 13, opacity: piBusy ? 0.6 : 1 }}
+                  >
+                    选择其他目录…
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
