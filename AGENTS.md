@@ -28,9 +28,17 @@ AGENTS.md → HANDOFF.md → REQUIREMENTS.md → docs/TASK_STATE.md
 - 每移植一个 P 编号 = 一个 commit，消息格式 `P-XX: 简述（源码落点文件）`。
 - 用户可见行为变更必须同步更新 `docs/CHANGELOG.md` 与 `docs/TASK_STATE.md`（同一提交）。
 - 网络访问需代理：`export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890`。
-- ⚠ **会话环境陷阱**：助手运行在 Pi Agent Desktop 内，其 shell 继承 `NODE_ENV=production`，
-  会导致 `npm ci` 只装 16 个包（跳过全部 devDependencies）。任何 npm 安装/构建前必须
-  `export NODE_ENV=development`（已踩过：2026-09-20）。
+- ⚠ **会话环境陷阱（在 Pi Agent Desktop 内跑命令时必读）**：
+  1. `NODE_ENV=production` 会被继承 → `npm ci` 静默只装 16 个包。任何 npm 命令前先 `export NODE_ENV=development`。
+  2. `__NEXT_PRIVATE_STANDALONE_CONFIG` / `__NEXT_PRIVATE_ORIGIN` / `TURBOPACK` 会被继承 →
+     `next dev/build` 优先读宿主应用的编译期配置（含 CI 机器绝对路径 `/Users/runner/...`），
+     启动即扇 `failed to canonicalize path` 。任何 next 命令前先
+     `unset __NEXT_PRIVATE_STANDALONE_CONFIG __NEXT_PRIVATE_ORIGIN TURBOPACK NEXT_DEPLOYMENT_ID`。
+  （两者均 2026-09-20 实踩；dev/npm 一句话版：先 `unset __NEXT_PRIVATE_STANDALONE_CONFIG __NEXT_PRIVATE_ORIGIN TURBOPACK NEXT_DEPLOYMENT_ID && export NODE_ENV=development`）
+  3. **`next build` 例外：必须不带 NODE_ENV=development**（2026-09-20 实踩：
+     prerender `/_global-error` 扇 `useContext null` 直接挂）。打包链用
+     `env -u NODE_ENV -u __NEXT_PRIVATE_* … npm run dist:mac`；且 electron-builder
+     下载 universal 二进制需代理（否则 `read ETIMEDOUT`），加 `https_proxy=http://127.0.0.1:7890`。
 
 ## 6. 如何跑测试
 ```bash
