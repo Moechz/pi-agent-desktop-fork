@@ -106,19 +106,39 @@ export function SidebarHeader({
     <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 38 }}>
       {/* macOS 隐藏标题栏遮盖条高 36px，头部下移避让。
           标题整行烘焙为图片（π + Pi Agent Desktop，明暗两版）——文字渲染在 Electron 下反复不可见，img 已被证明稳定 */}
-      <div className="sidebar-title-row flex items-center">
+      <div
+        className="sidebar-title-row flex items-center gap-2"
+        style={{ position: "relative", zIndex: 30, minWidth: 0 }}
+      >
+        {/* π logo：flexShrink 0 防止侧栏拉伸时被压扁 */}
         <img
-          className="pi-title-light"
-          src="/pi-title-light.png"
-          alt="Pi Agent Desktop"
-          style={{ height: 60, width: "auto" }}
+          src="/logo-red.png"
+          alt="Pi"
+          width={60}
+          height={60}
+          style={{ width: 60, height: 60, flexShrink: 0 }}
         />
-        <img
-          className="pi-title-dark"
-          src="/pi-title-dark.png"
-          alt="Pi Agent Desktop"
-          style={{ height: 60, width: "auto" }}
-        />
+        {/* 标题：置顶层级 + 高对比色，不依赖任何 class 样式 */}
+        <span
+          className="pi-agent-title"
+          title="Pi Agent Desktop"
+          style={{
+            position: "relative",
+            zIndex: 30,
+            fontSize: 30,
+            fontWeight: 700,
+            lineHeight: 1,
+            fontFamily: "inherit",
+            letterSpacing: "0.01em",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            minWidth: 0,
+            userSelect: "none",
+          }}
+        >
+          Pi Agent Desktop
+        </span>
       </div>
 
       {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右（标题下方约一行间距；60px logo 已占高，mb 归零补偿） */}

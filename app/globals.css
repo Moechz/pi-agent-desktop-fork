@@ -1122,6 +1122,13 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 /* ==================== P8b：表单控件字号（按钮 13px；输入类继承 body 14px） ==================== */
 button{font-size:13px}
 
-/* P22 标题烘焙图：明暗主题二选一显示 */
-html.dark img.pi-title-light { display: none; }
-html:not(.dark) img.pi-title-dark { display: none; }
+/* P22 侧栏标题：硬编码高对比色（明/暗双主题），并确保置顶不被浮层遮挡 */
+.pi-agent-title {
+  color: #0f1115;
+  position: relative;
+  z-index: 30;
+}
+html.dark .pi-agent-title,
+.dark .pi-agent-title {
+  color: #f9fafb;
+}
