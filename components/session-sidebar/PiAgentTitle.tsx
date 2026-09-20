@@ -75,14 +75,27 @@ export function PiAgentTitle() {
   useEffect(() => () => { if (revertTimerRef.current) clearTimeout(revertTimerRef.current); }, []);
 
   return (
-    <button
+    <span
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
-      className={`pi-agent-title bg-transparent border-none p-0 cursor-default font-bold tracking-normal font-mono min-w-[6ch] transition-colors duration-150 ${
-        showVersion ? "text-accent" : "text-text-strong"
-      }`}
-      style={{ fontSize: 17, fontWeight: 700, lineHeight: 1 }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleClick(); }}
+      title="点击查看版本号"
+      className="pi-agent-title"
+      style={{
+        fontSize: 17,
+        fontWeight: 700,
+        lineHeight: 1,
+        fontFamily: "inherit",
+        letterSpacing: "0.01em",
+        color: showVersion ? "var(--accent)" : "var(--text-strong)",
+        cursor: "pointer",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        whiteSpace: "nowrap",
+      }}
     >
       {display}
-    </button>
+    </span>
   );
 }
