@@ -202,7 +202,7 @@ function TreeNode({
           ))}
           {children.length === 0 && loaded && (
             <div style={{ paddingLeft: 8 + (depth + 1) * 14, fontSize: 12, color: "var(--text-dim)", height: 22, display: "flex", alignItems: "center" }}>
-              empty
+              空
             </div>
           )}
         </div>
@@ -244,7 +244,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
   if (loading) {
     return (
       <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-dim)" }}>
-        Loading files...
+        加载文件中…
       </div>
     );
   }
@@ -274,7 +274,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
       ))}
       {roots.length === 0 && (
         <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-dim)" }}>
-          No files found
+          未找到文件
         </div>
       )}
     </div>

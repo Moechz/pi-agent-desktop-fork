@@ -39,7 +39,7 @@ export function ProviderDetail({
       </div>
 
       <Field label={t("provider.providerName")}>
-        <TextInput value={editingName} onChange={setEditingName} placeholder="provider-name" mono />
+        <TextInput value={editingName} onChange={setEditingName} placeholder="例如 my-provider" mono />
         {editingName !== name && editingName.trim() && (
           <button onClick={() => onRename(editingName.trim())}
             style={{ marginTop: 4, padding: "3px 10px", background: "var(--accent)", border: "none", borderRadius: 4, color: "var(--accent-contrast)", cursor: "pointer", fontSize: 12, alignSelf: "flex-start" }}>
@@ -55,7 +55,7 @@ export function ProviderDetail({
 
       <Field label={t("provider.apiKey")}>
         <SecretTextInput value={provider.apiKey ?? ""} onChange={(v) => set("apiKey", v || undefined)}
-          placeholder="ENV_VAR_NAME, !shell-command, or literal key" mono />
+          placeholder="环境变量名、!shell 命令或密钥字面量" mono />
         <span style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>
           {t("provider.apiKeyHint")}
         </span>

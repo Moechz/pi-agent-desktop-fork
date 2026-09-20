@@ -16,10 +16,10 @@ interface AddProviderPickerProps {
 }
 
 const CUSTOM_TEMPLATES: { id: string; label: string; api: string; desc: string }[] = [
-  { id: "openai", label: "OpenAI Compatible", api: "openai-completions", desc: "/v1/chat/completions" },
-  { id: "anthropic", label: "Anthropic Compatible", api: "anthropic-messages", desc: "api.anthropic.com" },
+  { id: "openai", label: "OpenAI 兼容", api: "openai-completions", desc: "/v1/chat/completions" },
+  { id: "anthropic", label: "Anthropic 兼容", api: "anthropic-messages", desc: "api.anthropic.com" },
   { id: "openai-responses", label: "OpenAI Responses", api: "openai-responses", desc: "responses API" },
-  { id: "google", label: "Google Generative AI", api: "google-generative-ai", desc: "generativelanguage.googleapis.com" },
+  { id: "google", label: "Google 生成式 AI", api: "google-generative-ai", desc: "generativelanguage.googleapis.com" },
 ];
 
 export function AddProviderPicker({

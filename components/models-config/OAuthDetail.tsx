@@ -176,14 +176,14 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
               {loginState.phase === "auth"
-                ? "Complete sign-in in the browser, then copy the redirect URL from the address bar and paste it below."
+                ? "在浏览器中完成登录，然后从地址栏复制重定向 URL 粘贴到下方。"
                 : loginState.message}
             </p>
             {loginState.phase === "auth" && (
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)", lineHeight: 1.5 }}>
-                If the browser window did not open,{" "}
+                如果浏览器窗口没有打开，{" "}
                 <a href={loginState.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", wordBreak: "break-all" }}>
-                  click here to open the login page
+                  点击此处打开登录页面
                 </a>
                 .
               </p>
@@ -210,7 +210,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
         {loginState.phase === "device_code" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-              Open the verification page and enter this code:
+              打开验证页面并输入此验证码：
             </p>
             <div style={{ padding: "8px 10px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text)", fontSize: 16, fontWeight: 700, fontFamily: "var(--font-mono)", letterSpacing: 0 }}>
               {loginState.userCode}

@@ -301,7 +301,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                   value={formId}
                   onChange={(e) => setFormId(e.target.value)}
                   disabled={!isNew}
-                  placeholder="e.g. github"
+                  placeholder="例如 github"
                   className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent disabled:opacity-50"
                   required
                 />
@@ -314,7 +314,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. GitHub MCP"
+                  placeholder="例如 GitHub MCP"
                   className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text text-[13px] focus:outline-none focus:border-accent"
                 />
               </div>
@@ -359,7 +359,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     type="text"
                     value={formCommand}
                     onChange={(e) => setFormCommand(e.target.value)}
-                    placeholder="e.g. npx or node"
+                    placeholder="例如 npx 或 node"
                     className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                   />
                 </div>

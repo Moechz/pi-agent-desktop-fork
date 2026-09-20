@@ -226,7 +226,7 @@ export function ChatWindow({ session, newSessionCwd, onNewSessionCwdChange, onAg
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-text-muted">
-        Loading session...
+        加载会话中…
       </div>
     );
   }
