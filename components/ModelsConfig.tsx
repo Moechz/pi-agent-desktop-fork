@@ -142,7 +142,16 @@ export function ModelsConfig({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/models-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
+        // P11：保存前过滤空 id 模型行，防 TypeBox 校验失败丢掉整个 models.json
+        body: JSON.stringify({
+          ...config,
+          providers: Object.fromEntries(
+            Object.entries(config.providers ?? {}).map(([name, p]) => [
+              name,
+              { ...p, models: (p.models ?? []).filter((m) => m.id?.trim()) },
+            ]),
+          ),
+        }),
       });
       const d = await res.json() as { success?: boolean; error?: string };
       if (!res.ok || d.error) setSaveError(d.error ?? `HTTP ${res.status}`);

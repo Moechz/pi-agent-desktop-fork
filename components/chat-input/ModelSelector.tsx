@@ -70,7 +70,7 @@ export function ModelSelector({
         aria-label={t("model.change", { model: currentName })}
         style={{
           display: "flex", alignItems: "center", justifyContent: "center",
-          width: 32, padding: 0,
+          gap: 6, width: "auto", padding: "0 8px",
           height: "var(--control-height)",
           background: modelDropdownOpen ? "var(--bg-hover)" : "none",
           border: "none",
@@ -82,7 +82,7 @@ export function ModelSelector({
         }}
         className={isStreaming ? "" : "hover:bg-[var(--bg-hover)] hover:text-[var(--text)] active:scale-95 transition-[background-color,color,transform] duration-150"}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <rect x="4" y="4" width="16" height="16" rx="2" />
           <rect x="9" y="9" width="6" height="6" />
           <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
@@ -90,6 +90,10 @@ export function ModelSelector({
           <line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" />
           <line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" />
         </svg>
+        {/* P12：按钮显示当前模型名（溢出省略） */}
+        <span style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {currentName}
+        </span>
       </button>
       {modelDropdownOpen && modelDropdownRect && (() => {
         const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
