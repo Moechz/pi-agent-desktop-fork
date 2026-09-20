@@ -110,9 +110,9 @@ export function SidebarHeader({
         className="sidebar-title-row flex items-center gap-2"
         style={{ position: "relative", zIndex: 30, minWidth: 0 }}
       >
-        {/* π logo：flexShrink 0 防止侧栏拉伸时被压扁 */}
+        {/* π logo（用户提供 piiconsmall.png 提取：背景透明、保留原色）：flexShrink 0 防拉伸变形 */}
         <img
-          src="/logo-red.png"
+          src="/pi-logo.png"
           alt="Pi"
           width={60}
           height={60}
