@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { resolveCustomPathSelection } from "@/lib/custom-path-selection";
 import type { SessionInfo } from "@/lib/types";
-import { PiAgentTitle } from "./PiAgentTitle";
 import { getRecentCwds, shortenCwd, pickDirectoryFromHost } from "./helpers";
 import { useI18n } from "../I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
@@ -104,18 +103,26 @@ export function SidebarHeader({
   const recentCwds = getRecentCwds(allSessions);
 
   return (
-    <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 40 }}>
-      {/* macOS 隐藏标题栏时红绿灯悬浮在窗口左上（约 y0-38），头部下移 40px 避让 */}
-      <div className="sidebar-title-row flex items-center justify-between gap-2">
-        {/* 红 π logo（无背景，取自应用图标重制）+ 标题 */}
-        <div className="flex items-center gap-2 min-w-0">
-          <img src="/logo-red.png" alt="Pi" width={60} height={60} style={{ width: 60, height: 60, flexShrink: 0 }} />
-          <PiAgentTitle />
-        </div>
+    <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 38 }}>
+      {/* macOS 隐藏标题栏遮盖条高 36px，头部下移避让。
+          标题整行烘焙为图片（π + Pi Agent Desktop，明暗两版）——文字渲染在 Electron 下反复不可见，img 已被证明稳定 */}
+      <div className="sidebar-title-row flex items-center">
+        <img
+          className="pi-title-light"
+          src="/pi-title-light.png"
+          alt="Pi Agent Desktop"
+          style={{ height: 60, width: "auto" }}
+        />
+        <img
+          className="pi-title-dark"
+          src="/pi-title-dark.png"
+          alt="Pi Agent Desktop"
+          style={{ height: 60, width: "auto" }}
+        />
       </div>
 
       {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右（标题下方约一行间距；60px logo 已占高，mb 归零补偿） */}
-      <div className="flex items-center justify-between" style={{ marginTop: 28 }}>
+      <div className="flex items-center justify-between" style={{ marginTop: 0 }}>
         <button
           onClick={handleNewSession}
           disabled={!selectedCwd}

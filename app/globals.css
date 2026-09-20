@@ -1121,3 +1121,7 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 .markdown-body h4{font-size:14px;font-weight:600}
 /* ==================== P8b：表单控件字号（按钮 13px；输入类继承 body 14px） ==================== */
 button{font-size:13px}
+
+/* P22 标题烘焙图：明暗主题二选一显示 */
+html.dark img.pi-title-light { display: none; }
+html:not(.dark) img.pi-title-dark { display: none; }
