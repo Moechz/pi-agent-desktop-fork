@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-21 — 发布 0.8.8-2（首个源码 fork 版、公开仓库）
+
+| 类别 | 内容 |
+|---|---|
+| 发版 | `v0.8.8-2` tag 触发 CI 三平台打包（win NSIS / mac universal / linux deb），发布说明 `docs/releases/v0.8.8-2.md` |
+| 图标 | macOS 规范几何：824/1024 居中 + 四角透明（修「比其它 App 大一圈」）；win/linux 保持满幅 |
+| 更新源 | `electron-builder.yml` publish 改指本仓库（owner/repo/author/copyright/maintainer 元数据同步为维护者）；**杜绝拉上游版覆盖定制** |
+| 公开 | 仓库转 public（CI 免费额度 + 同事免协作即可下载） |
+| 署名 | 我方文件去第三方人名（README/AGENTS/electron-builder）；LICENSE 与包名等法律/结构标识保留 |
+
+
 
 ## 2026-09-21 — 用户验收轮：侧栏头部定稿
 

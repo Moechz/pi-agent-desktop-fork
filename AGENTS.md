@@ -7,7 +7,7 @@
 - **每次功能性提交必须同步 +1**：0.8.8-1（= official-v1）→ 0.8.8-2 → …
 - 纯文档/注释提交不占号；DMG 文件名自动带版本，便于归档比对
 ## 1. 项目是什么
-个人定制的 **Pi Agent Desktop** 源码 fork（上游 [Chasen-Liao/pi-agent-desktop](https://github.com/Chasen-Liao/pi-agent-desktop)，MIT）。
+个人定制的 **Pi Agent Desktop** 源码 fork（基于上游官方项目，MIT）。
 从 **v0.8.8 tag** 分叉，目标：把此前以「编译产物补丁」方式维护的 21 项 UI 定制（P1–P21，详见 `REQUIREMENTS.md`）
 移植为**源码级修改**，此后自建自装，不再依赖上游封装的桌面 UI。
 目标平台：macOS（Windows 见 D-005，暂不做）。唯一用户：仓库所有者本人。

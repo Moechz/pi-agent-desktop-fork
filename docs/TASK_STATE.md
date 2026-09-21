@@ -9,6 +9,12 @@
 - 验收期共 41 项改动全部落地：P1–P21 移植 + 深度审计 7 修 + 逐条验收微调
 - 补丁系统同日退役：launchd `com.user.pi-ui-patch` 卸载，`~/.pi-ui-patches` 归档至旧仓 `backup/patches-retired/`
 - 后续唯一定制入口 = 本仓库；更新流程 = 改码 → commit → 干净重建 → Cmd+Q 换装
+## 🚀 发布（2026-09-21）：v0.8.8-2
+
+- 版本号 `package.json` = `0.8.8-2`；推 tag `v0.8.8-2` → `.github/workflows/desktop-packages.yml` 打包三平台
+- 发布说明 `docs/releases/v0.8.8-2.md`；仓库已转 public
+- 更新源指向本仓库；后续发版 = 改码 → commit → 推 tag（CI 全自动打包）
+
 
 ## 1. 仓库状态
 - 全量克隆自 upstream，`custom/main` 自 v0.8.8 分叉；remotes：origin=upstream（自有远端待建）。

@@ -3,8 +3,8 @@
   "version": "0.8.8-2",
   "description": "Pi Agent Desktop — desktop client for the pi coding agent",
   "license": "MIT",
-  "author": "Chasen",
-  "homepage": "https://github.com/Chasen-Liao/pi-agent-desktop",
+  "author": "Moechz",
+  "homepage": "https://github.com/Moechz/pi-agent-desktop-fork",
   "desktopName": "pi-agent-desktop",
   "main": "electron/dist/main.js",
   "bin": {

@@ -1,6 +1,6 @@
 appId: com.agegr.pi-agent-desktop
 productName: Pi Agent Desktop
-copyright: Copyright © 2026 Chasen
+copyright: Copyright © 2026 Moechz
 
 directories:
   output: release
@@ -94,7 +94,7 @@ nsis:
 linux:
   executableName: pi-agent-desktop
   syncDesktopName: true
-  maintainer: "Chasen <Chasen-Liao@users.noreply.github.com>"
+  maintainer: "Moechz <moechz@163.com>"
   target:
     - target: deb
       arch:
@@ -128,5 +128,5 @@ dmg:
 
 publish:
   provider: github
-  owner: Chasen-Liao
-  repo: pi-agent-desktop
+  owner: Moechz
+  repo: pi-agent-desktop-fork

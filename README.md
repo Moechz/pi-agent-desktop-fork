@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/Chasen-Liao/pi-agent-desktop">
+  <a href="https://github.com/Moechz/pi-agent-desktop-fork">
     <img src="public/logo.png" alt="Pi Agent Desktop application icon" width="128" height="128" />
   </a>
 
@@ -9,9 +9,8 @@
 
   [Pi 编程智能体](https://github.com/badlogic/pi-mono) 的原生桌面客户端。基于 Electron 构建，提供比浏览器更原生的使用体验。
 
-  [![Release](https://img.shields.io/github/v/release/Chasen-Liao/pi-agent-desktop?color=orange&logo=github)](https://github.com/Chasen-Liao/pi-agent-desktop/releases)
-  [![License](https://img.shields.io/github/license/Chasen-Liao/pi-agent-desktop?color=blue)](LICENSE)
-  [![Landing](https://img.shields.io/badge/Landing-GitHub%20Pages-111111?logo=githubpages)](https://chasen-liao.github.io/pi-agent-desktop/)
+  [![Release](https://img.shields.io/github/v/release/Moechz/pi-agent-desktop-fork?color=orange&logo=github)](https://github.com/Moechz/pi-agent-desktop-fork/releases)
+  [![License](https://img.shields.io/github/license/Moechz/pi-agent-desktop-fork?color=blue)](LICENSE)
 
   ---
 
@@ -49,7 +48,7 @@
 
 ## 下载安装
 
-前往 [Releases](https://github.com/Chasen-Liao/pi-agent-desktop/releases) 页面下载最新版安装程序。
+前往 [Releases](https://github.com/Moechz/pi-agent-desktop-fork/releases) 页面下载最新版安装程序。
 
 按系统下载对应安装包（以当前 Release 资产为准）：
 
@@ -142,16 +141,14 @@ scripts/
 
 报 Issue、提 PR、合并方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。新功能用 `dev/` 或 `future/` 分支。发版见 [docs/RELEASING.md](docs/RELEASING.md)。
 
+## 本仓库说明
+
+本仓库是**个人定制版**发布仓库（维护/发布：Moechz），在上游官方项目基础上做了大量 UI/交互定制，并关闭了指向上游的更新源。
+
+- 自动更新检查指向**本仓库** Releases，不会拉取上游官方版覆盖定制
+- 安装包未代码签名：macOS 首次打开若提示“已损坏”，执行 `xattr -cr "/Applications/Pi Agent Desktop.app"`；Windows 遇 SmartScreen 选“更多信息 → 仍要运行”
+- 版本号规则：`<上游版本>-<本次定制序号>`（如 `0.8.8-2`）
+
 ## 许可
 
 MIT License
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=Chasen-Liao%2Fpi-agent-desktop&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Chasen-Liao/pi-agent-desktop&type=date&theme=dark&legend=top-left&sealed_token=aFn-TCmARmvfk1wIdKSpOk7h46vafl3D-moDORISvD96gQ2y3nR3DvatGktptaV93Dz0ULxRvLxCT5yJ3_FzrPGXVjg7f-tJTmKpafiODarLHzonGBnXQw" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Chasen-Liao/pi-agent-desktop&type=date&legend=top-left&sealed_token=aFn-TCmARmvfk1wIdKSpOk7h46vafl3D-moDORISvD96gQ2y3nR3DvatGktptaV93Dz0ULxRvLxCT5yJ3_FzrPGXVjg7f-tJTmKpafiODarLHzonGBnXQw" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Chasen-Liao/pi-agent-desktop&type=date&legend=top-left&sealed_token=aFn-TCmARmvfk1wIdKSpOk7h46vafl3D-moDORISvD96gQ2y3nR3DvatGktptaV93Dz0ULxRvLxCT5yJ3_FzrPGXVjg7f-tJTmKpafiODarLHzonGBnXQw" />
- </picture>
-</a>
