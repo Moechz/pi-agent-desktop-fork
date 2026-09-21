@@ -166,13 +166,14 @@ export function SidebarHeader({
         </span>
       </div>
 
-      {/* P16 四钮行：新会话靠左，新建目录 ▾ 刷新 靠右（标题下方约一行间距；60px logo 已占高，mb 归零补偿） */}
-      <div className="flex items-center justify-between" style={{ marginTop: 0 }}>
+      {/* P16 四钮行（整行右对齐）：新会话（加宽一倍 150px）新建目录 ▾ 刷新 */}
+      <div className="flex items-center justify-end" style={{ marginTop: 0 }}>
+        <div className="flex items-center gap-1">
         <button
           onClick={handleNewSession}
           disabled={!selectedCwd}
           aria-label={t("sidebar.newSession")}
-          className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border px-2 text-[13px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
+          className={`sidebar-new-session-button flex h-7 shrink-0 items-center justify-center gap-1 rounded-control border text-[13px] [min-width:150px] font-medium tracking-normal transition-[background-color,border-color,color,opacity,transform] duration-150 ${
             selectedCwd
               ? "bg-chrome-button-bg border-border text-text-muted cursor-pointer hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring"
               : "bg-chrome-button-bg border-border text-text-dim cursor-not-allowed"
@@ -186,7 +187,6 @@ export function SidebarHeader({
           </svg>
           新会话
         </button>
-        <div className="flex items-center gap-1">
         <button
           onClick={() => void handleCustomPath()}
           disabled={customPathOpen}
