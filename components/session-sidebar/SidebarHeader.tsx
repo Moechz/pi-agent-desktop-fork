@@ -110,13 +110,13 @@ export function SidebarHeader({
         className="sidebar-title-row flex items-center justify-center gap-2"
         style={{ position: "relative", zIndex: 30 }}
       >
-        {/* π logo（用户提供 piiconsmall.png 提取透明版）：40×40，flexShrink 0 防拉伸变形 */}
+        {/* π logo（用户提供 piiconsmall.png 提取透明版）：30×30，flexShrink 0 防拉伸变形 */}
         <img
           src="/pi-logo.png"
           alt="Pi"
-          width={40}
-          height={40}
-          style={{ width: 40, height: 40, flexShrink: 0 }}
+          width={30}
+          height={30}
+          style={{ width: 30, height: 30, flexShrink: 0 }}
         />
         {/* 标题：Pi Agent，20px 中粗（500），行内左右居中。明暗双 span 硬编码色 + CSS 二选一显示
             （沿用已验证的可见性方案：内联字号/字重/合成层，不依赖类样式） */}
@@ -128,7 +128,7 @@ export function SidebarHeader({
             zIndex: 999,
             display: "inline-block",
             transform: "translateZ(0)",
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: 500,
             lineHeight: 1,
             fontFamily: "inherit",
@@ -150,7 +150,7 @@ export function SidebarHeader({
             zIndex: 999,
             display: "inline-block",
             transform: "translateZ(0)",
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: 500,
             lineHeight: 1,
             fontFamily: "inherit",
