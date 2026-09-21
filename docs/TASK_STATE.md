@@ -2,6 +2,14 @@
 
 快照日期：2026-09-20 ｜ 当前版本：v0.8.8（上游 tag，未做任何源码修改）｜ 分支：`custom/main`
 
+
+## ✅ 里程碑（2026-09-21 16:30）：正式版切换完成
+
+- `official-v1`（b93ec66）= 验收终版，已安装于 `/Applications`，用户宣布转正
+- 验收期共 41 项改动全部落地：P1–P21 移植 + 深度审计 7 修 + 逐条验收微调
+- 补丁系统同日退役：launchd `com.user.pi-ui-patch` 卸载，`~/.pi-ui-patches` 归档至旧仓 `backup/patches-retired/`
+- 后续唯一定制入口 = 本仓库；更新流程 = 改码 → commit → 干净重建 → Cmd+Q 换装
+
 ## 1. 仓库状态
 - 全量克隆自 upstream，`custom/main` 自 v0.8.8 分叉；remotes：origin=upstream（自有远端待建）。
 - 文档骨架已提交；**代码零修改**。

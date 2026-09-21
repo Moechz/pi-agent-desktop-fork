@@ -1,3 +1,12 @@
+## 2026-09-21 — 正式版 official-v1 切换
+
+| 类别 | 内容 |
+|---|---|
+| 里程碑 | 补丁系统退役，源码 fork 全面接管 `/Applications` |
+| 最终态 | logo 30×30 + 标题 Pi Agent Desktop 18px/500 双 span 明暗；顶部留白 21px（原生遮盖条已移除，红绿灯悬浮与标题同排）；新会话 150px 右对齐组；底部 模型/技能 缩短靠左 |
+| 退役 | launchd `com.user.pi-ui-patch` 卸载、`~/.pi-ui-patches` → 旧仓 `backup/patches-retired/` |
+| 归档 | DMG `389416f7…` 存于旧仓 `backup/installer/` |
+
 # Changelog
 
 
