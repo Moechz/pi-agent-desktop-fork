@@ -118,11 +118,11 @@ export function SidebarHeader({
           height={30}
           style={{ width: 30, height: 30, flexShrink: 0 }}
         />
-        {/* 标题：Pi Agent，20px 中粗（500），行内左右居中。明暗双 span 硬编码色 + CSS 二选一显示
+        {/* 标题：Pi Agent Desktop，18px 中粗（500），行内左右居中。明暗双 span 硬编码色 + CSS 二选一显示
             （沿用已验证的可见性方案：内联字号/字重/合成层，不依赖类样式） */}
         <span
           className="pi-title-light"
-          title="Pi Agent"
+          title="Pi Agent Desktop"
           style={{
             position: "relative",
             zIndex: 999,
@@ -140,11 +140,11 @@ export function SidebarHeader({
             WebkitUserSelect: "none",
           }}
         >
-          Pi Agent
+          Pi Agent Desktop
         </span>
         <span
           className="pi-title-dark"
-          title="Pi Agent"
+          title="Pi Agent Desktop"
           style={{
             position: "relative",
             zIndex: 999,
@@ -162,7 +162,7 @@ export function SidebarHeader({
             WebkitUserSelect: "none",
           }}
         >
-          Pi Agent
+          Pi Agent Desktop
         </span>
       </div>
 
