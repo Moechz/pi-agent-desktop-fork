@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 2026-09-21 — 用户验收轮：侧栏头部定稿
+
+- `c2c88a9` 新会话按钮靠左 + 选中行左橙边 2→4px
+- `caf000c` 组内 modified 降序（活跃会话浮顶，生产版行为找回）
+- `b73c9e1` 标题行：红π logo（用户提供 piiconsmall.png 提取透明版）+ 标题
+- `fb3c726` 头部下移 40px 避让 titleBarOverlay（36px 原生遮盖条曾盖住标题）
+- `b638374`/`150ac0e` 标题可见性攻坚：文字在用户 Electron 中长期不可见，最终方案=内联品牌粉红 #ea46a1 + WebkitTextFillColor + translateZ(0) 独立合成层 + zIndex 999 —— 可见
+- logo 尺寸迭代 20→60→50；按钮行 marginTop 68→44→28→0（y88，物理上移极限）
+- 烘焙图方案（π+标题合成 PNG）一度可见但侧栏拉伸时 flex 压扁变形，弃用——教训：flex 内 img 必须 flexShrink:0
+
 ## 2026-09-20 — 二次全量对齐（生产版产物逐字对照）
 
 - `ba514f7` 绿点判定改 /api/agent isStreaming 轮询、组头运行计数胶囊 N ▶、P10 思考手风琴、P6b 两处弹层
