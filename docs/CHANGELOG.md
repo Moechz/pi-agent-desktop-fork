@@ -18,6 +18,10 @@
 | 更新源 | `electron-builder.yml` publish 改指本仓库（owner/repo/author/copyright/maintainer 元数据同步为维护者）；**杜绝拉上游版覆盖定制** |
 | 公开 | 仓库转 public（CI 免费额度 + 同事免协作即可下载） |
 | 署名 | 我方文件去第三方人名（README/AGENTS/electron-builder）；LICENSE 与包名等法律/结构标识保留 |
+- `a0eb4f6` 修侧栏不自动重排：4 秒轮询数据回写列表（签名比对）+ 激活后 350ms 静默重取；`tsc --noEmit` 零错误
+- 构建环境坑（复现记录）：**宿主注入的 `__NEXT_PRIVATE_*` / `NEXT_DEPLOYMENT_ID` / `NODE_ENV` 会让 `next build` 直接失败**（`TypeError: generate is not a function`）。本地重建必须：
+  `env -u NODE_ENV -u __NEXT_PRIVATE_STANDALONE_CONFIG -u __NEXT_PRIVATE_ORIGIN -u NEXT_DEPLOYMENT_ID npm run dist:mac`（CI 无此污染，故 CI 正常）
+- `scripts/install-local-mac.sh`：本地换装一键脚本（Terminal 运行；退出应用→覆盖 /Applications→去隔离→重启）
 
 
 
