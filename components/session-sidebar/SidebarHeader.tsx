@@ -167,7 +167,7 @@ export function SidebarHeader({
       </div>
 
       {/* P16 四钮行（整行右对齐）：新会话（加宽一倍 150px）新建目录 ▾ 刷新 */}
-      <div className="flex items-center justify-end" style={{ marginTop: 0 }}>
+      <div className="flex items-center justify-end" style={{ marginTop: 12 }}>
         <div className="flex items-center gap-1">
         <button
           onClick={handleNewSession}
