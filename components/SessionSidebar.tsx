@@ -9,6 +9,9 @@ import { buildSessionTree, getRecentCwds } from "./session-sidebar/helpers";
 import { useI18n } from "./I18nProvider";
 import { apiJson } from "./apiJson";
 
+const sessionsSignature = (list: SessionInfo[]): string =>
+  list.map((s) => `${s.id}:${s.modified}:${s.name ?? ""}`).join("|");
+
 interface Props {
   selectedSessionId: string | null;
   onSelectSession: (session: SessionInfo, isRestore?: boolean) => void;
@@ -56,8 +59,10 @@ export function SessionSidebar({
   
   const sessionRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const explorerRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 列表数据的签名（轮询回写用，避免闭包拿到旧值 / 无变化时白重渲）
+  const sessionsSigRef = useRef<string>("");
 
-  const loadSessions = useCallback(async (showLoading = false) => {
+  const loadSessions = useCallback(async (showLoading = false, silent = false) => {
     try {
       if (showLoading) setLoading(true);
       const data = await apiJson<{ sessions: SessionInfo[] }>(
@@ -66,8 +71,9 @@ export function SessionSidebar({
         { fallback: t("common.failed") },
       );
       setAllSessions(data.sessions);
+      sessionsSigRef.current = sessionsSignature(data.sessions);
       setError(null);
-      if (!showLoading) {
+      if (!showLoading && !silent) {
         setSessionRefreshDone(true);
         if (sessionRefreshTimerRef.current) clearTimeout(sessionRefreshTimerRef.current);
         sessionRefreshTimerRef.current = setTimeout(() => setSessionRefreshDone(false), 2000);
@@ -78,6 +84,18 @@ export function SessionSidebar({
       if (showLoading) setLoading(false);
     }
   }, [t]);
+
+  // 点击激活即重排：激活/恢复会话会更新服务端 modified（会话活动时间），
+  // 本地列表需要重新取一次才能把该会话浮到组顶（silent：不闪刷新完成图标）
+  const handleSelectSession = useCallback(
+    (session: SessionInfo, isRestore?: boolean) => {
+      onSelectSession(session, isRestore);
+      window.setTimeout(() => {
+        void loadSessions(false, true);
+      }, 350);
+    },
+    [onSelectSession, loadSessions],
+  );
 
   const initialLoadDone = useRef(false);
   useEffect(() => {
@@ -154,8 +172,15 @@ export function SessionSidebar({
       try {
         const r = await fetch("/api/sessions");
         if (!r.ok) return;
-        const d = (await r.json()) as { sessions?: { id: string }[] };
-        const ids = (d.sessions ?? []).map((s) => s.id);
+        const d = (await r.json()) as { sessions?: SessionInfo[] };
+        const fresh = d.sessions ?? [];
+        // 回写列表：会话活动时间/名称变化时自动重排（不必再手动刷新）
+        const sig = sessionsSignature(fresh);
+        if (alive && sig !== sessionsSigRef.current) {
+          sessionsSigRef.current = sig;
+          setAllSessions(fresh);
+        }
+        const ids = fresh.map((s) => s.id);
         const results = await Promise.all(
           ids.map(async (id) => {
             try {
@@ -288,7 +313,7 @@ export function SessionSidebar({
                       key={node.session.id}
                       node={node}
                       selectedSessionId={selectedSessionId}
-                      onSelectSession={onSelectSession}
+                      onSelectSession={handleSelectSession}
                       onRenamed={loadSessions}
                       onSessionDeleted={(id) => {
                         onSessionDeleted?.(id);
