@@ -421,7 +421,7 @@ export function AppShell() {
         explorerRefreshKey={explorerRefreshKey}
         onAtMention={handleAtMention}
       />
-      <div className="p-2 shrink-0 flex justify-between gap-1">
+      <div className="p-2 shrink-0 flex justify-start gap-1">
         {(
           [
             {
@@ -463,7 +463,7 @@ export function AppShell() {
             disabled={disabled}
             title={label}
             aria-label={label}
-            className={`flex-1 flex items-center justify-center gap-1.5 h-control-height p-0 bg-transparent border-none rounded-control text-[13px] transition-[background-color,color,opacity,transform] duration-150 ${
+            className={`flex items-center justify-center gap-1.5 h-control-height px-3 bg-transparent border-none rounded-control text-[13px] transition-[background-color,color,opacity,transform] duration-150 ${
               disabled
                 ? "cursor-default opacity-35 text-text-muted"
                 : "cursor-pointer text-text-muted hover:bg-bg-hover hover:text-text active:scale-95"
