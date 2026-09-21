@@ -305,11 +305,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     titleBarStyle: "hidden",
-    titleBarOverlay: {
-      color: "#0c1118",       // --bg-elevated (dark)
-      symbolColor: "#d9deea", // --text (dark)
-      height: 36,
-    },
+    // P22: 移除 titleBarOverlay（原生深色遮盖条）——macOS 红绿灯直接悬浮于内容之上，
+    // 侧栏标题行可与红绿灯同排并行（灯靠左、标题居中），消除顶部 36px 强制留白
     title: "Pi Agent Desktop",
     icon: nativeImage.createFromPath(getAppIconPath(app.getAppPath())),
     show: false,
