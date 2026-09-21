@@ -103,8 +103,8 @@ export function SidebarHeader({
   const recentCwds = getRecentCwds(allSessions);
 
   return (
-    <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 11 }}>
-      {/* 遮盖条已移除：红绿灯（y≈11-25，靠左）与居中标题行同排并行，顶部仅留 11px。
+    <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 21 }}>
+      {/* 遮盖条已移除：红绿灯（y≈11-25，靠左）与居中标题行同排并行，顶部留白 21px（11+10）。
           标题整行烘焙为图片（π + Pi Agent Desktop，明暗两版）——文字渲染在 Electron 下反复不可见，img 已被证明稳定 */}
       <div
         className="sidebar-title-row flex items-center justify-center gap-2"
