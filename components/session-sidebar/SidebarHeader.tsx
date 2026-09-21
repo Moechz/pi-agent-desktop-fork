@@ -107,43 +107,62 @@ export function SidebarHeader({
       {/* macOS 隐藏标题栏遮盖条高 36px，头部下移避让。
           标题整行烘焙为图片（π + Pi Agent Desktop，明暗两版）——文字渲染在 Electron 下反复不可见，img 已被证明稳定 */}
       <div
-        className="sidebar-title-row flex items-center gap-2"
-        style={{ position: "relative", zIndex: 30, minWidth: 0 }}
+        className="sidebar-title-row flex items-center justify-center gap-2"
+        style={{ position: "relative", zIndex: 30 }}
       >
-        {/* π logo（用户提供 piiconsmall.png 提取：背景透明、保留原色）：flexShrink 0 防拉伸变形 */}
+        {/* π logo（用户提供 piiconsmall.png 提取透明版）：40×40，flexShrink 0 防拉伸变形 */}
         <img
           src="/pi-logo.png"
           alt="Pi"
-          width={50}
-          height={50}
-          style={{ width: 50, height: 50, flexShrink: 0 }}
+          width={40}
+          height={40}
+          style={{ width: 40, height: 40, flexShrink: 0 }}
         />
-        {/* 标题：全内联硬编码（品牌粉红 #ea46a1，双主题高对比）+ 独立合成层（translateZ）
-            —— 历经 class/变量/CSS 规则三版在用户 Electron 中均不可见，此版不依赖任何外部样式与合成合并 */}
+        {/* 标题：Pi Agent，20px 细体，行内左右居中。明暗双 span 硬编码色 + CSS 二选一显示
+            （沿用已验证的可见性方案：内联字号/字重/合成层，不依赖类样式） */}
         <span
-          className="pi-agent-title"
-          title="Pi Agent Desktop"
+          className="pi-title-light"
+          title="Pi Agent"
           style={{
             position: "relative",
             zIndex: 999,
             display: "inline-block",
             transform: "translateZ(0)",
-            fontSize: 30,
-            fontWeight: 800,
+            fontSize: 20,
+            fontWeight: 300,
             lineHeight: 1,
             fontFamily: "inherit",
             letterSpacing: "0.01em",
-            color: "#ea46a1",
-            WebkitTextFillColor: "#ea46a1",
+            color: "#0f1115",
+            WebkitTextFillColor: "#0f1115",
             whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            minWidth: 0,
             userSelect: "none",
             WebkitUserSelect: "none",
           }}
         >
-          Pi Agent Desktop
+          Pi Agent
+        </span>
+        <span
+          className="pi-title-dark"
+          title="Pi Agent"
+          style={{
+            position: "relative",
+            zIndex: 999,
+            display: "inline-block",
+            transform: "translateZ(0)",
+            fontSize: 20,
+            fontWeight: 300,
+            lineHeight: 1,
+            fontFamily: "inherit",
+            letterSpacing: "0.01em",
+            color: "#f9fafb",
+            WebkitTextFillColor: "#f9fafb",
+            whiteSpace: "nowrap",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+          }}
+        >
+          Pi Agent
         </span>
       </div>
 
