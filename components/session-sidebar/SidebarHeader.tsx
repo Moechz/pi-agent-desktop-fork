@@ -118,7 +118,7 @@ export function SidebarHeader({
           height={40}
           style={{ width: 40, height: 40, flexShrink: 0 }}
         />
-        {/* 标题：Pi Agent，20px 细体，行内左右居中。明暗双 span 硬编码色 + CSS 二选一显示
+        {/* 标题：Pi Agent，20px 中粗（500），行内左右居中。明暗双 span 硬编码色 + CSS 二选一显示
             （沿用已验证的可见性方案：内联字号/字重/合成层，不依赖类样式） */}
         <span
           className="pi-title-light"
@@ -129,7 +129,7 @@ export function SidebarHeader({
             display: "inline-block",
             transform: "translateZ(0)",
             fontSize: 20,
-            fontWeight: 300,
+            fontWeight: 500,
             lineHeight: 1,
             fontFamily: "inherit",
             letterSpacing: "0.01em",
@@ -151,7 +151,7 @@ export function SidebarHeader({
             display: "inline-block",
             transform: "translateZ(0)",
             fontSize: 20,
-            fontWeight: 300,
+            fontWeight: 500,
             lineHeight: 1,
             fontFamily: "inherit",
             letterSpacing: "0.01em",
