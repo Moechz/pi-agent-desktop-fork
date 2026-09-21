@@ -114,27 +114,33 @@ export function SidebarHeader({
         <img
           src="/pi-logo.png"
           alt="Pi"
-          width={60}
-          height={60}
-          style={{ width: 60, height: 60, flexShrink: 0 }}
+          width={50}
+          height={50}
+          style={{ width: 50, height: 50, flexShrink: 0 }}
         />
-        {/* 标题：置顶层级 + 高对比色，不依赖任何 class 样式 */}
+        {/* 标题：全内联硬编码（品牌粉红 #ea46a1，双主题高对比）+ 独立合成层（translateZ）
+            —— 历经 class/变量/CSS 规则三版在用户 Electron 中均不可见，此版不依赖任何外部样式与合成合并 */}
         <span
           className="pi-agent-title"
           title="Pi Agent Desktop"
           style={{
             position: "relative",
-            zIndex: 30,
+            zIndex: 999,
+            display: "inline-block",
+            transform: "translateZ(0)",
             fontSize: 30,
-            fontWeight: 700,
+            fontWeight: 800,
             lineHeight: 1,
             fontFamily: "inherit",
             letterSpacing: "0.01em",
+            color: "#ea46a1",
+            WebkitTextFillColor: "#ea46a1",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
             minWidth: 0,
             userSelect: "none",
+            WebkitUserSelect: "none",
           }}
         >
           Pi Agent Desktop
