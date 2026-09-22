@@ -15,11 +15,12 @@ export async function GET() {
     const agentDir = getAgentDir();
     const { registry } = await createPiRuntime();
     const available = registry.getAvailable();
-    // P14：deepseek 目录仅留 V4 Flash（干净目录真实 id 是 deepseek-v4-flash；
-    // 补丁时代曾手工改名 deepseek-flash，两者都兼容；v4-pro 隐藏）
+    // P14：deepseek 目录只留 V4.1 Flash（id: deepseek-flash，即 DeepSeek V4.1 Flash）；
+    // 旧 id deepseek-v4-flash 与 v4-pro 一律隐藏。目录数据由 scripts/patch-model-catalog.mjs
+    // 在构建期对齐上游（0.86.1 已把 v4-flash 改名为 deepseek-flash，v4-pro 保留但不上榜）
     const filtered = available.filter(
       (m: { id: string; provider: string }) =>
-        !(m.provider === "deepseek" && m.id !== "deepseek-v4-flash" && m.id !== "deepseek-flash"),
+        !(m.provider === "deepseek" && m.id !== "deepseek-flash"),
     );
     modelList = filtered.map((m: { id: string; name: string; provider: string }) => ({
       id: m.id,
