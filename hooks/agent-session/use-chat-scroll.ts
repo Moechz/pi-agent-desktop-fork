@@ -6,12 +6,15 @@ interface UseChatScrollOptions {
   messageCount: number;
   agentRunning: boolean;
   streamingMessage?: unknown;
+  /** 当前会话 id：变化时复位“初次定位”标记并重新滚到底部 */
+  sessionKey?: string | null;
 }
 
 export function useChatScroll({
   messageCount,
   agentRunning,
   streamingMessage,
+  sessionKey,
 }: UseChatScrollOptions) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -45,6 +48,23 @@ export function useChatScroll({
     containerNode.addEventListener("scroll", handleScroll, { passive: true });
     return () => containerNode.removeEventListener("scroll", handleScroll);
   }, [containerNode, handleScroll]);
+
+  // 切换会话：复位定位状态并立即跳到底部（否则新打开的会话停在最早的历史，需手动下滑）
+  // initialScrollDoneRef 原先置 true 后永不复位 → 换会话时“初次定位”不再执行，即本 bug 根因
+  useEffect(() => {
+    initialScrollDoneRef.current = false;
+    isAtBottomRef.current = true;
+    pendingScrollToUserRef.current = false;
+    if (sessionKey === undefined || sessionKey === null) return;
+    // 消息异步加载：多次尝试兼顾“内容尚未渲染完成”的时序
+    const timers = [0, 120, 400].map((delay) =>
+      window.setTimeout(() => {
+        isAtBottomRef.current = true;
+        scrollToBottom("auto");
+      }, delay),
+    );
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [sessionKey, scrollToBottom]);
 
   // Initial load scroll to bottom once container mounts
   useEffect(() => {

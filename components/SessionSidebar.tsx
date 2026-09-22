@@ -9,6 +9,9 @@ import { buildSessionTree, getRecentCwds } from "./session-sidebar/helpers";
 import { useI18n } from "./I18nProvider";
 import { apiJson } from "./apiJson";
 
+// 组折叠状态的本地存储键（与 __piDirs 同一约定）
+const COLLAPSED_STORE_KEY = "__piCollapsedGroups";
+
 const sessionsSignature = (list: SessionInfo[]): string =>
   list.map((s) => `${s.id}:${s.modified}:${s.name ?? ""}`).join("|");
 
@@ -160,8 +163,30 @@ export function SessionSidebar({
     return list;
   }, [allSessions]);
 
-  // P3-2：组折叠状态（cwd→收起；默认全展开，不持久化）
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  // P3-2：组折叠状态（cwd→收起；默认全展开）。持久化到 localStorage：
+  // 否则侧栏重挂载 / 重启应用后会全部展开，用户手动收起的设定丢失
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(COLLAPSED_STORE_KEY);
+      const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, boolean>) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      // 只存“收起”的目录，避免无效键堆积
+      const onlyCollapsed: Record<string, boolean> = {};
+      for (const [cwd, collapsed] of Object.entries(collapsedGroups)) {
+        if (collapsed) onlyCollapsed[cwd] = true;
+      }
+      window.localStorage.setItem(COLLAPSED_STORE_KEY, JSON.stringify(onlyCollapsed));
+    } catch {
+      /* localStorage 不可用：忽略，设定仅在本次运行内生效 */
+    }
+  }, [collapsedGroups]);
 
   // P3 运行点：轮询 /api/agent/{id} 的 running+state.isStreaming（实时真值；
   // modified-diff 方案不可行——流式期间 modified 只在块落盘时变，长时间工具执行会误判空闲）

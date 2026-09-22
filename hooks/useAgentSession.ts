@@ -249,6 +249,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     messageCount: messages.length,
     agentRunning,
     streamingMessage: streamState.streamingMessage,
+    sessionKey: session?.id ?? null,
   });
 
   const sessionIdRef = useRef<string | null>(session?.id ?? null);
