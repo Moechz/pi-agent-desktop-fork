@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-22 — 修复三则（待发 v0.8.8-3）
+
+| 类别 | 内容 |
+|---|---|
+| 侧栏折叠 | 目录折叠状态持久化（localStorage `__piCollapsedGroups`）：原先仅组件 state，重挂载/重启即全展开 |
+| 会话滚动 | 切会话自动落到最新历史：`useChatScroll` 的 `initialScrollDoneRef` 置 true 后永不复位 → 新会话停在最早历史；现按 `sessionKey` 复位并在 0/120/400ms 兜底跳底 |
+| 模型目录 | deepseek 只留 V4.1 Flash：P14 过滤改为只放行 `deepseek-flash`；新增 `scripts/patch-model-catalog.mjs` + `vendor/pi-ai/deepseek-0.86.1.json`（上游已把 `deepseek-v4-flash` 改名 `deepseek-flash`），构建期幂等对齐，接入 `build:standalone`。将来升 pi-ai 至 ≥0.86.1 后该补丁自动失效可删 |
+| 构建环境 | electron 下载走 `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/` 更稳（代理传大文件易 TLS/ECONNRESET 中断）；本地重建仍需 `env -u NODE_ENV -u __NEXT_PRIVATE_STANDALONE_CONFIG -u __NEXT_PRIVATE_ORIGIN -u NEXT_DEPLOYMENT_ID` |
+| 远端 | fork 远端改 SSH（`git@github.com:Moechz/pi-agent-desktop-fork.git`）：直连 443 现已可用，代理反慢 |
+
+
 ## 2026-09-21 — 发布 0.8.8-2（首个源码 fork 版、公开仓库）
 
 | 类别 | 内容 |
