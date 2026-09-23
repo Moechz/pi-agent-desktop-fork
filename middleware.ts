@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildWebCspHeader } from "@/lib/csp";
-import { isAllowedOrigin } from "@/lib/auth-policy";
+import { isAllowedOrigin, validateRequestOrigin } from "@/lib/auth-policy";
 
 export { isAllowedOrigin };
 
@@ -17,7 +17,15 @@ const CSP_HEADER = buildWebCspHeader();
  * Exported for unit testing.
  */
 export function shouldApplyOriginCheck(pathname: string, _method: string): boolean {
-  return pathname.startsWith("/api");
+  // 用「段边界」匹配 /api：路径可能是 /api/... 或子路径部署下的 /<appid>/api/...，
+  // 且不应误伤 /api-docs 这类同前缀页面路由。此前只判断 startsWith("/api")，
+  // 在 TOS（basePath=/piagentfortos）下会漏检所有 API 请求 —— 安全漏洞，勿回退。
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+  const effective =
+    basePath && (pathname === basePath || pathname.startsWith(`${basePath}/`))
+      ? pathname.slice(basePath.length)
+      : pathname;
+  return /(^|\/)api(\/|$)/.test(effective);
 }
 
 /**
@@ -38,9 +46,12 @@ export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   if (shouldApplyOriginCheck(pathname, request.method)) {
-    const origin = request.headers.get("origin");
-    if (origin !== null && !isAllowedOrigin(origin)) {
-      return new NextResponse(JSON.stringify({ error: "forbidden origin" }), {
+    // 单一事实源：Origin 策略全部走 lib/auth-policy.ts 的 validateRequestOrigin
+    // （回环 + PI_ALLOWED_ORIGINS + **同源放行**）。此处曾复制一份"仅回环"的判断，
+    // 导致 TOS 反代部署（Origin=http://<nas>:8181）所有写操作 403 —— 勿再分叉。
+    const rejection = validateRequestOrigin(request);
+    if (rejection !== null) {
+      return new NextResponse(JSON.stringify({ error: rejection }), {
         status: 403,
         headers: { "content-type": "application/json" },
       });

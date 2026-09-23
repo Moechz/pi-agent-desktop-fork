@@ -1,4 +1,6 @@
 import { register } from "node:module";
+// 仅类型：运行时由下方 loader stub 提供 next/server
+import type { NextRequest } from "next/server";
 import test from "node:test";
 import assert from "node:assert/strict";
 
@@ -17,9 +19,18 @@ import assert from "node:assert/strict";
 const LOADER_SOURCE = `
 export function resolve(specifier, context, nextResolve) {
   if (specifier === "next/server") {
+    // 可用的最小实现：中间件本身也要被测（此前是空壳，导致 middleware.ts 里
+    // 复制的一份 Origin 判断长期没被覆盖 —— TOS 上所有写操作 403 的根因）
     const stub =
-      "export class NextResponse { static next() { return new NextResponse(); } }" +
-      "export class NextRequest {}";
+      "export class NextResponse extends Response { static next() { return new NextResponse(null); } }" +
+      "export class NextRequest {" +
+      "  constructor(input, init = {}) {" +
+      "    this.url = String(input);" +
+      "    this.method = init.method || 'GET';" +
+      "    this.headers = new Headers(init.headers || {});" +
+      "    this.nextUrl = new URL(this.url);" +
+      "  }" +
+      "}";
     return {
       url: "data:text/javascript," + encodeURIComponent(stub),
       shortCircuit: true,
@@ -127,4 +138,34 @@ test("shouldApplyOriginCheck: non-API POST is NOT checked (handled by CSP instea
 test("shouldApplyOriginCheck: all method variants on /api/* are checked", () => {
   assert.equal(shouldApplyOriginCheck("/api/x", "post"), true);
   assert.equal(shouldApplyOriginCheck("/api/x", "get"), true);
+});
+
+// ── 中间件级（此前只测策略函数，漏掉了中间件内复制的那份判断，TOS 上因此 403）──
+test("middleware: 同源写请求放行（Origin == Host，反代部署）", async () => {
+  const { middleware } = await import("./middleware.ts");
+  const req = {
+    method: "PUT",
+    url: "http://192.168.124.57:8181/piagentfortos/api/models-config",
+    headers: new Headers({ origin: "http://192.168.124.57:8181", host: "192.168.124.57:8181" }),
+    nextUrl: new URL("http://192.168.124.57:8181/piagentfortos/api/models-config"),
+  } as unknown as NextRequest;
+  const res = middleware(req);
+  assert.notEqual(res.status, 403, "同源写请求不得被 middleware 403（TOS 上否则无法保存任何配置）");
+});
+
+test("middleware: 跨域写请求仍 403", async () => {
+  const { middleware } = await import("./middleware.ts");
+  const req = {
+    method: "PUT",
+    url: "http://192.168.124.57:8181/piagentfortos/api/models-config",
+    headers: new Headers({ origin: "http://evil.example", host: "192.168.124.57:8181" }),
+    nextUrl: new URL("http://192.168.124.57:8181/piagentfortos/api/models-config"),
+  } as unknown as NextRequest;
+  assert.equal(middleware(req).status, 403, "跨域写入必须继续拦截");
+});
+
+test("shouldApplyOriginCheck：带 basePath 前缀（TOS）也必须检查 /api", () => {
+  assert.equal(shouldApplyOriginCheck("/piagentfortos/api/models-config", "PUT"), true);
+  assert.equal(shouldApplyOriginCheck("/piagentfortos/page", "PUT"), false);
+  assert.equal(shouldApplyOriginCheck("/api/models-config", "PUT"), true);
 });
