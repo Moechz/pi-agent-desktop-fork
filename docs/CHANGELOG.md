@@ -9,6 +9,14 @@
 
 # Changelog
 
+## 2026-09-22 — 发布 v0.8.8-4
+
+| 类别 | 内容 |
+|---|---|
+| 发版 | `0.8.8-4`；内容 = NewAPI 网关 422 兼容兜底 + Windows Titlebar Overlay 主进程异常修复 + 测试基线修复 |
+| 说明 | 发布说明 `docs/releases/v0.8.8-4.md`；本地构建验证通过后推 tag 由 CI 打三平台 |
+
+
 ## 2026-09-22 — 修两处反馈（NewAPI/DeepSeek 422 + Windows Titlebar Overlay 异常）+ 测试基线修复
 
 | 类别 | 内容 |
