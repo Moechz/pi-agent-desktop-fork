@@ -371,7 +371,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
                     type="text"
                     value={formArgs}
                     onChange={(e) => setFormArgs(e.target.value)}
-                    placeholder="e.g. -y @modelcontextprotocol/server-github"
+                    placeholder={t("mcp.exampleArgs")}
                     className="w-full px-2.5 py-1.5 rounded-control bg-bg border border-border text-text font-mono text-[13px] focus:outline-none focus:border-accent"
                   />
                 </div>

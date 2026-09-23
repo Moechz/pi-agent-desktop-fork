@@ -492,7 +492,7 @@ function AddSkillPanel({
           <div
             style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.8 }}
           >
-            Search{" "}
+            {t("skills.searchPrefix")}{" "}
             <a
               href="https://skills.sh"
               target="_blank"
@@ -501,7 +501,7 @@ function AddSkillPanel({
             >
               skills.sh
             </a>{" "}
-            to discover and install skills for your agent.
+            {t("skills.searchSuffix")}
           </div>
         )
       )}

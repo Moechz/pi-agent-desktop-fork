@@ -4,7 +4,8 @@ import path from "path";
 import { appendFileSync, mkdirSync } from "fs";
 import { spawn } from "child_process";
 import net from "net";
-import { createTray } from "./tray";
+import { createTray, updateTrayMenu } from "./tray";
+import { mainT, normalizeMainLocale, type MainLocale } from "./i18n";
 import { waitForNextServerReady } from "./server-wait";
 import { killProcessDescendants, killProcessTree } from "./process-tree";
 import { pickApiKeys } from "./env-filter";
@@ -52,6 +53,10 @@ let mainWindow: BrowserWindow | null = null;
 let nextProcess: ServerProcess | null = null;
 let isQuitting = false;
 let logFilePath: string | null = null;
+
+/** 界面语言（渲染进程通过 set-locale 同步；首帧用系统语言兜底） */
+let uiLocale: MainLocale = normalizeMainLocale(app.getLocale());
+let trayRef: Electron.Tray | null = null;
 const DEFAULT_PORT = 30141;
 let serverState: ServerState = "starting";
 let activePort: number | null = null;
@@ -542,6 +547,15 @@ function registerIpcHandlers() {
   ipcMain.on("set-theme", (_event, isDark: boolean) => {
     applyTitleBarOverlayTheme(mainWindow, isDark);
   });
+
+  ipcMain.on("set-locale", (_event, locale: unknown) => {
+    const next = normalizeMainLocale(typeof locale === "string" ? locale : null);
+    if (next === uiLocale) return;
+    uiLocale = next;
+    if (trayRef && mainWindow && !mainWindow.isDestroyed()) {
+      updateTrayMenu(trayRef, mainWindow, uiLocale);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -590,7 +604,7 @@ app.whenReady().then(async () => {
 
     createWindow();
     logStartupTiming("window created");
-    createTray(mainWindow!);
+    trayRef = createTray(mainWindow!, uiLocale);
     startupUiReady = true;
 
     nextProcess = startNextServer(port);
@@ -628,10 +642,10 @@ app.whenReady().then(async () => {
             const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
             const options = {
               type: "info" as const,
-              title: "Update Available",
-              message: `A new version (${info.version}) is available.`,
-              detail: "Download and install now? The app will restart after download completes.",
-              buttons: ["Download", "Later"],
+              title: mainT("update.availableTitle", uiLocale),
+              message: mainT("update.availableMessage", uiLocale, { version: info.version }),
+              detail: mainT("update.availableDetail", uiLocale),
+              buttons: [mainT("update.download", uiLocale), mainT("update.later", uiLocale)],
               defaultId: 0,
               cancelId: 1,
             };
@@ -679,9 +693,9 @@ app.whenReady().then(async () => {
             const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
             const options = {
               type: "info" as const,
-              title: "Update Downloaded",
-              message: `Version ${info.version} has been downloaded. Restart to install the update.`,
-              buttons: ["Restart Now", "Later"],
+              title: mainT("update.downloadedTitle", uiLocale),
+              message: mainT("update.downloadedMessage", uiLocale, { version: info.version }),
+              buttons: [mainT("update.restartNow", uiLocale), mainT("update.later", uiLocale)],
               defaultId: 0,
             };
             const showPromise = parent

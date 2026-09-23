@@ -399,7 +399,7 @@ export const en = {
   "common.confirm": "Confirm",
   "approval.deny": "Deny",
   "approval.allow": "Allow",
-  "approval.confirmToolTitle": "Allow {tool}?",
+  "approval.confirmToolTitle": "Allow this tool?",
   "chat.turnInterrupted": "Turn interrupted: {message} (usually a tool call timed out or was stopped — not a model service failure; you can continue the conversation)",
   "chat.modelRequestFailed": "Model request failed: {message}",
   "modelsConfig.compatibleOpenAI": "OpenAI-compatible",
@@ -436,6 +436,10 @@ export const en = {
   "chatInput.useDefaultDirectory": "Use default folder",
   "chatInput.chooseOtherDirectory": "Choose another folder…",
   "modelsConfig.compatibleOpenAIResponses": "OpenAI Responses",
+  "modelsConfig.inheritNone": "— inherit / none —",
+  "skills.searchPrefix": "Search ",
+  "skills.searchSuffix": " to discover and install skills for your agent.",
+  "mcp.exampleArgs": "e.g. -y @modelcontextprotocol/server-github",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -842,7 +846,7 @@ export const zhCN: Record<TranslationKey, string> = {
   "common.confirm": "确定",
   "approval.deny": "拒绝",
   "approval.allow": "允许",
-  "approval.confirmToolTitle": "允许 {tool}？",
+  "approval.confirmToolTitle": "允许执行此工具？",
   "chat.turnInterrupted": "本轮已中断：{message}（多为工具调用超时/被终止或手动停止，非模型服务故障，可直接继续对话）",
   "chat.modelRequestFailed": "模型请求失败：{message}",
   "modelsConfig.compatibleOpenAI": "OpenAI 兼容",
@@ -879,4 +883,8 @@ export const zhCN: Record<TranslationKey, string> = {
   "chatInput.useDefaultDirectory": "使用默认目录",
   "chatInput.chooseOtherDirectory": "选择其他目录…",
   "modelsConfig.compatibleOpenAIResponses": "OpenAI Responses",
+  "modelsConfig.inheritNone": "— 继承 / 无 —",
+  "skills.searchPrefix": "在 ",
+  "skills.searchSuffix": " 中搜索，为你的智能体发现并安装技能。",
+  "mcp.exampleArgs": "例如 -y @modelcontextprotocol/server-github",
 };

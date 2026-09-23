@@ -75,6 +75,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale;
+    // 同步给主进程：托盘菜单与原生对话框按同一语言渲染
+    const customWindow = window as unknown as { electronAPI?: { setLocale?: (locale: string) => void } };
+    customWindow.electronAPI?.setLocale?.(locale);
     document.documentElement.dir = "ltr";
   }, [locale]);
 

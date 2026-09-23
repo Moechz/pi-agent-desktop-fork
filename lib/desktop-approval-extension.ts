@@ -17,7 +17,7 @@ export function createDesktopApprovalFactory(modeRef: AgentModeRef): ExtensionFa
       if (!needsAskConfirm(modeRef.current, event.toolName)) return;
       // 标题用 i18n key 约定传给界面（服务端不知道界面语言）：i18n:<key>|<参数>
       const ok = await ctx.ui.confirm(
-        `i18n:approval.confirmToolTitle|${event.toolName}`,
+        "i18n:approval.confirmToolTitle",
         summarizeToolCall(event.toolName, event.input)
       );
       if (!ok) return askBlockResult();

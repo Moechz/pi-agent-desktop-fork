@@ -33,4 +33,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   quitAndInstall: () => ipcRenderer.invoke("quit-and-install"),
   setTheme: (isDark: boolean) => ipcRenderer.send("set-theme", isDark),
+  // 主进程用它本地化托盘菜单与原生对话框（渲染进程语言变化时同步）
+  setLocale: (locale: string) => ipcRenderer.send("set-locale", locale),
 });

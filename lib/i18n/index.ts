@@ -48,6 +48,17 @@ export function translate(
   return interpolate(dictionary[key] ?? en[key], values);
 }
 
+/**
+ * 解析服务端（pi 扩展）传来的标题：形如 `i18n:<key>` 时按当前语言翻译。
+ * 非该形式、或键不存在时原样返回 —— 保证向后兼容，不会把裸键显示给用户。
+ */
+export function resolveI18nTitle(title: string, locale: Locale): string {
+  const prefix = "i18n:";
+  if (!title.startsWith(prefix)) return title;
+  const key = title.slice(prefix.length);
+  return hasTranslationKey(key) ? translate(locale, key) : title;
+}
+
 export function hasTranslationKey(key: string): key is TranslationKey {
   return Object.prototype.hasOwnProperty.call(en, key);
 }

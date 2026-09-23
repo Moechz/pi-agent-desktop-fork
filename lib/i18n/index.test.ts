@@ -4,6 +4,7 @@ import {
   normalizeLocale,
   normalizePreference,
   resolveLocale,
+  resolveI18nTitle,
   translate,
 } from "./index.ts";
 
@@ -39,4 +40,11 @@ test("translates and interpolates UI messages", () => {
     translate("zh-CN", "extension.addFailed"),
     "添加扩展或技能失败",
   );
+});
+
+test("resolves extension-provided i18n titles and leaves plain titles untouched", () => {
+  assert.equal(resolveI18nTitle("i18n:approval.confirmToolTitle", "zh-CN"), "允许执行此工具？");
+  assert.equal(resolveI18nTitle("i18n:approval.confirmToolTitle", "en"), "Allow this tool?");
+  assert.equal(resolveI18nTitle("Plain title", "zh-CN"), "Plain title");
+  assert.equal(resolveI18nTitle("i18n:does.not.exist", "zh-CN"), "i18n:does.not.exist");
 });

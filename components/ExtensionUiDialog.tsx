@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import type { ExtensionUiRequestEvent } from "@/hooks/agent-session/agent-events-manager";
 import { useI18n } from "./I18nProvider";
-import { hasTranslationKey } from "@/lib/i18n";
+import { resolveI18nTitle } from "@/lib/i18n";
 
 export type ExtensionUiResponsePayload = {
   id: string;
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function ExtensionUiDialog({ request, onRespond }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [text, setText] = useState("");
 
   useEffect(() => {
@@ -31,13 +31,8 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
 
   if (!request) return null;
 
-  // 服务端不知道界面语言：标题以 i18n:<key>|<参数> 形式传来，这里按当前语言解析
-  const titleText = (() => {
-    if (!request.title.startsWith("i18n:")) return request.title;
-    const [key, param] = request.title.slice("i18n:".length).split("|");
-    if (!hasTranslationKey(key)) return request.title;
-    return t(key, param ? { tool: param } : undefined);
-  })();
+  // 服务端（pi 扩展）不知道界面语言：标题以 i18n:<key> 传来，这里按当前语言解析
+  const titleText = resolveI18nTitle(request.title, locale);
 
   const close = (payload: ExtensionUiResponsePayload) => onRespond(payload);
 
