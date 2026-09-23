@@ -440,6 +440,8 @@ export const en = {
   "skills.searchPrefix": "Search ",
   "skills.searchSuffix": " to discover and install skills for your agent.",
   "mcp.exampleArgs": "e.g. -y @modelcontextprotocol/server-github",
+  "minimap.you": "You",
+  "minimap.assistant": "Assistant",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -887,4 +889,6 @@ export const zhCN: Record<TranslationKey, string> = {
   "skills.searchPrefix": "在 ",
   "skills.searchSuffix": " 中搜索，为你的智能体发现并安装技能。",
   "mcp.exampleArgs": "例如 -y @modelcontextprotocol/server-github",
+  "minimap.you": "你",
+  "minimap.assistant": "助手",
 };

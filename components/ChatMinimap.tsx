@@ -2,15 +2,19 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo, RefObject } from "react";
 import type { AgentMessage, AssistantMessage, TextContent } from "@/lib/types";
+import { buildTickLayout, entryIndexFor, tickIndexAt, tickTopPct } from "../lib/minimap-ticks.ts";
+import { useI18n } from "./I18nProvider";
 
 interface Props {
   messages: AgentMessage[];
   streamingMessage: Partial<AgentMessage> | null;
   scrollContainer: RefObject<HTMLDivElement | null>;
-  messageRefs: RefObject<(HTMLDivElement | null)[]>;
+  /** 保留以兼容调用方；刻度布局不再依赖 DOM 测量 */
+  messageRefs?: RefObject<(HTMLDivElement | null)[]>;
 }
 
 const MINIMAP_WIDTH = 30;
+const TOOLTIP_HEIGHT = 26;
 
 function getMessagePreview(msg: AgentMessage | Partial<AgentMessage>): string {
   if (msg.role === "user") {
@@ -41,11 +45,10 @@ function getMessagePreview(msg: AgentMessage | Partial<AgentMessage>): string {
   return "";
 }
 
-function getNodeColor(msg: AgentMessage | Partial<AgentMessage>): { bg: string; border: string } {
-  if (msg.role === "user") {
-    return { bg: "var(--user-bg)", border: "var(--user-border)" };
-  }
-  return { bg: "var(--bg-subtle)", border: "var(--border)" };
+/** 刻度颜色：用户消息用品牌色系，助手消息用中性色系 */
+function getTickColor(msg: AgentMessage | Partial<AgentMessage>, hovered: boolean): string {
+  if (msg.role === "user") return hovered ? "var(--accent)" : "var(--user-border)";
+  return hovered ? "var(--text)" : "var(--border)";
 }
 
 function hasTextContent(msg: AgentMessage | Partial<AgentMessage>): boolean {
@@ -57,27 +60,31 @@ function hasTextContent(msg: AgentMessage | Partial<AgentMessage>): boolean {
   return false;
 }
 
-interface NodeInfo {
-  topRatio: number;   // 0–1 within total scroll height
-  heightRatio: number;
-  msg: AgentMessage | Partial<AgentMessage>;
-  index: number;
-}
-
-export function ChatMinimap({ messages, streamingMessage, scrollContainer, messageRefs }: Props) {
+export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Props) {
+  const { t } = useI18n();
   const [scrollRatio, setScrollRatio] = useState(0);
   const [viewportRatio, setViewportRatio] = useState(1);
   const [visible, setVisible] = useState(false);
-  const [nodes, setNodes] = useState<NodeInfo[]>([]);
-  const [minimapHovered, setMinimapHovered] = useState(false);
-  const [mouseYRatio, setMouseYRatio] = useState<number | null>(null);
+  const [hoveredTick, setHoveredTick] = useState<number | null>(null);
+  const [minimapHeightPx, setMinimapHeightPx] = useState(600);
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const allMessages = useMemo(
-    () => (streamingMessage ? [...messages, streamingMessage] : messages) as (AgentMessage | Partial<AgentMessage>)[],
-    [messages, streamingMessage]
+    () =>
+      (streamingMessage
+        ? [...messages, streamingMessage]
+        : messages) as (AgentMessage | Partial<AgentMessage>)[],
+    [messages, streamingMessage],
   );
+
+  // 每个可显示条目 → 一根刻度（不再依赖 DOM 位置，故渲染顺序即分布顺序）
+  const entries = useMemo(
+    () => allMessages.filter((msg) => hasTextContent(msg)),
+    [allMessages],
+  );
+  const layout = useMemo(() => buildTickLayout(entries.length), [entries.length]);
+
   const allMessagesRef = useRef(allMessages);
   allMessagesRef.current = allMessages;
 
@@ -98,36 +105,6 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
       setScrollRatio(scrollEl.scrollTop / scrollable);
       setViewportRatio(clientH / totalH);
     }
-
-    // Build node positions from real DOM refs
-    const refs = messageRefs.current;
-    const newNodes: NodeInfo[] = [];
-    let refIndex = 0;
-
-    const allMessages = allMessagesRef.current;
-    for (let i = 0; i < allMessages.length; i++) {
-      const msg = allMessages[i];
-      if (msg.role !== "user" && msg.role !== "assistant") continue;
-
-      const el = refs?.[refIndex];
-      refIndex++;
-
-      if (!hasTextContent(msg)) continue;
-
-      if (el && totalH > 0) {
-        const elRect = el.getBoundingClientRect();
-        const containerRect = scrollEl.getBoundingClientRect();
-        const top = elRect.top - containerRect.top + scrollEl.scrollTop;
-        const h = elRect.height;
-        newNodes.push({
-          topRatio: top / totalH,
-          heightRatio: h / totalH,
-          msg,
-          index: newNodes.length,
-        });
-      }
-    }
-    setNodes(newNodes);
   };
 
   const updatePositions = useCallback(() => updatePositionsRef.current(), []);
@@ -138,7 +115,6 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
     el.addEventListener("scroll", updatePositions, { passive: true });
     const ro = new ResizeObserver(updatePositions);
     ro.observe(el);
-    // Also observe the scroll content for height changes
     if (el.firstElementChild) ro.observe(el.firstElementChild);
     updatePositions();
     return () => {
@@ -147,125 +123,98 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
     };
   }, [scrollContainer, updatePositions]);
 
-  // Re-measure when message count changes (new messages arrive)
   useEffect(() => {
-    const t = setTimeout(updatePositions, 50);
-    return () => clearTimeout(t);
+    const timeout = setTimeout(updatePositions, 50);
+    return () => clearTimeout(timeout);
   }, [messages.length, updatePositions]);
 
-  const scrollToMinimapRatio = useCallback((viewportTopRatio: number) => {
-    const el = scrollContainer.current;
-    if (!el) return;
-    const scrollable = el.scrollHeight - el.clientHeight;
-    if (scrollable <= 0) return;
-    const clamped = Math.max(0, Math.min(1 - viewportRatio, viewportTopRatio));
-    el.scrollTop = (clamped / (1 - viewportRatio)) * scrollable;
-  }, [scrollContainer, viewportRatio]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!visible) return;
-
-    draggingRef.current = true;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickRatio = (e.clientY - rect.top) / rect.height;
-    const grabOffset = clickRatio - scrollRatio * (1 - viewportRatio);
-    const insideBox = grabOffset >= 0 && grabOffset <= viewportRatio;
-    const offset = insideBox ? grabOffset : viewportRatio / 2;
-
-    scrollToMinimapRatio(clickRatio - offset);
-
-    const onMove = (ev: MouseEvent) => {
-      if (!draggingRef.current) return;
-      const r = (ev.clientY - rect.top) / rect.height;
-      scrollToMinimapRatio(r - offset);
-    };
-    const onUp = () => {
-      draggingRef.current = false;
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }, [visible, viewportRatio, scrollRatio, scrollToMinimapRatio]);
-
-
-
-  // Measure minimap height reactively. Reading containerRef.current.clientHeight
-  // directly during render would return null on first mount (falling back to 600
-  // and causing tooltip miscalculation on the first hover). useState + useEffect
-  // gives us the real value after mount, and ResizeObserver keeps it in sync on
-  // window resize / sidebar toggle.
-  const [minimapHeightPx, setMinimapHeightPx] = useState(600);
-
+  // 量取容器高度（提示条位置需要像素值；首次挂载读到 null 会算错 → 用 state + ResizeObserver）
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
-    // Measure immediately so the second render already uses the real height.
     setMinimapHeightPx(el.clientHeight);
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const height = entry.contentRect.height;
+    const observer = new ResizeObserver((records) => {
+      for (const record of records) {
+        const height = record.contentRect.height;
         if (height > 0) setMinimapHeightPx(height);
       }
     });
     observer.observe(el);
-
     return () => observer.disconnect();
-    // mount-only: containerRef is a stable object
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Compute collision-free tooltip positions for all nodes
-  const TOOLTIP_HEIGHT = 22;
-  const TOOLTIP_GAP = 2;
+  const scrollToMinimapRatio = useCallback(
+    (viewportTopRatio: number) => {
+      const el = scrollContainer.current;
+      if (!el) return;
+      const scrollable = el.scrollHeight - el.clientHeight;
+      if (scrollable <= 0) return;
+      const clamped = Math.max(0, Math.min(1 - viewportRatio, viewportTopRatio));
+      el.scrollTop = (clamped / (1 - viewportRatio)) * scrollable;
+    },
+    [scrollContainer, viewportRatio],
+  );
 
-  const tooltipPositions = useMemo(() => {
-    if (!minimapHovered || nodes.length === 0) return [];
-    // Initial positions: centered on the dot
-    const positions = nodes.map((node) =>
-      Math.round(node.topRatio * minimapHeightPx - TOOLTIP_HEIGHT / 2)
-    );
-    // Iterative push-apart to resolve overlaps (top-to-bottom pass, then bottom-to-top)
-    for (let pass = 0; pass < 10; pass++) {
-      for (let i = 1; i < positions.length; i++) {
-        const minTop = positions[i - 1] + TOOLTIP_HEIGHT + TOOLTIP_GAP;
-        if (positions[i] < minTop) positions[i] = minTop;
-      }
-      for (let i = positions.length - 2; i >= 0; i--) {
-        const maxTop = positions[i + 1] - TOOLTIP_HEIGHT - TOOLTIP_GAP;
-        if (positions[i] > maxTop) positions[i] = maxTop;
-      }
-    }
-    // Clamp all to minimap bounds
-    for (let i = 0; i < positions.length; i++) {
-      positions[i] = Math.max(0, Math.min(minimapHeightPx - TOOLTIP_HEIGHT, positions[i]));
-    }
-    return positions;
-  }, [minimapHovered, nodes, minimapHeightPx]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!visible) return;
+
+      draggingRef.current = true;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickRatio = (e.clientY - rect.top) / rect.height;
+      const grabOffset = clickRatio - scrollRatio * (1 - viewportRatio);
+      const insideBox = grabOffset >= 0 && grabOffset <= viewportRatio;
+      const offset = insideBox ? grabOffset : viewportRatio / 2;
+
+      scrollToMinimapRatio(clickRatio - offset);
+
+      const onMove = (ev: MouseEvent) => {
+        if (!draggingRef.current) return;
+        const r = (ev.clientY - rect.top) / rect.height;
+        scrollToMinimapRatio(r - offset);
+      };
+      const onUp = () => {
+        draggingRef.current = false;
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [visible, viewportRatio, scrollRatio, scrollToMinimapRatio],
+  );
 
   if (!visible) return null;
 
   const viewportBoxTop = scrollRatio * (1 - viewportRatio) * 100;
   const viewportBoxHeight = viewportRatio * 100;
 
-  // Find the node closest to the current mouse position
-  const nearestIndex = mouseYRatio !== null && nodes.length > 0
-    ? nodes.reduce((best, node) => {
-        return Math.abs(node.topRatio - mouseYRatio) < Math.abs(nodes[best].topRatio - mouseYRatio) ? node.index : best;
-      }, 0)
-    : null;
+  const hoveredEntry =
+    hoveredTick !== null && layout.count > 0
+      ? entries[entryIndexFor(hoveredTick, layout, entries.length)]
+      : undefined;
+  const hoveredPreview = hoveredEntry ? getMessagePreview(hoveredEntry) : "";
+  const tooltipTop =
+    hoveredTick !== null
+      ? Math.max(
+          0,
+          Math.min(
+            minimapHeightPx - TOOLTIP_HEIGHT,
+            (tickTopPct(hoveredTick, layout) / 100) * minimapHeightPx - TOOLTIP_HEIGHT / 2,
+          ),
+        )
+      : 0;
 
   return (
     <div
       ref={containerRef}
       onMouseDown={handleMouseDown}
-      onMouseEnter={() => setMinimapHovered(true)}
-      onMouseLeave={() => { setMinimapHovered(false); setMouseYRatio(null); }}
+      onMouseLeave={() => setHoveredTick(null)}
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        setMouseYRatio((e.clientY - rect.top) / rect.height);
+        const ratio = (e.clientY - rect.top) / rect.height;
+        setHoveredTick(tickIndexAt(ratio, layout));
       }}
       style={{
         width: MINIMAP_WIDTH,
@@ -278,7 +227,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
         overflow: "visible",
       }}
     >
-      {/* Viewport indicator */}
+      {/* 视口指示框（拖动滚动） */}
       <div
         style={{
           position: "absolute",
@@ -294,51 +243,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
         }}
       />
 
-      {/* Message nodes */}
-      {nodes.map((node) => {
-        const color = getNodeColor(node.msg);
-        const isNearest = minimapHovered && nearestIndex === node.index;
-        const isUser = node.msg.role === "user";
-        const dotTop = node.topRatio * 100;
-
-        return (
-          <div
-            key={node.index}
-
-            style={{
-              position: "absolute",
-              top: `${dotTop}%`,
-              transform: "translateY(-50%)",
-              left: 0,
-              right: 0,
-              height: "12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              zIndex: 2,
-            }}
-          >
-            {/* Dot */}
-            <div
-              style={{
-                width: isUser ? 7 : 5,
-                height: isUser ? 7 : 5,
-                borderRadius: isUser ? 2 : "50%",
-                background: color.bg,
-                border: `1.5px solid ${color.border}`,
-                flexShrink: 0,
-                transition: "transform 0.1s",
-                transform: isNearest ? "scale(1.6)" : "scale(1)",
-              }}
-            />
-
-
-          </div>
-        );
-      })}
-
-      {/* Center line */}
+      {/* 中轴线：刻度挂在它上面，像一把纵向标尺 */}
       <div
         style={{
           position: "absolute",
@@ -352,49 +257,88 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
         }}
       />
 
-      {/* Tooltips for all nodes, collision-free positions */}
-      {minimapHovered && nodes.map((node, i) => {
-        const preview = getMessagePreview(node.msg);
-        const color = getNodeColor(node.msg);
-        const isNearest = nearestIndex === node.index;
-        if (!preview || tooltipPositions.length === 0) return null;
-        return (
-          <div
-            key={node.index}
-            style={{
-              position: "absolute",
-              top: tooltipPositions[i],
-              right: "100%",
-              marginRight: 6,
-              background: "var(--bg)", /* P6b：不透明，与主弹窗同色 */
-              borderTop: `1px solid ${isNearest ? color.border : "var(--border)"}`,
-              borderRight: `1px solid ${isNearest ? color.border : "var(--border)"}`,
-              borderBottom: `1px solid ${isNearest ? color.border : "var(--border)"}`,
-              borderLeft: `2px solid ${color.border}`,
-              borderRadius: "var(--radius-control)",
-              padding: "2px 7px",
-              width: 200,
-              zIndex: 100,
-              pointerEvents: "none",
-              opacity: isNearest ? 1 : 0.45,
-              transition: "top 0.1s, opacity 0.1s",
-            }}
-          >
+      {/* 会话刻度：等分槽位，刻度画在槽中心（均匀分布 + 命中唯一） */}
+      {layout.count > 0 &&
+        Array.from({ length: layout.count }, (_, tick) => {
+          const entry = entries[entryIndexFor(tick, layout, entries.length)];
+          if (!entry) return null;
+          const isUser = entry.role === "user";
+          const isHovered = hoveredTick === tick;
+          return (
             <div
+              key={tick}
               style={{
-                fontSize: 12,
-                color: isNearest ? "var(--text)" : "var(--text-muted)",
-                lineHeight: 1.4,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                position: "absolute",
+                top: `${tick * layout.slotPct}%`,
+                height: `${layout.slotPct}%`,
+                left: 0,
+                right: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none", // 命中判定由容器 mousemove 统一做，避免子元素抢事件
+                zIndex: 2,
               }}
             >
-              {preview}
+              <div
+                style={{
+                  width: isHovered ? (isUser ? 20 : 15) : isUser ? 14 : 9,
+                  height: isHovered ? 3 : 2,
+                  borderRadius: 2,
+                  background: getTickColor(entry, isHovered),
+                  transition: "width 0.1s, height 0.1s, background 0.1s",
+                }}
+              />
             </div>
+          );
+        })}
+
+      {/* 只渲染悬停那一条的简要（不再全部渲染后互相避让） */}
+      {hoveredEntry && hoveredPreview && (
+        <div
+          style={{
+            position: "absolute",
+            top: tooltipTop,
+            right: "100%",
+            marginRight: 6,
+            background: "var(--bg)",
+            borderTop: "1px solid var(--border)",
+            borderRight: "1px solid var(--border)",
+            borderBottom: "1px solid var(--border)",
+            borderLeft: `2px solid ${
+              hoveredEntry.role === "user" ? "var(--user-border)" : "var(--border)"
+            }`,
+            borderRadius: "var(--radius-control)",
+            padding: "2px 7px",
+            width: 220,
+            zIndex: 100,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--text-dim)",
+              lineHeight: 1.2,
+              marginBottom: 1,
+            }}
+          >
+            {hoveredEntry.role === "user" ? t("minimap.you") : t("minimap.assistant")}
           </div>
-        );
-      })}
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--text)",
+              lineHeight: 1.4,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {hoveredPreview}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
