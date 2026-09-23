@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { resolveCustomPathSelection } from "@/lib/custom-path-selection";
@@ -36,7 +37,7 @@ export function SidebarHeader({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/home")
+    fetch(withBasePath("/api/home"))
       .then((r) => r.json())
       .then((d: { home?: string }) => {
         if (d.home) setHomeDir(d.home);
@@ -68,7 +69,7 @@ export function SidebarHeader({
 
   const handleDefaultCwd = useCallback(async () => {
     try {
-      const res = await fetch("/api/default-cwd", { method: "POST" });
+      const res = await fetch(withBasePath("/api/default-cwd"), { method: "POST" });
       const data = (await res.json()) as { cwd?: string; error?: string };
       if (data.cwd) {
         setCwdPickerError(null);
@@ -112,7 +113,7 @@ export function SidebarHeader({
       >
         {/* π logo（用户提供 piiconsmall.png 提取透明版）：30×30，flexShrink 0 防拉伸变形 */}
         <img
-          src="/pi-logo.png"
+          src={withBasePath("/pi-logo.png")}
           alt="Pi"
           width={30}
           height={30}

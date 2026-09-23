@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import {
   useState,
@@ -464,7 +465,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
             break;
           case "fetchAgentState":
             if (sessionIdRef.current) {
-              fetch(`/api/agent/${encodeURIComponent(sessionIdRef.current)}`)
+              fetch(withBasePath(`/api/agent/${encodeURIComponent(sessionIdRef.current)}`))
                 .then((r) => r.json())
                 .then(
                   (d: {
@@ -649,7 +650,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     pendingSteersRef.current = [];
     pendingPromptsRef.current = [];
 
-    fetch("/api/desktop-settings")
+    fetch(withBasePath("/api/desktop-settings"))
       .then((r) => r.json())
       .then((d: { defaultAgentMode?: AgentMode }) => {
         if (!cancelled && d.defaultAgentMode) setAgentMode(d.defaultAgentMode);
@@ -708,7 +709,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
   // Load global default mode for brand-new sessions
   useEffect(() => {
     if (!isNew) return;
-    fetch("/api/desktop-settings")
+    fetch(withBasePath("/api/desktop-settings"))
       .then((r) => r.json())
       .then(
         (d: {

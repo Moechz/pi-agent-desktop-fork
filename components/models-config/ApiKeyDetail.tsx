@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 
 import { useState, useEffect, useCallback } from "react";
 import type { ApiKeyProvider } from "./types";
@@ -26,7 +27,7 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
     setError(null);
     setSavedOk(false);
     try {
-      const res = await fetch(`/api/auth/api-key/${encodeURIComponent(provider.id)}`, {
+      const res = await fetch(withBasePath(`/api/auth/api-key/${encodeURIComponent(provider.id)}`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
@@ -51,7 +52,7 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
     setRemoving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/auth/api-key/${encodeURIComponent(provider.id)}`, { method: "DELETE" });
+      const res = await fetch(withBasePath(`/api/auth/api-key/${encodeURIComponent(provider.id)}`), { method: "DELETE" });
       const d = await res.json() as { success?: boolean; error?: string };
       if (!res.ok || d.error) setError(d.error ?? `HTTP ${res.status}`);
       else onRefresh();

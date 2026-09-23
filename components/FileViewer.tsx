@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -299,7 +300,7 @@ function ImageViewer({ filePath, cwd }: { filePath: string; cwd?: string }) {
     }
 
     const encoded = encodeFilePathForApi(filePath);
-    const es = new EventSource(`/api/files/${encoded}?type=watch`);
+    const es = new EventSource(withBasePath(`/api/files/${encoded}?type=watch`));
     esRef.current = es;
 
     es.addEventListener("connected", () => setWatching(true));
@@ -435,7 +436,7 @@ function AudioViewer({ filePath, cwd }: { filePath: string; cwd?: string }) {
     }
 
     const encoded = encodeFilePathForApi(filePath);
-    const es = new EventSource(`/api/files/${encoded}?type=watch`);
+    const es = new EventSource(withBasePath(`/api/files/${encoded}?type=watch`));
     esRef.current = es;
 
     es.addEventListener("connected", () => setWatching(true));
@@ -675,7 +676,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
 
   const fetchContent = useCallback((filePath: string, isRefresh = false) => {
     const encoded = encodeFilePathForApi(filePath);
-    return fetch(`/api/files/${encoded}?type=read`)
+    return fetch(withBasePath(`/api/files/${encoded}?type=read`))
       .then((r) => r.json())
       .then((d: FileData & { error?: string }) => {
         if (d.error) {
@@ -704,7 +705,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
     setSaving(true);
     try {
       const encoded = encodeFilePathForApi(filePath);
-      const res = await fetch(`/api/files/${encoded}`, {
+      const res = await fetch(withBasePath(`/api/files/${encoded}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editContent }),
@@ -765,7 +766,7 @@ function TextFileViewer({ filePath, cwd }: Props) {
 
     // Set up SSE watch
     const encoded = encodeFilePathForApi(filePath);
-    const es = new EventSource(`/api/files/${encoded}?type=watch`);
+    const es = new EventSource(withBasePath(`/api/files/${encoded}?type=watch`));
     esRef.current = es;
 
     es.addEventListener("connected", () => {

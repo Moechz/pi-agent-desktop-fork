@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import { useState, useEffect, useCallback } from "react";
 import type { ModelsJson, ModelEntry, ProviderEntry, OAuthProvider, ApiKeyProvider, Selection } from "./models-config/types";
@@ -23,21 +24,21 @@ export function ModelsConfig({ onClose }: { onClose: () => void }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const loadOAuthProviders = useCallback(() => {
-    fetch("/api/auth/providers")
+    fetch(withBasePath("/api/auth/providers"))
       .then((r) => r.json())
       .then((d: { providers: OAuthProvider[] }) => setOauthProviders(d.providers))
       .catch((err) => { console.error("Failed to load OAuth providers:", err); });
   }, []);
 
   const loadApiKeyProviders = useCallback(() => {
-    fetch("/api/auth/all-providers")
+    fetch(withBasePath("/api/auth/all-providers"))
       .then((r) => r.json())
       .then((d: { providers: ApiKeyProvider[] }) => setApiKeyProviders(d.providers))
       .catch((err) => { console.error("Failed to load API key providers:", err); });
   }, []);
 
   useEffect(() => {
-    fetch("/api/models-config")
+    fetch(withBasePath("/api/models-config"))
       .then((r) => r.json())
       .then((d: ModelsJson) => {
         const normalized = d.providers ? d : { ...d, providers: {} };
@@ -139,7 +140,7 @@ export function ModelsConfig({ onClose }: { onClose: () => void }) {
     setSaveError(null);
     setSavedOk(false);
     try {
-      const res = await fetch("/api/models-config", {
+      const res = await fetch(withBasePath("/api/models-config"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         // P11：保存前过滤空 id 模型行，防 TypeBox 校验失败丢掉整个 models.json

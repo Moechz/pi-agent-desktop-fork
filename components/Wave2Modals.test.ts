@@ -11,7 +11,8 @@ const modalSurfaceSource = readFileSync(join(process.cwd(), "components/ModalSur
 
 test("McpConfigContent tests connection via POST /api/mcp/test", () => {
   assert.match(mcpSource, /export function McpConfigContent/);
-  assert.match(mcpSource, /fetch\("\/api\/mcp\/test"/);
+  // 路径经 withBasePath 包裹（TOS 子路径部署）；断言构造点而非字面调用形式
+  assert.match(mcpSource, /withBasePath\("\/api\/mcp\/test"\)/);
   assert.match(mcpSource, /apiJson\("\/api\/mcp\/toggle"/);
 });
 

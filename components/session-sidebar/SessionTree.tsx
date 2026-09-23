@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 
 import { useState, useCallback, useRef } from "react";
 import type { SessionInfo } from "@/lib/types";
@@ -160,7 +161,7 @@ function SessionItem({
     setRenaming(false);
     if (name === (session.name ?? "")) return;
     try {
-      await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, {
+      await fetch(withBasePath(`/api/sessions/${encodeURIComponent(session.id)}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
@@ -181,7 +182,7 @@ function SessionItem({
     setConfirmDelete(false);
     setDeleting(true);
     try {
-      await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, { method: "DELETE" });
+      await fetch(withBasePath(`/api/sessions/${encodeURIComponent(session.id)}`), { method: "DELETE" });
       onDeleted?.(session.id);
     } catch {
       setDeleting(false);

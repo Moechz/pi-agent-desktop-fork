@@ -1,3 +1,5 @@
+import { withBasePath } from "../lib/base-path.ts";
+
 export interface ApiJsonOptions {
   fallback: string;
 }
@@ -15,7 +17,8 @@ export async function apiJson<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(input, init);
+    // TOS 子路径部署：字符串路径统一补 basePath 前缀（无前缀时行为不变）
+    response = await fetch(typeof input === "string" ? withBasePath(input) : input, init);
   } catch {
     throw new Error(options.fallback);
   }

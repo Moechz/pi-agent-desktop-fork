@@ -9,8 +9,13 @@ try {
   piVersion = (JSON.parse(readFileSync(piPkgPath, "utf8")) as { version: string }).version;
 } catch { /* package not found, use default */ }
 
+// TOS 子路径部署：TOS 应用通过 /<appid>/ 访问（前缀保留反代），
+// 构建期传入 TOS_BASE_PATH 即给整站加 basePath；桌面构建不传 → 根路径行为不变
+const tosBasePath = (process.env.TOS_BASE_PATH ?? "").trim().replace(/\/+$/, "");
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  ...(tosBasePath ? { basePath: tosBasePath, assetPrefix: tosBasePath } : {}),
   turbopack: {},
   serverExternalPackages: ["@earendil-works/pi-coding-agent", "@earendil-works/pi-ai"],
   allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.*.*"],
@@ -33,6 +38,7 @@ const nextConfig: NextConfig = {
     ],
   },
   env: {
+    NEXT_PUBLIC_BASE_PATH: tosBasePath,
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_PI_VERSION: piVersion,
   },

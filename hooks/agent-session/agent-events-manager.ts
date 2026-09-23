@@ -1,3 +1,4 @@
+import { withBasePath } from "../../lib/base-path.ts";
 import type { AgentMessage } from "@/lib/types";
 
 /**
@@ -121,7 +122,7 @@ export class AgentEventsManager {
     this.disconnect();
     this.setStatus("connecting");
 
-    const es = new EventSource(`/api/agent/${encodeURIComponent(sid)}/events`);
+    const es = new EventSource(withBasePath(`/api/agent/${encodeURIComponent(sid)}/events`));
     this.eventSource = es;
 
     es.onopen = () => {

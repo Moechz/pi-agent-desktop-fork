@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import type { SessionInfo } from "@/lib/types";
@@ -195,7 +196,7 @@ export function SessionSidebar({
     let alive = true;
     const tick = async () => {
       try {
-        const r = await fetch("/api/sessions");
+        const r = await fetch(withBasePath("/api/sessions"));
         if (!r.ok) return;
         const d = (await r.json()) as { sessions?: SessionInfo[] };
         const fresh = d.sessions ?? [];
@@ -209,7 +210,7 @@ export function SessionSidebar({
         const results = await Promise.all(
           ids.map(async (id) => {
             try {
-              const a = await fetch(`/api/agent/${encodeURIComponent(id)}`);
+              const a = await fetch(withBasePath(`/api/agent/${encodeURIComponent(id)}`));
               if (!a.ok) return [id, false] as const;
               const j = (await a.json()) as { running?: boolean; state?: { isStreaming?: boolean } };
               return [id, !!(j.running && j.state?.isStreaming)] as const;

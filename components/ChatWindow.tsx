@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -304,7 +305,7 @@ export function ChatWindow({ session, newSessionCwd, onNewSessionCwdChange, onAg
           <div className="flex w-full max-w-[820px] flex-col justify-center">
             <div className="mb-8 flex justify-center select-none">
               <Image
-                src="/logo.png"
+                src={withBasePath("/logo.png")}
                 alt=""
                 aria-hidden="true"
                 width={64}

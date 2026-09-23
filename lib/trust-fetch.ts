@@ -1,3 +1,4 @@
+import { withBasePath } from "./base-path.ts";
 /**
  * Retry helper for agent APIs that may return 409 needsTrust.
  */
@@ -27,7 +28,7 @@ export async function ensureTrustThenFetch(
         headers: { "Content-Type": "application/json" },
       });
     }
-    const trustRes = await fetch("/api/trust", {
+    const trustRes = await fetch(withBasePath("/api/trust"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cwd: body.cwd, optionId }),

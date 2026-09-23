@@ -1,3 +1,4 @@
+import { withBasePath } from "../../lib/base-path.ts";
 import type { SessionInfo } from "@/lib/types";
 import { normalizeLocale, translate, type Locale } from "@/lib/i18n";
 
@@ -55,7 +56,7 @@ export async function pickDirectoryFromHost(): Promise<string | null> {
     return electronAPI.selectDirectory();
   }
 
-  const res = await fetch("/api/select-directory", { method: "POST" });
+  const res = await fetch(withBasePath("/api/select-directory"), { method: "POST" });
   let data: { path?: string | null; error?: string };
   try {
     data = await res.json();

@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 import { useI18n } from "@/components/I18nProvider";
 
 import { useCallback, useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
@@ -146,7 +147,7 @@ export function useSessionCommands(opts: UseSessionCommandsOptions) {
             break;
           case "skills": {
             const cwd = newSessionCwd ?? session?.cwd ?? "";
-            fetch(`/api/skills?cwd=${encodeURIComponent(cwd)}`)
+            fetch(withBasePath(`/api/skills?cwd=${encodeURIComponent(cwd)}`))
               .then((res) => res.json())
               .then((d) => {
                 if (d.error) {

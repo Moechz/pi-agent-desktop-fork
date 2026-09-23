@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import React, { useRef, useState, useCallback, useEffect, useImperativeHandle, forwardRef, KeyboardEvent, useLayoutEffect, useMemo } from "react";
 import { buildSlashCommandItems, getSlashTriggerQuery, type SlashCommandItem, type SlashSkill } from "@/lib/slash-commands";
@@ -206,7 +207,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
     setSlashSkillsLoading(true);
     setSlashSkillsError(null);
 
-    fetch(`/api/skills?cwd=${encodeURIComponent(currentCwd)}`, { signal: controller.signal })
+    fetch(withBasePath(`/api/skills?cwd=${encodeURIComponent(currentCwd)}`), { signal: controller.signal })
       .then((r) => r.json())
       .then((d: { skills?: SlashSkill[]; error?: string }) => {
         if (d.error) {
@@ -375,7 +376,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
     let alive = true;
     (async () => {
       try {
-        const r = await fetch("/api/sessions");
+        const r = await fetch(withBasePath("/api/sessions"));
         const d = (await r.json()) as { sessions?: { cwd: string; modified: string }[] };
         const byCwd = new Map<string, string>();
         for (const s of d.sessions ?? []) {
@@ -419,7 +420,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
   const piUseDefault = useCallback(async () => {
     try {
       setPiBusy(true);
-      const r = await fetch("/api/default-cwd", { method: "POST" });
+      const r = await fetch(withBasePath("/api/default-cwd"), { method: "POST" });
       const d = (await r.json()) as { cwd?: string };
       if (d.cwd) piSelect(d.cwd);
     } catch {

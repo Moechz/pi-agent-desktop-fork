@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { OAuthProvider, OAuthLoginState } from "./types";
@@ -36,7 +37,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
     setLoginState({ phase: "connecting" });
     setInputValue("");
 
-    const es = new EventSource(`/api/auth/login/${encodeURIComponent(provider.id)}`);
+    const es = new EventSource(withBasePath(`/api/auth/login/${encodeURIComponent(provider.id)}`));
     eventSourceRef.current = es;
 
     es.onmessage = (e) => {
@@ -83,7 +84,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
   }, [provider.id, onRefresh]);
 
   const handleLogout = useCallback(async () => {
-    await fetch(`/api/auth/logout/${encodeURIComponent(provider.id)}`, { method: "POST" });
+    await fetch(withBasePath(`/api/auth/logout/${encodeURIComponent(provider.id)}`), { method: "POST" });
     setLoginState({ phase: "idle" });
     onRefresh();
   }, [provider.id, onRefresh]);
@@ -92,7 +93,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
     if (!code.trim()) return;
     setLoginState({ phase: "progress", message: "Verifying…" });
     try {
-      const res = await fetch(`/api/auth/login/${encodeURIComponent(provider.id)}`, {
+      const res = await fetch(withBasePath(`/api/auth/login/${encodeURIComponent(provider.id)}`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, code: code.trim() }),
@@ -113,7 +114,7 @@ export function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; 
   const submitSelection = useCallback(async (token: string, value: string) => {
     setLoginState({ phase: "progress", message: "Continuing…" });
     try {
-      const res = await fetch(`/api/auth/login/${encodeURIComponent(provider.id)}`, {
+      const res = await fetch(withBasePath(`/api/auth/login/${encodeURIComponent(provider.id)}`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, code: value }),

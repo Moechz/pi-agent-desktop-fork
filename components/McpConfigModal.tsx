@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import React, { useState, useEffect, useCallback } from "react";
 import type { McpServerStatus, McpServerConfig } from "@/lib/mcp-config";
@@ -98,7 +99,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
     setTestingId(server.id);
     setTestResult(null);
     try {
-      const res = await fetch("/api/mcp/test", {
+      const res = await fetch(withBasePath("/api/mcp/test"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -143,7 +144,7 @@ export function McpConfigContent({ cwd }: McpConfigContentProps) {
         }
       }
 
-      const res = await fetch("/api/mcp/test", {
+      const res = await fetch(withBasePath("/api/mcp/test"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

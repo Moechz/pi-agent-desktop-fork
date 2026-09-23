@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 
 import { useState, useEffect, useCallback } from "react";
 import type { ProviderEntry, ModelEntry, ModelTestState } from "./types";
@@ -68,7 +69,7 @@ export function ModelDetail({
     if (!model.id.trim() || testState.phase === "testing") return;
     setTestState({ phase: "testing" });
     try {
-      const res = await fetch("/api/models-config/test", {
+      const res = await fetch(withBasePath("/api/models-config/test"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ providerName, provider, model }),

@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../lib/base-path.ts";
 
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -263,13 +264,13 @@ export function AppShell() {
           const found = await resolveForkedSession(
             newId,
             async () => {
-              const res = await fetch("/api/sessions");
+              const res = await fetch(withBasePath("/api/sessions"));
               if (!res.ok) return [];
               const data = (await res.json()) as { sessions: SessionInfo[] };
               return data.sessions;
             },
             async (id) => {
-              const res = await fetch(`/api/sessions/${encodeURIComponent(id)}`);
+              const res = await fetch(withBasePath(`/api/sessions/${encodeURIComponent(id)}`));
               if (!res.ok) return null;
               const data = (await res.json()) as { info?: SessionInfo | null };
               return data.info ?? null;
@@ -397,7 +398,7 @@ export function AppShell() {
           }
           if (!targetEntryId) {
             try {
-              const res = await fetch(`/api/sessions/${encodeURIComponent(s.id)}`);
+              const res = await fetch(withBasePath(`/api/sessions/${encodeURIComponent(s.id)}`));
               if (res.ok) {
                 const data = (await res.json()) as { context?: { entryIds?: string[] } };
                 if (data.context?.entryIds?.length) {

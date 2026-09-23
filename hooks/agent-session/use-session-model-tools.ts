@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "../../lib/base-path.ts";
 
 import { useCallback, useEffect, useState } from "react";
 import { sendAgentCommand } from "@/lib/agent-client";
@@ -104,7 +105,7 @@ export function useSessionModelTools(opts: UseSessionModelToolsOptions) {
   );
 
   useEffect(() => {
-    fetch("/api/models")
+    fetch(withBasePath("/api/models"))
       .then((r) => r.json())
       .then(
         (d: {
