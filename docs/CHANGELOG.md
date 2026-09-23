@@ -9,14 +9,15 @@
 
 # Changelog
 
-## 2026-09-23 — 发布 v0.8.8-6（替代未产出资产的 v0.8.8-5）
+## 2026-09-23 — 发布 v0.8.8-6（Windows 工具能力补齐）
 
 | 类别 | 内容 |
 |---|---|
-| 背景 | v0.8.8-5 的 Release 由某轮工作流提前建为空壳（created 09:11），上传 job 走「已存在」分支后 `gh release upload` 两次均报成功但资产始终为 0；重跑单 job 仍复现 → 改为切全新 tag |
-| 处置 | 删除空 Release 与 v0.8.8-5 tag，版本升至 0.8.8-6，内容与 0.8.8-5 一致（Windows 工具能力补齐 + 中断提示文案） |
-| 备注 | 经验：Release 若被提前创建，后续上传可能静默失效；发版保持「全新 tag → 工作流 create+upload」路径最稳 |
-
+| 内容 | Windows 工具能力补齐（preset 用 powershell + 默认带 grep/find/ls + 随包内置 rg/fd）+ NewAPI 网关 422 兼容 + Titlebar Overlay 修复 + 中断提示文案 |
+| 发版 | `v0.8.8-6` 全新 tag；三平台打包成功，10 个资产齐全（Windows exe 181MB / macOS DMG 323MB / Linux deb 178MB） |
+| 勘误 | 排查期间一度判定「上传静默失效、资产为 0」，实为**代理下 GitHub API 资产列表陈旧**（`/releases` 列表端点与 `/releases/tags/<tag>` 均返回 assets=0，而 `/releases/<id>` 与按 id 的 assets 端点为 10；公网 HEAD 下载亦 200 正常）。教训：**校验资产一律按 release id 查或直接 HEAD 探测下载，不要用列表端点的 assets 字段** |
+| 代价 | 因误判删除了内容相同的 v0.8.8-5（其 tag 与 Release 已清理，未对外分发过链接，无影响） |
+| 经验 | ① tag 推送后 Release 对象会在工作流启动前若干秒被创建（v0.8.8-4 同样如此且资产正常），属正常现象；② 长任务用后台运行 + 短轮询，避免工具超时中断对话 |
 
 ## 2026-09-23 — 发布 v0.8.8-5：Windows 工具能力补齐（同事反馈）
 
