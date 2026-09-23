@@ -13,6 +13,7 @@ import { BranchNavigator } from "./BranchNavigator";
 import { ExtensionsConfigModal } from "./ExtensionsConfigModal";
 import { SessionExportModal } from "./SessionExportModal";
 import { BranchCloneModal, type BranchCloneMode } from "./BranchCloneModal";
+import { DirectoryPickerHost } from "./DirectoryPickerHost";
 import { useTheme } from "@/hooks/useTheme";
 import type { SessionInfo, SessionTreeNode } from "@/lib/types";
 import type { ChatInputHandle } from "./ChatInput";
@@ -833,6 +834,7 @@ export function AppShell() {
         onClose={() => setExportModalOpen(false)}
         sessionId={exportSessionId ?? selectedSession?.id ?? null}
       />
+      <DirectoryPickerHost />
       <BranchCloneModal
         isOpen={branchCloneModal.isOpen}
         onClose={() => setBranchCloneModal((prev) => ({ ...prev, isOpen: false }))}

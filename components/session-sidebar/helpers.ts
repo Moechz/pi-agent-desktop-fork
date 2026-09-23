@@ -1,4 +1,6 @@
 import { withBasePath } from "../../lib/base-path.ts";
+import { isDirectoryPickerAvailable, requestDirectoryPick } from "../../lib/directory-picker.ts";
+import { isTosApiAvailable } from "../../lib/tos-api.ts";
 import type { SessionInfo } from "@/lib/types";
 import { normalizeLocale, translate, type Locale } from "@/lib/i18n";
 
@@ -54,6 +56,12 @@ export async function pickDirectoryFromHost(): Promise<string | null> {
   const electronAPI = (window as Window & { electronAPI?: ElectronAPI }).electronAPI;
   if (electronAPI?.selectDirectory) {
     return electronAPI.selectDirectory();
+  }
+
+  // TOS（浏览器）环境：用 TOS 官方文件管理 API 的应用内目录选择器
+  // （桌面版 Electron 原生弹窗优先；两者都没有时才走服务端回退）
+  if (isTosApiAvailable() && isDirectoryPickerAvailable()) {
+    return requestDirectoryPick();
   }
 
   const res = await fetch(withBasePath("/api/select-directory"), { method: "POST" });
