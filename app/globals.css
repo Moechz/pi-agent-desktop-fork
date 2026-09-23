@@ -1009,10 +1009,6 @@ span.linenumber {
 }
 
 /* macOS traffic lights occupy the left side of the hidden title bar. */
-html[data-electron-platform="darwin"] .sidebar-title-row .pi-agent-title {
-  display: none;
-}
-
 .macos-titlebar-leading-safe-area {
   width: 0;
   height: 100%;

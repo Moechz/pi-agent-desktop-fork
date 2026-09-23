@@ -1,7 +1,9 @@
 import { existsSync } from "fs";
 import { unlink } from "fs/promises";
 import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 import { createAgentSession, SessionManager } from "@earendil-works/pi-coding-agent";
+import { applyGatewayDeveloperRoleCompat } from "./gateway-compat.ts";
 import { cacheSessionPath, invalidateSessionPathCache } from "./session-reader.ts";
 import type { AgentSessionLike, ToolInfo } from "./pi-types";
 import {
@@ -822,6 +824,10 @@ export async function startRpcSession(
     // Pi 0.82+: empty tools allowlist is expressed via noTools: "all"
     const createOptions =
       effectiveTools.length === 0 ? { noTools: "all" as const } : { tools: effectiveTools };
+
+    // P24：agent 会话自建 ModelRuntime（不经过 lib/pi-runtime），这里同样做网关兼容兜底
+    // —— 保证真正发模型请求的这条路径也拿到 compat.supportsDeveloperRole=false
+    applyGatewayDeveloperRoleCompat(join(agentDir, "models.json"));
 
     const { session: inner } = await createAgentSession({
       cwd,

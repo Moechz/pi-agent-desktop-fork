@@ -22,3 +22,18 @@ test("applyTitleBarOverlayTheme applies dark and light window colors", () => {
     { color: "#ffffff", symbolColor: "#364152" },
   ]);
 });
+
+test("applyTitleBarOverlayTheme 吞掉 Windows 的 'overlay not enabled' 异常（P22 回归修复）", () => {
+  let calls = 0;
+  const target = {
+    setTitleBarOverlay: () => {
+      calls += 1;
+      throw new TypeError("Titlebar overlay is not enabled");
+    },
+  };
+  // 首次调用抛异常 → 返回 false 且不外抛
+  assert.equal(applyTitleBarOverlayTheme(target, true), false);
+  // 同一窗口第二次直接跳过（WeakSet 记忆），不再触发异常
+  assert.equal(applyTitleBarOverlayTheme(target, false), false);
+  assert.equal(calls, 1);
+});

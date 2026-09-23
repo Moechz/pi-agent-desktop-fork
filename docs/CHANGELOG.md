@@ -9,6 +9,16 @@
 
 # Changelog
 
+## 2026-09-22 — 修两处反馈（NewAPI/DeepSeek 422 + Windows Titlebar Overlay 异常）+ 测试基线修复
+
+| 类别 | 内容 |
+|---|---|
+| 网关兼容 | NewAPI/OneAPI 等第三方网关调 DeepSeek 报 `422 messages[0].role: unknown variant \`developer\`` ← pi 对 reasoning 模型默认用 developer role。新增 `lib/gateway-compat.ts`：对 models.json 中自定义 openai-completions provider 未显式声明 `compat.supportsDeveloperRole` 时自动补写 `false`（改用 system role）；显式声明优先、官方 OpenAI/Azure 跳过、幂等。接入 `lib/pi-runtime.ts`（模型 API 路径）与 `lib/rpc-manager.ts`（agent 会话路径，真正发请求处）。文档依据：pi docs/models.md「Some OpenAI-compatible servers do not understand the developer role」 |
+| Windows 崩溃 | 主进程弹「A JavaScript error occurred in the main process / TypeError: Titlebar overlay is not enabled」← **我们的 P22 回归**：窗口已移除 `titleBarOverlay`（原生遮盖条），但 set-theme IPC 仍调用 `setTitleBarOverlay`（Windows 上函数存在→调用即抛）。`electron/title-bar-overlay.ts` 改为 try/catch + 按窗口 WeakSet 记忆，静默降级 |
+| 测试基线 | 修 3 处 P 系迁移遗留的陈旧断言：panel-layout 侧栏默认宽 260→347（P5）、electron-titlebar-layout 引用已删除的 `PiAgentTitle.tsx` 与 11px/ml-auto 旧值（改断言 `pi-title-light/dark` 与 13px、右对齐）；顺带移除 globals.css 中已无元素使用的死规则 `.pi-agent-title{display:none}`。`npm test` 612 通过 / 0 失败；`tsc --noEmit` 零错误 |
+| 构建脚本 | `build:standalone` 里目录补丁移到 `next build` 之后（package.test.ts 要求以 next build 开头；pi-ai 为运行时依赖，位置不影响生效，且仍在拷贝运行时包之前） |
+
+
 ## 2026-09-22 — 发布 v0.8.8-3
 
 | 类别 | 内容 |

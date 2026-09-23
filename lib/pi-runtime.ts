@@ -9,6 +9,7 @@ import {
   getAgentDir,
 } from "@earendil-works/pi-coding-agent";
 import type { AuthInteraction, AuthType } from "@earendil-works/pi-ai";
+import { applyGatewayDeveloperRoleCompat } from "./gateway-compat.ts";
 import { join } from "path";
 
 export type { AuthInteraction, AuthType };
@@ -32,9 +33,13 @@ export async function createPiRuntime(options: CreatePiRuntimeOptions = {}): Pro
 }> {
   const agentDir = getAgentDir();
   const cwd = options.cwd ?? process.cwd();
+  const modelsPath = options.modelsPath === undefined ? join(agentDir, "models.json") : options.modelsPath;
+  // P24：第三方网关（NewAPI/OneAPI 等）不认 `developer` role → 409/422。此处对自定义
+  // openai-completions provider 做兼容兜底（未显式声明时才补写，幂等）。
+  applyGatewayDeveloperRoleCompat(modelsPath);
   const runtime = await ModelRuntime.create({
     authPath: options.authPath ?? join(agentDir, "auth.json"),
-    modelsPath: options.modelsPath === undefined ? join(agentDir, "models.json") : options.modelsPath,
+    modelsPath,
     allowModelNetwork: options.allowModelNetwork ?? false,
   });
   const services = await createAgentSessionServices({
