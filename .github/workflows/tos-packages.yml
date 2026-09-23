@@ -82,24 +82,38 @@ jobs:
           DEB="$(ls tos/dist/*.deb)"
           echo "== $DEB =="
           test -f "$DEB.sha256"
-          members="$(ar t "$DEB" | tr '\n' ' ')"
+
+          # 注意：set -o pipefail 下 `tar … | grep -q` 会因 grep 提前退出给 tar 发 SIGPIPE
+          # 造成 "tar: stdout: write error" 假失败（指南坑 33）——一律先落清单再查。
+          ar t "$DEB" > members.txt
+          members="$(tr '\n' ' ' < members.txt)"
           echo "ar 成员: $members"
           for m in debian-binary control.tar.gz data.tar.xz; do
-            echo "$members" | grep -qw "$m" || { echo "缺少成员 $m"; exit 1; }
+            grep -qx "$m" members.txt || { echo "缺少成员 $m"; exit 1; }
           done
+
           mkdir -p /tmp/debcheck && cd /tmp/debcheck && rm -rf ./*
           ar x "$OLDPWD/$DEB"
-          # 注意：set -o pipefail 下 tar | head 会因 SIGPIPE 假失败（指南坑 33）
           tar xzf control.tar.gz -O ./control > control.txt
           head -8 control.txt
           grep -q '^Package: piagentfortos$' control.txt
           grep -q '^Architecture: ${{ matrix.arch }}$' control.txt
           grep -q '^Depends: git' control.txt
-          tar tJf data.tar.xz | grep -qx './usr/local/piagentfortos/bin/node'
-          tar tJf data.tar.xz | grep -qx './usr/local/piagentfortos/standalone/server.js'
-          tar tJf data.tar.xz | grep -qx './usr/local/piagentfortos/PROVENANCE.md'
-          tar tJf data.tar.xz | grep -qx './etc/systemd/system/piagentfortos.service'
-          tar tJf data.tar.xz | grep -qx './etc/nginx/conf.d/piagentfortos.conf'
+
+          tar tJf data.tar.xz > data-list.txt
+          for f in \
+            ./usr/local/piagentfortos/bin/node \
+            ./usr/local/piagentfortos/standalone/server.js \
+            ./usr/local/piagentfortos/config.ini \
+            ./usr/local/piagentfortos/piagentfortos.lang \
+            ./usr/local/piagentfortos/images/icons/piagentfortos.svg \
+            ./usr/local/piagentfortos/PROVENANCE.md \
+            ./usr/local/piagentfortos/BUILD-INFO \
+            ./usr/local/piagentfortos/webui.bz2 \
+            ./etc/systemd/system/piagentfortos.service \
+            ./etc/nginx/conf.d/piagentfortos.conf ; do
+            grep -qx "$f" data-list.txt || { echo "data 包缺少 $f"; exit 1; }
+          done
           echo "结构复核通过"
 
       - uses: actions/upload-artifact@v4
