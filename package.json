@@ -1,6 +1,6 @@
 {
   "name": "@chasen-liao/pi-agent-desktop",
-  "version": "0.8.8-4",
+  "version": "0.8.8-5",
   "description": "Pi Agent Desktop — desktop client for the pi coding agent",
   "license": "MIT",
   "author": "Moechz",
@@ -33,10 +33,10 @@
     "release": "npm version patch --no-git-tag-version && npm run build:standalone && npm publish --access public",
     "build:electron": "tsc -p electron/tsconfig.json && node -e \"const fs=require('fs'); fs.copyFileSync('electron/startup.html', 'electron/dist/startup.html'); fs.copyFileSync('electron/startup.js', 'electron/dist/startup.js')\"",
     "dev:electron": "npm run build:electron && npx electron .",
-    "pack": "npm run build:standalone && npm run build:electron && npx electron-builder --dir && node scripts/smoke-packaged-standalone.mjs",
-    "pack:mac": "npm run build:standalone && npm run build:electron && npx electron-builder --mac --universal --dir && node scripts/smoke-packaged-standalone.mjs",
-    "dist": "npm run build:standalone && npm run build:electron && npx electron-builder --publish never && node scripts/smoke-packaged-standalone.mjs",
-    "dist:mac": "npm run build:standalone && npm run build:electron && npx electron-builder --mac --universal --publish never && node scripts/smoke-packaged-standalone.mjs"
+    "pack": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --dir && node scripts/smoke-packaged-standalone.mjs",
+    "pack:mac": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --mac --universal --dir && node scripts/smoke-packaged-standalone.mjs",
+    "dist": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --publish never && node scripts/smoke-packaged-standalone.mjs",
+    "dist:mac": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --mac --universal --publish never && node scripts/smoke-packaged-standalone.mjs"
   },
   "build": {
     "extends": "electron-builder.yml"

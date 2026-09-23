@@ -15,6 +15,11 @@ files:
   - "!electron/tsconfig.json"
 
 extraResources:
+  # 随包搜索工具（rg/fd），由 scripts/fetch-tool-binaries.mjs 在构建期拉取
+  - from: vendor/bin
+    to: bin
+    filter:
+      - "**/*"
   - from: .next/standalone
     to: standalone
     filter:

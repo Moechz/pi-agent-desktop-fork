@@ -10,6 +10,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import type { AuthInteraction, AuthType } from "@earendil-works/pi-ai";
 import { applyGatewayDeveloperRoleCompat } from "./gateway-compat.ts";
+import { installBundledTools } from "./bundled-tools.ts";
 import { join } from "path";
 
 export type { AuthInteraction, AuthType };
@@ -37,6 +38,8 @@ export async function createPiRuntime(options: CreatePiRuntimeOptions = {}): Pro
   // P24：第三方网关（NewAPI/OneAPI 等）不认 `developer` role → 409/422。此处对自定义
   // openai-completions provider 做兼容兜底（未显式声明时才补写，幂等）。
   applyGatewayDeveloperRoleCompat(modelsPath);
+  // 随包搜索工具（rg/fd）→ ~/.pi/agent/bin：让 grep/find 无需联网下载即可用
+  installBundledTools();
   const runtime = await ModelRuntime.create({
     authPath: options.authPath ?? join(agentDir, "auth.json"),
     modelsPath,

@@ -6,9 +6,20 @@
 export type AgentMode = "plan" | "ask" | "full";
 export type ToolPreset = "none" | "default" | "full";
 
+/**
+ * 当前平台的 shell 工具名：Windows 上是 pi 的 `powershell` 工具；
+ * `bash` 在 Windows 需已安装 Git Bash，否则执行时报「No bash shell found」→ 同事端表现为「不能执行命令」。
+ */
+export const SHELL_TOOL: string = process.platform === "win32" ? "powershell" : "bash";
+
+/** 只读检索类工具：列目录 / 搜文件名 / 搜内容（预置默认带着，否则「不能列目录、不能搜索」） */
+export const READ_SEARCH_TOOLS: readonly string[] = ["grep", "find", "ls"];
+
 export const PLAN_TOOLS: readonly string[] = ["read", "grep", "find", "ls"];
 export const ASK_CONFIRM_TOOLS: readonly string[] = [
+  SHELL_TOOL,
   "bash",
+  "powershell",
   "write",
   "edit",
   // LTM write/delete channels mutate durable project memory; keep them behind
@@ -18,8 +29,8 @@ export const ASK_CONFIRM_TOOLS: readonly string[] = [
 ];
 
 export const PRESET_NONE: readonly string[] = [];
-export const PRESET_DEFAULT: readonly string[] = ["read", "bash", "edit", "write"];
-export const PRESET_FULL: readonly string[] = ["bash", "read", "edit", "write", "grep", "find", "ls"];
+export const PRESET_DEFAULT: readonly string[] = ["read", SHELL_TOOL, "edit", "write", ...READ_SEARCH_TOOLS];
+export const PRESET_FULL: readonly string[] = [SHELL_TOOL, "read", "edit", "write", ...READ_SEARCH_TOOLS];
 
 export const DEFAULT_AGENT_MODE: AgentMode = "full";
 export const DEFAULT_TOOL_PRESET: ToolPreset = "default";
@@ -66,9 +77,9 @@ export function summarizeToolCall(toolName: string, input: unknown): string {
     return `${toolName}(${JSON.stringify(input ?? {})})`;
   }
   const obj = input as Record<string, unknown>;
-  if (toolName === "bash" && typeof obj.command === "string") {
+  if ((toolName === "bash" || toolName === "powershell") && typeof obj.command === "string") {
     const cmd = obj.command.length > 200 ? `${obj.command.slice(0, 200)}…` : obj.command;
-    return `bash: ${cmd}`;
+    return `${toolName}: ${cmd}`;
   }
   if ((toolName === "write" || toolName === "edit") && typeof obj.path === "string") {
     return `${toolName}: ${obj.path}`;

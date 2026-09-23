@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { createAgentSession, SessionManager } from "@earendil-works/pi-coding-agent";
 import { applyGatewayDeveloperRoleCompat } from "./gateway-compat.ts";
+import { installBundledTools } from "./bundled-tools.ts";
 import { cacheSessionPath, invalidateSessionPathCache } from "./session-reader.ts";
 import type { AgentSessionLike, ToolInfo } from "./pi-types";
 import {
@@ -828,6 +829,9 @@ export async function startRpcSession(
     // P24：agent 会话自建 ModelRuntime（不经过 lib/pi-runtime），这里同样做网关兼容兜底
     // —— 保证真正发模型请求的这条路径也拿到 compat.supportsDeveloperRole=false
     applyGatewayDeveloperRoleCompat(join(agentDir, "models.json"));
+
+    // 随包搜索工具（rg/fd）先就位：grep/find 首次使用不至于要联网下载（国内常失败）
+    installBundledTools();
 
     const { session: inner } = await createAgentSession({
       cwd,

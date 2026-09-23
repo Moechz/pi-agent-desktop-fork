@@ -9,6 +9,16 @@
 
 # Changelog
 
+## 2026-09-23 — 发布 v0.8.8-5：Windows 工具能力补齐（同事反馈）
+
+| 类别 | 内容 |
+|---|---|
+| 根因 | ① 预设只有 `bash`：Windows 上 pi 的 bash 需 Git Bash，缺装即「No bash shell found」→ 不能执行命令；② 默认预置缺 `grep/find/ls` → 不能列目录/搜文件；③ `grep/find` 依赖的 rg/fd 由 pi **运行时**从 GitHub 下载（国内失败）→ 搜索等于不可用 |
+| 修复 | `lib/approval-policy.ts`：新增平台感知 `SHELL_TOOL`（win32→powershell，其他→bash），默认/完整预置补 `grep/find/ls`，ASK_CONFIRM 与 summarize 兼容 powershell；新增 `lib/bundled-tools.ts` + `scripts/fetch-tool-binaries.mjs`：构建期按平台拉取 rg/fd → 打包进 `resources/bin` → 首次启动复制到 `~/.pi/agent/bin`（pi 的 ensureTool 命中本地文件即不再联网）；`electron-builder.yml` extraResources 与四个打包脚本接入 |
+| 验证 | 单元测试 4 项（复制/幂等/来源选择/平台过滤）+ 真机验证：rg 15.2.0、fd 10.5.0 落位并可执行，pi 的 getToolPath 命中该目录；全量 `npm test` 616 通过 0 失败 |
+| 发版 | `0.8.8-5`，发布说明 `docs/releases/v0.8.8-5.md` |
+
+
 ## 2026-09-22 — 发布 v0.8.8-4
 
 | 类别 | 内容 |
