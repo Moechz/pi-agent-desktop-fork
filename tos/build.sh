@@ -16,6 +16,7 @@
 # ============================================================================
 set -euo pipefail
 
+CALLER_PWD="$PWD"
 cd "$(dirname "$0")"
 TOS_DIR="$PWD"
 REPO_DIR="$(cd .. && pwd)"
@@ -26,7 +27,13 @@ BUILD_STANDALONE=0
 ARCH_OVERRIDE=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --standalone) STANDALONE="$2"; shift 2 ;;
+    --standalone)
+      # 调用方的 cwd 可能与脚本目录不同，这里立刻解析为绝对路径（下方会 cd 到 tos/）
+      case "$2" in
+        /*) STANDALONE="$2" ;;
+        *) STANDALONE="$CALLER_PWD/$2" ;;
+      esac
+      shift 2 ;;
     --build-standalone) BUILD_STANDALONE=1; shift ;;
     --arch) ARCH_OVERRIDE="$2"; shift 2 ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
@@ -153,7 +160,10 @@ if [ "$BUILD_STANDALONE" = 1 ]; then
   STANDALONE="$REPO_DIR/.next/standalone"
 fi
 if [ -z "$STANDALONE" ] || [ ! -d "$STANDALONE" ]; then
-  echo "❌ 缺少应用本体：请用 --standalone <dir> 指定已构建的 .next/standalone，或用 --build-standalone" >&2
+  echo "❌ 缺少应用本体：--standalone 指向的目录不存在" >&2
+  echo "   解析后路径: ${STANDALONE:-（未提供）}" >&2
+  echo "   当前工作目录: $PWD（调用方: $CALLER_PWD）" >&2
+  echo "   请用 --standalone <dir>（相对调用方 cwd 或绝对路径）或 --build-standalone" >&2
   exit 1
 fi
 echo "  应用本体: $STANDALONE"
