@@ -1,11 +1,8 @@
 Package: piagentfortos
-Version: @VERSION@
-Architecture: @ARCH@
-Maintainer: @MAINTAINER@
-Installed-Size: @SIZE@
-# git 是硬依赖：agent 会在用户项目里执行 git 提交/分支（会话分支功能亦依赖 worktree）。
-# 目标真机 tnas-57 自带 git 2.34.1，但其它机型可能没有 —— 交给包管理器按需安装
-# （注意：绝不能在 postinst 里联网安装，那是商店 S8 一票否决项）。
+Version: @@VERSION@@
+Architecture: @@ARCH@@
+Maintainer: @@MAINTAINER@@
+Installed-Size: @@SIZE@@
 Depends: git, systemd
 Section: utils
 Priority: optional

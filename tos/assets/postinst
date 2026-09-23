@@ -1,0 +1,180 @@
+#!/bin/bash
+# postinst —— 安装/升级后处理
+#
+# 职责分工：包只负责分发"组件树"（/usr/local/piagentfortos 下的 node 运行时、
+# standalone、配置模板、单元、nginx 片段），postinst 负责全部**派生状态**：
+# 属主、webui 解压、数据卷选择、系统层注册（服务 + nginx）、首装配置引导、启动与就绪检查。
+# 经 TOS 应用中心安装时平台也会做部分注册动作，本脚本全部幂等，两条安装路径行为一致。
+set -e
+
+APP_ID=piagentfortos
+APP_USER=piagentfortos
+APP_DIR=/usr/local/$APP_ID
+DATA_DEFAULT=/var/lib/$APP_ID
+APP_PORT=18141
+BASE_PATH=/piagentfortos
+MAINT_LOG=/var/log/${APP_ID}-maint.log
+
+pkg_log() {
+  mkdir -p /var/log 2>/dev/null || true
+  echo "$(date '+%F %T') $*" >> "$MAINT_LOG" 2>/dev/null || true
+}
+pkg_log postinst "$1" "new=@VERSION@${2:+ old=$2}"
+
+# 探测 NAS 的局域网 IP（用于安装结束提示）
+detect_ip() {
+  local ip=""
+  if command -v ip > /dev/null 2>&1; then
+    ip=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src"){print $(i+1); exit}}')
+  fi
+  [ -n "$ip" ] || ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+  echo "$ip"
+}
+
+case "$1" in
+  configure)
+    # 1. 用户兜底（preinst 已建；平台安装路径也会创建）
+    if ! id -u "$APP_USER" > /dev/null 2>&1; then
+      useradd --system --user-group --no-create-home --shell /usr/sbin/nologin "$APP_USER" 2>/dev/null || true
+    fi
+
+    # 2. 应用目录属主（node 运行时与 standalone 都归运行用户）
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR" 2>/dev/null || true
+
+    # 3. 解压 webui.bz2（官方模板行为；External Open 模式下是占位落地页）
+    if [ -f "$APP_DIR/webui.bz2" ]; then
+      ( cd "$APP_DIR" && tar -xjf webui.bz2 2>/dev/null || true )
+    fi
+    # 3b. 平台目录（@apps）存在时同步落地页，与其它应用形态保持一致
+    for base in /Volume1/@apps /Volume2/@apps; do
+      if [ -d "$base/$APP_ID" ] && [ -f "$APP_DIR/index.html" ]; then
+        install -m 0644 -o "$APP_USER" -g "$APP_USER" "$APP_DIR/index.html" "$base/$APP_ID/index.html" 2>/dev/null || true
+      fi
+    done
+
+    # 4. 首装配置引导：仅在不存在时从 .example 复制（升级永不覆盖用户配置，坑 2）
+    if [ ! -e "$APP_DIR/$APP_ID.env" ] && [ -e "$APP_DIR/$APP_ID.env.example" ]; then
+      install -m 0640 -o "$APP_USER" -g "$APP_USER" "$APP_DIR/$APP_ID.env.example" "$APP_DIR/$APP_ID.env"
+      pkg_log postinst bootstrap "$APP_ID.env 首装"
+    fi
+
+    # 5. 数据目录：优先放数据卷（系统盘往往很小，会话/记忆会持续增长），
+    #    并把结果写进 env 覆盖单元里的安全默认值（EnvironmentFile 优先级更高）。
+    VOL=""
+    for candidate in /Volume1 /Volume2 /Volume3 /Volume4 /volume1 /volume2; do
+      if [ -d "$candidate" ]; then VOL="$candidate"; break; fi
+    done
+    if [ -n "$VOL" ]; then
+      TARGET_DATA="$VOL/@apps/$APP_ID/data"
+    else
+      TARGET_DATA="$DATA_DEFAULT"
+    fi
+    mkdir -p "$TARGET_DATA/agent" "$TARGET_DATA/workspace" "$DATA_DEFAULT/agent"
+    chown -R "$APP_USER:$APP_USER" "$TARGET_DATA" "$DATA_DEFAULT" 2>/dev/null || true
+
+    if [ "$TARGET_DATA" != "$DATA_DEFAULT" ] && [ -e "$APP_DIR/$APP_ID.env" ]; then
+      ENV_FILE="$APP_DIR/$APP_ID.env"
+      if ! grep -q '^HOME=' "$ENV_FILE" 2>/dev/null; then
+        printf '\n# 以下两行由 postinst 依据数据卷自动写入（数据放数据卷，不占系统盘）\nHOME=%s\n' "$TARGET_DATA" >> "$ENV_FILE"
+        pkg_log postinst "数据目录重定向到 $TARGET_DATA"
+      fi
+      if ! grep -q '^PI_CODING_AGENT_DIR=' "$ENV_FILE" 2>/dev/null; then
+        printf 'PI_CODING_AGENT_DIR=%s/agent\n' "$TARGET_DATA" >> "$ENV_FILE"
+      fi
+      chown "$APP_USER:$APP_USER" "$ENV_FILE" 2>/dev/null || true
+    fi
+    pkg_log postinst "数据目录=$TARGET_DATA（可用空间 $(df -Pk "$TARGET_DATA" 2>/dev/null | awk 'NR==2{print int($4/1024)"MB"}')）"
+
+    # 6. 装机探测 NoNewPrivileges 下的 execve 兼容性（指南坑 23）：
+    #    个别 TOS 构建在 NNP 下拒绝一切 exec → 服务 203/EXEC。仅探测失败时装最小降级
+    #    drop-in（只关 NNP，其余沙箱与用户不变）；探测正常则清理本包自己的旧降级文件。
+    DROPIN_DIR=/etc/systemd/system/$APP_ID.service.d
+    DROPIN=$DROPIN_DIR/80-$APP_ID-exec-compat.conf
+    if systemd-run --wait --collect -p NoNewPrivileges=true /bin/true > /dev/null 2>&1; then
+      rm -f "$DROPIN" 2>/dev/null || true
+      rmdir "$DROPIN_DIR" 2>/dev/null || true
+      pkg_log postinst "NNP exec 探测通过，无需兼容 drop-in"
+    else
+      mkdir -p "$DROPIN_DIR"
+      printf '[Service]\n# 本机内核/安全策略在 NoNewPrivileges 下拒绝 execve（203/EXEC）\nNoNewPrivileges=false\n' > "$DROPIN"
+      chmod 0644 "$DROPIN"
+      pkg_log postinst "NNP exec 探测失败，已安装降级 drop-in（NoNewPrivileges=false）"
+      echo "提示: 本机在 NoNewPrivileges 下 exec 异常，已自动降级 NNP 以保证服务可启动。" >&2
+    fi
+
+    # 7. 系统层注册：单元以 dpkg 实体文件落 /etc/systemd/system（不依赖平台拷贝），
+    #    init.d/ 只放这一个主服务单元（多单元会卡死 TOS 应用中心安装流程，坑 11）。
+    install -m 0644 "$APP_DIR/init.d/$APP_ID.service" /etc/systemd/system/$APP_ID.service
+    systemctl daemon-reload
+
+    # 升级路径 prerm 只停不拆 → 这里两条路径都幂等 enable（坑 3）
+    systemctl enable $APP_ID.service > /dev/null 2>&1 || true
+    if [ -n "${2:-}" ]; then
+      systemctl restart $APP_ID.service 2>/dev/null || true
+    else
+      systemctl start $APP_ID.service 2>/dev/null || true
+    fi
+
+    # 8. nginx 路由：写入 /etc/nginx/conf.d 后立即 nginx -t 校验，
+    #    失败立刻回滚，绝不留下会让 nginx 无法 reload 的配置（坑 5）。
+    if command -v nginx > /dev/null 2>&1 && [ -d /etc/nginx/conf.d ]; then
+      install -m 0644 "$APP_DIR/nginx/$APP_ID.conf" /etc/nginx/conf.d/$APP_ID.conf
+      if nginx -t > /dev/null 2>&1; then
+        nginx -s reload > /dev/null 2>&1 || true
+        pkg_log postinst "nginx 路由已注册 /$APP_ID/"
+      else
+        rm -f /etc/nginx/conf.d/$APP_ID.conf
+        pkg_log postinst "nginx -t 失败，已回滚 conf.d 注册"
+        echo "提示: 本机 nginx 的 conf.d 不在 server 上下文，已跳过自动注册 /$APP_ID/。" >&2
+        echo "      可手工把 $APP_DIR/nginx/$APP_ID.conf 的 location 段加入对应 server 块。" >&2
+      fi
+    fi
+
+    # 9. 就绪检查（坑 26：restart 成功 ≠ 就绪；轮询 30s，超时打有限快照）
+    ready=0
+    if command -v curl > /dev/null 2>&1; then
+      for _ in $(seq 1 30); do
+        if curl -fsS --max-time 2 "http://127.0.0.1:${APP_PORT}${BASE_PATH}/" -o /dev/null 2>/dev/null; then
+          ready=1
+          break
+        fi
+        sleep 1
+      done
+    else
+      sleep 2
+      systemctl is-active --quiet $APP_ID.service && ready=1
+    fi
+    if [ "$ready" = 1 ]; then
+      pkg_log postinst "就绪（127.0.0.1:${APP_PORT}${BASE_PATH}/ 响应）"
+    else
+      echo "警告: ${APP_ID} 30s 内未就绪，排查: journalctl -u $APP_ID -n 50 --no-pager" >&2
+      systemctl --no-pager -l status $APP_ID.service 2>/dev/null | head -20 >> "$MAINT_LOG" 2>/dev/null || true
+    fi
+
+    # 10. git 依赖提示（本包声明 Depends: git，但手动 dpkg -i 不解析依赖）
+    if ! command -v git > /dev/null 2>&1; then
+      echo "提示: 未检测到 git —— 智能体的本地提交与会话分支功能将不可用。" >&2
+      echo "      安装: apt-get install -y git" >&2
+      pkg_log postinst "警告：git 缺失（代码提交/会话分支功能受限）"
+    fi
+
+    # 11. 收尾
+    NAS_IP=$(detect_ip)
+    pkg_log postinst done "@VERSION@"
+    echo ""
+    if [ -n "${2:-}" ]; then
+      echo "Pi Agent for TOS @VERSION@ 已完成升级（自 $2）。"
+    else
+      echo "Pi Agent for TOS @VERSION@ 已安装。"
+    fi
+    echo "  打开界面 : TOS 桌面 → Pi Agent for TOS 图标（新标签页）"
+    [ -n "$NAS_IP" ] && echo "             也可直接访问 https://$NAS_IP/$APP_ID/ 或 http://$NAS_IP:8181/$APP_ID/"
+    echo "  使用方式 : 打开界面 → 设置里配置模型服务（API 密钥）→ 选择项目目录（复用 TOS 文件 API）"
+    echo "  数据位置 : $TARGET_DATA（apt remove 保留，apt purge 删除）"
+    echo "  端口说明 : 仅监听 127.0.0.1:${APP_PORT}，不对外暴露端口（经 TOS nginx 路由访问）"
+    [ -n "$NAS_IP" ] && echo "  隐私政策 : https://$NAS_IP/$APP_ID/privacy-policy.html"
+    echo ""
+    ;;
+esac
+
+exit 0

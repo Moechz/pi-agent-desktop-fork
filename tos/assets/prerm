@@ -1,0 +1,34 @@
+#!/bin/bash
+# prerm —— 卸载/升级前处理
+# ⚠️ 指南坑 3：只在 remove/deconfigure 时 disable；**upgrade 时绝不能 disable**，
+# 否则升级后服务不再随开机自启（postinst 虽会重新 enable，但少一次状态跳变更稳）。
+set -e
+
+APP_ID=piagentfortos
+APP_USER=piagentfortos
+MAINT_LOG=/var/log/piagentfortos-maint.log
+
+pkg_log() {
+  mkdir -p /var/log 2>/dev/null || true
+  echo "$(date '+%F %T') $*" >> "$MAINT_LOG" 2>/dev/null || true
+}
+pkg_log prerm "$*"
+
+case "$1" in
+  remove|deconfigure)
+    systemctl stop $APP_ID.service 2>/dev/null || true
+    systemctl disable $APP_ID.service 2>/dev/null || true
+    pkg_log prerm "已停止并 disable $APP_ID.service（$1）"
+    ;;
+  upgrade|failed-upgrade|*)
+    # 升级：只停服务，保留 enable 状态
+    systemctl stop $APP_ID.service 2>/dev/null || true
+    pkg_log prerm "升级路径：仅停止服务，保持 enabled"
+    ;;
+esac
+
+# 清残留进程（服务侧可能还有子进程：node 运行的智能体工具/构建任务）
+pkill -u "$APP_USER" 2>/dev/null || true
+sleep 1
+
+exit 0

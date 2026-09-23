@@ -1,0 +1,45 @@
+# PROVENANCE —— Pi Agent for TOS 预编译物来源审计表
+
+本包内含预编译二进制（Node 运行时、搜索工具、原生模块）。按 TOS 商店审核（V6）要求，
+逐项列出来源与 SHA-256 pin；全部来自以下公开、可复核的发布源，构建脚本见本仓库 `tos/`。
+
+应用：`piagentfortos`   版本：`@@VERSION@@`   架构：`@@ARCH@@`   构建时间：`@@BUILD_TIME@@`
+
+## 一、运行时与工具（由 tos/build.sh 在构建期下载并校验 sha256）
+
+| 组件 | 版本 | 来源（官方发布源） | SHA-256 |
+|---|---|---|---|
+| Node.js 运行时（linux-@@ARCH@@） | @@NODE_VERSION@@ | https://nodejs.org/dist/v@@NODE_VERSION@@/node-v@@NODE_VERSION@@-linux-@@NODE_ASSET_ARCH@@.tar.xz （官方 `SHASUMS256.txt`） | `@@NODE_SHA256@@` |
+| ripgrep（搜索） | @@RIPGREP_VERSION@@ | https://github.com/BurntSushi/ripgrep/releases/tag/@@RIPGREP_VERSION@@ | `@@RG_SHA256@@` |
+| fd（按名查找） | @@FD_VERSION@@ | https://github.com/sharkdp/fd/releases/tag/v@@FD_VERSION@@ | `@@FD_SHA256@@` |
+
+> ripgrep / fd 为 MIT / Apache-2.0 许可，随包使用时其许可声明见上游仓库。
+
+## 二、应用本体（源码构建，非预编译）
+
+`standalone/` 目录由本仓库公开源码构建（Next.js standalone 输出）：
+
+- 源码仓库：https://github.com/Moechz/pi-agent-desktop-fork
+- 构建提交：`@@SRC_COMMIT@@`
+- 构建命令：`npm ci` → `next build`（`TOS_BASE_PATH=/@@APP_ID@@`）→ 运行时包补齐
+- 产物内 `.next/`、`server.js` 等均为可读 JavaScript，无二进制黑盒
+
+## 三、随包原生模块（npm 生态，随 standalone 一并分发）
+
+| 组件 | 说明 | 来源 |
+|---|---|---|
+| `@img/sharp-*` | 图像处理（读取图片附件） | npm 官方包（sharp 项目，Apache-2.0），按 linux-@@ARCH@@ 平台安装 |
+| `@earendil-works/pi-tui/native` | 终端 UI 原生件（pi 运行时的一部分） | npm 官方包（`@earendil-works/pi-*`） |
+
+以上 npm 包的完整依赖清单与完整性哈希（sha512）可在应用目录 `standalone/package-lock` 语义对应的
+上游锁文件中复核；本仓库 `package-lock.json` 即为构建输入。
+
+## 四、复现方式
+
+```bash
+git clone https://github.com/Moechz/pi-agent-desktop-fork && cd pi-agent-desktop-fork
+git checkout @@SRC_COMMIT@@
+cd tos && ./build.sh --arch @@ARCH@@     # 产出 piagentfortos_@@VERSION@@_@@ARCH@@.deb
+```
+
+构建脚本对每个下载物做 SHA-256 校验（表一），不匹配即构建失败——不存在静默替换的可能。

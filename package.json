@@ -36,7 +36,8 @@
     "pack": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --dir && node scripts/smoke-packaged-standalone.mjs",
     "pack:mac": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --mac --universal --dir && node scripts/smoke-packaged-standalone.mjs",
     "dist": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --publish never && node scripts/smoke-packaged-standalone.mjs",
-    "dist:mac": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --mac --universal --publish never && node scripts/smoke-packaged-standalone.mjs"
+    "dist:mac": "npm run build:standalone && npm run build:electron && node scripts/fetch-tool-binaries.mjs && npx electron-builder --mac --universal --publish never && node scripts/smoke-packaged-standalone.mjs",
+    "build:standalone:linux": "next build && node scripts/patch-model-catalog.mjs && node scripts/ensure-standalone-next-runtimes.mjs && node scripts/ensure-standalone-pi-runtime.mjs && node scripts/dereference-standalone-symlinks.mjs && node scripts/smoke-standalone-server.mjs"
   },
   "build": {
     "extends": "electron-builder.yml"

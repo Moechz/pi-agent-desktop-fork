@@ -1,0 +1,27 @@
+#!/bin/bash
+# preinst —— 安装/升级前处理
+# TOS 规范：专用低权用户必须在 preinst 创建（平台安装路径也会自动创建，
+# 这里保证手动 dpkg/apt 安装同样可用；两处都幂等，殊途同归）。
+set -e
+
+APP_ID=piagentfortos
+APP_USER=piagentfortos
+MAINT_LOG=/var/log/piagentfortos-maint.log
+
+pkg_log() {
+  mkdir -p /var/log 2>/dev/null || true
+  echo "$(date '+%F %T') $*" >> "$MAINT_LOG" 2>/dev/null || true
+}
+pkg_log preinst "$*"
+
+# 专用系统用户：--user-group 显式建同名主组（不依赖发行版 USERGROUPS_ENAB 默认值）
+if ! id -u "$APP_USER" > /dev/null 2>&1; then
+  useradd --system --user-group --no-create-home --shell /usr/sbin/nologin "$APP_USER" 2>/dev/null || true
+  pkg_log preinst "已创建系统用户 $APP_USER（uid=$(id -u "$APP_USER" 2>/dev/null)）"
+fi
+
+# 数据目录安全默认在系统盘（postinst 会探测数据卷并改写到 env）
+mkdir -p /var/lib/$APP_ID /var/lib/$APP_ID/agent
+chown -R "$APP_USER:$APP_USER" /var/lib/$APP_ID 2>/dev/null || true
+
+exit 0
