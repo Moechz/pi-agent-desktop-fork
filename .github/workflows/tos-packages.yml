@@ -89,7 +89,9 @@ jobs:
           done
           mkdir -p /tmp/debcheck && cd /tmp/debcheck && rm -rf ./*
           ar x "$OLDPWD/$DEB"
-          tar xzf control.tar.gz -O ./control | tee control.txt | head -8
+          # 注意：set -o pipefail 下 tar | head 会因 SIGPIPE 假失败（指南坑 33）
+          tar xzf control.tar.gz -O ./control > control.txt
+          head -8 control.txt
           grep -q '^Package: piagentfortos$' control.txt
           grep -q '^Architecture: ${{ matrix.arch }}$' control.txt
           grep -q '^Depends: git' control.txt

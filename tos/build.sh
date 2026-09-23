@@ -145,12 +145,16 @@ chmod 0755 "$BIN_DIR/node"
 
 fetch_verified "$RG_URL" "$WORK/$RG_TARBALL" "$RG_SHA256_EXPECTED" "ripgrep ${RIPGREP_VERSION}"
 tar -xzf "$WORK/$RG_TARBALL" -C "$WORK"
-cp "$(find "$WORK" -name rg -type f -path "*${RG_ASSET_ARCH}*" | head -1)" "$VENDOR_BIN_DIR/rg"
+RG_BIN="$(find "$WORK" -name rg -type f -path "*${RG_ASSET_ARCH}*" -print -quit)"
+[ -n "$RG_BIN" ] || { echo "❌ 未在压缩包中找到 rg（架构 $RG_ASSET_ARCH）" >&2; exit 1; }
+cp "$RG_BIN" "$VENDOR_BIN_DIR/rg"
 chmod 0755 "$VENDOR_BIN_DIR/rg"
 
 fetch_verified "$FD_URL" "$WORK/$FD_TARBALL" "$FD_SHA256_EXPECTED" "fd ${FD_VERSION}"
 tar -xzf "$WORK/$FD_TARBALL" -C "$WORK"
-cp "$(find "$WORK" -name fd -type f -path "*${FD_ASSET_ARCH}*" | head -1)" "$VENDOR_BIN_DIR/fd"
+FD_BIN="$(find "$WORK" -name fd -type f -path "*${FD_ASSET_ARCH}*" -print -quit)"
+[ -n "$FD_BIN" ] || { echo "❌ 未在压缩包中找到 fd（架构 $FD_ASSET_ARCH）" >&2; exit 1; }
+cp "$FD_BIN" "$VENDOR_BIN_DIR/fd"
 chmod 0755 "$VENDOR_BIN_DIR/fd"
 
 # 应用本体：外部传入，或现场构建（Linux）
