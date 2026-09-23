@@ -80,6 +80,15 @@ async function stopChild(child) {
   }
 }
 
+/**
+ * 子路径部署（TOS）：构建期 TOS_BASE_PATH=/<appid> 会把整站移到该前缀下，
+ * 冒烟探活也必须带上前缀，否则 404 超时（CI 上的真实失败原因）。
+ */
+const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH ?? process.env.TOS_BASE_PATH ?? "")
+  .trim()
+  .replace(/\/+$/, "");
+const withBasePath = (path) => `${BASE_PATH}${path}`;
+
 async function getJsonArray(baseUrl, endpoint, key, stderr) {
   const response = await fetch(`${baseUrl}${endpoint}`, {
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -153,10 +162,10 @@ try {
   const stderr = () => (stderrText.trim() ? `\n${stderrText.trim()}` : "");
 
   const baseUrl = `http://127.0.0.1:${port}`;
-  await waitForHealth(`${baseUrl}/api/health`, child, stderr, () => childSpawnError);
+  await waitForHealth(`${baseUrl}${withBasePath("/api/health")}`, child, stderr, () => childSpawnError);
 
-  const sessions = await getJsonArray(baseUrl, "/api/sessions", "sessions", stderr);
-  const providers = await getJsonArray(baseUrl, "/api/auth/providers", "providers", stderr);
+  const sessions = await getJsonArray(baseUrl, withBasePath("/api/sessions"), "sessions", stderr);
+  const providers = await getJsonArray(baseUrl, withBasePath("/api/auth/providers"), "providers", stderr);
 
   console.log(
     `smoke-standalone-server: health 200, sessions 200 (${sessions.length}), auth providers 200 (${providers.length})`
