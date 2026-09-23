@@ -1,0 +1,26 @@
+Package: piagentfortos
+Version: @VERSION@
+Architecture: @ARCH@
+Maintainer: @MAINTAINER@
+Installed-Size: @SIZE@
+# git 是硬依赖：agent 会在用户项目里执行 git 提交/分支（会话分支功能亦依赖 worktree）。
+# 目标真机 tnas-57 自带 git 2.34.1，但其它机型可能没有 —— 交给包管理器按需安装
+# （注意：绝不能在 postinst 里联网安装，那是商店 S8 一票否决项）。
+Depends: git, systemd
+Section: utils
+Priority: optional
+Homepage: https://github.com/Moechz/pi-agent-desktop-fork
+Description: Pi Agent Desktop for TOS (web UI, self-contained Node runtime)
+ Pi Agent Desktop 是为 pi 编程智能体打造的桌面客户端；本包把它作为 TOS 网页
+ 应用提供：应用只监听回环地址，经 TOS 网页服务标准路由 /piagentfortos/ 打开，
+ 后端由随包携带的 Node 运行时驱动，安装后开箱可用。
+ .
+ TOS 基座没有 Node 运行时（实测 node/npm/bun/deno 全无），因此本包内置
+ Node @@NODE_VERSION@@（官方源 + sha256 固化，见应用目录 PROVENANCE.md），
+ 以及搜索工具 ripgrep / fd 与图像处理原生模块，全部离线可用。
+ .
+ 会话、长期记忆与工作区数据存放在数据卷 /Volume1/@apps/piagentfortos/data，
+ 不占系统盘；服务以专用非特权用户运行并施加 systemd 沙箱加固；
+ 目录选择复用 TOS 官方文件管理 API，权限由 TOS 统一管控。
+ .
+ Upstream author: Pi Agent Desktop (MIT) / Packaged for TOS by Moechz.

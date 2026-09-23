@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Privacy Policy — Pi Agent for TOS</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; padding: 28px 20px 48px; font: 15px/1.7 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 780px; margin-inline: auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 26px 0 8px; }
+  p, li { margin: 6px 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .meta { color: #6b7280; font-size: 13px; }
+  hr { border: none; border-top: 1px solid #d1d5db55; margin: 28px 0; }
+</style>
+</head>
+<body>
+  <h1>Privacy Policy / 隐私政策</h1>
+  <p class="meta">Pi Agent for TOS · Last updated / 最后更新：2026-09-23</p>
+
+  <h2>中文</h2>
+  <p><strong>本应用不收集、不上传任何用户数据。</strong>它完全在你的 NAS 本机运行；打包者（Moechz）与其托管服务不会收到你的任何信息，应用内也没有任何遥测或统计上报。</p>
+  <ul>
+    <li><strong>本机存储</strong>：会话记录、长期记忆与工作区数据保存在 <code>/Volume1/@apps/piagentfortos/data</code>。执行 <code>apt remove</code> 会保留这些数据，<code>apt purge</code> 会删除它们。</li>
+    <li><strong>网络通信</strong>：应用仅在两种情况下联网——① 你自行配置的模型服务（如 DeepSeek、OpenAI 或你的自建网关，密钥由你提供）；② 你在对话中要求智能体执行的联网操作（如下载依赖、调用 API）。为完成对话，你的提示词、会话上下文与工具输出会被发送到你选择的模型服务商，其处理方式受该服务商的隐私政策约束。</li>
+    <li><strong>不向第三方回传</strong>：本应用不会把数据发送给打包者或上游项目。</li>
+    <li><strong>日志</strong>：运行日志只写入本机 systemd 日志（<code>journalctl -u piagentfortos</code>），不会外传。</li>
+    <li><strong>权限</strong>：应用以专用非特权用户运行，目录访问范围由 TOS 自身的文件权限体系决定；选择工作目录时复用 TOS 官方文件管理 API。</li>
+  </ul>
+
+  <h2>English</h2>
+  <p><strong>This app collects and uploads no user data.</strong> It runs entirely on your NAS. Neither the packager (Moechz) nor any of their services receive information from it, and the app contains no telemetry or analytics.</p>
+  <ul>
+    <li><strong>Local storage</strong>: sessions, long-term memory and workspace data live in <code>/Volume1/@apps/piagentfortos/data</code>. <code>apt remove</code> keeps that data; <code>apt purge</code> deletes it.</li>
+    <li><strong>Network</strong>: the app goes online only when (1) it talks to the model provider you configured (DeepSeek, OpenAI, your own gateway, …) using your own API key, or (2) you ask the agent to do something online (install dependencies, call an API, …). To run a conversation, your prompts, session context and tool output are sent to the model provider you chose, and their handling is governed by that provider's privacy policy.</li>
+    <li><strong>No third-party reporting</strong>: nothing is sent back to the packager or the upstream project.</li>
+    <li><strong>Logs</strong>: only local systemd logs (<code>journalctl -u piagentfortos</code>), never uploaded.</li>
+    <li><strong>Permissions</strong>: the service runs as a dedicated unprivileged user; folder access is governed by TOS's own permission model, and the folder picker reuses the official TOS file-management API.</li>
+  </ul>
+
+  <hr/>
+  <p class="meta">Contact / 联系：<a href="https://github.com/Moechz/pi-agent-desktop-fork/issues">github.com/Moechz/pi-agent-desktop-fork/issues</a></p>
+</body>
+</html>

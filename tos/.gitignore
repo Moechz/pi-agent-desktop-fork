@@ -1,0 +1,8 @@
+# macOS 构建机污染（指南坑 8）
+.DS_Store
+._*
+# 构建期临时目录
+build/
+dist/
+*.deb
+*.sha256

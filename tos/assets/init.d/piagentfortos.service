@@ -1,0 +1,56 @@
+[Unit]
+Description=Pi Agent Desktop for TOS (web UI, self-contained Node runtime)
+Documentation=https://github.com/Moechz/pi-agent-desktop-fork
+After=network.target
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+User=piagentfortos
+Group=piagentfortos
+WorkingDirectory=/usr/local/piagentfortos
+
+# 界面语言/主题等偏好存在浏览器侧；此处只需让应用找到 agent 目录与写权限。
+# 这里是**安全默认值**（系统盘，任何机型都存在）；postinst 会探测数据卷并把
+# 实际路径（/VolumeN/@apps/piagentfortos/data）写进 piagentfortos.env 覆盖它们
+# ——EnvironmentFile 的优先级高于 Environment，所以数据最终落在数据卷上。
+Environment=HOME=/var/lib/piagentfortos
+Environment=PI_CODING_AGENT_DIR=/var/lib/piagentfortos/agent
+
+# 监听地址与端口属于安全敏感项：写死在单元里（ExecStart 只支持基本 ${VAR} 展开，
+# 不支持 shell 风格默认值 —— 指南坑 1），用户可调项放下面这个 env 文件。
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=18141
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+
+EnvironmentFile=-/usr/local/piagentfortos/piagentfortos.env
+
+# 只用回环监听；Node 运行时会与前端资源都在应用目录内，无外部依赖。
+ExecStart=/usr/local/piagentfortos/bin/node /usr/local/piagentfortos/standalone/server.js
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+# 注意：按 TOS 规范不配置 Restart/RestartSec —— 生命周期由应用中心统一管理（S05）。
+
+# 加固：本应用是"编程智能体"，必须能读写用户指定的项目目录（数据卷共享目录），
+# 因此 ProtectSystem 用 full 而不是 strict（strict 会把整个文件系统挂成只读，
+# 智能体就无法在项目里写文件）；ProtectHome 用 read-only 允许读取家目录但不写入。
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+# 前缀 - 表示路径缺失也不致启动失败（数据卷未挂载等异常场景）
+ReadWritePaths=-/var/lib/piagentfortos -/Volume1/@apps/piagentfortos -/Volume2/@apps/piagentfortos
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+PrivateTmp=true
+LimitNOFILE=65536
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
