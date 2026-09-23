@@ -653,7 +653,7 @@ export function AppShell() {
                   </button>
                   <div className="my-1 border-t border-divider" />
                   <label className="flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-[13px] text-text">
-                    <span className="w-4 text-center" aria-hidden="true">文</span>
+                    <span className="w-4 text-center" aria-hidden="true">🌐</span>
                     <span className="flex-1">{t("language.label")}</span>
                     <select
                       value={localePreference}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { OAuthProvider, ApiKeyProvider } from "./types";
 import { ProviderIcon } from "./PROVIDER_ICONS";
+import type { TranslationKey } from "@/lib/i18n";
 import { useI18n } from "../I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
 
@@ -15,11 +16,11 @@ interface AddProviderPickerProps {
   onClose: () => void;
 }
 
-const CUSTOM_TEMPLATES: { id: string; label: string; api: string; desc: string }[] = [
-  { id: "openai", label: "OpenAI 兼容", api: "openai-completions", desc: "/v1/chat/completions" },
-  { id: "anthropic", label: "Anthropic 兼容", api: "anthropic-messages", desc: "api.anthropic.com" },
-  { id: "openai-responses", label: "OpenAI Responses", api: "openai-responses", desc: "responses API" },
-  { id: "google", label: "Google 生成式 AI", api: "google-generative-ai", desc: "generativelanguage.googleapis.com" },
+const CUSTOM_TEMPLATES: { id: string; labelKey: TranslationKey; api: string; desc: string }[] = [
+  { id: "openai", labelKey: "modelsConfig.compatibleOpenAI", api: "openai-completions", desc: "/v1/chat/completions" },
+  { id: "anthropic", labelKey: "modelsConfig.compatibleAnthropic", api: "anthropic-messages", desc: "api.anthropic.com" },
+  { id: "openai-responses", labelKey: "modelsConfig.compatibleOpenAIResponses", api: "openai-responses", desc: "responses API" },
+  { id: "google", labelKey: "modelsConfig.googleGenerativeAi", api: "google-generative-ai", desc: "generativelanguage.googleapis.com" },
 ];
 
 export function AddProviderPicker({
@@ -42,8 +43,9 @@ export function AddProviderPicker({
 
   const availableOAuth = oauthProviders.filter((p) => !p.loggedIn && (!q || p.name.toLowerCase().includes(q)));
   const availableApiKey = apiKeyProviders.filter((p) => !p.configured && (!q || p.displayName.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)));
-  const filteredTemplates = CUSTOM_TEMPLATES.filter(
-    (t) => !q || t.label.toLowerCase().includes(q) || t.api.includes(q) || "custom".includes(q)
+  const templates = CUSTOM_TEMPLATES.map((tpl) => ({ ...tpl, label: t(tpl.labelKey) }));
+  const filteredTemplates = templates.filter(
+    (tpl) => !q || tpl.label.toLowerCase().includes(q) || tpl.api.includes(q) || "custom".includes(q)
   );
 
   const totalCount = availableOAuth.length + availableApiKey.length + filteredTemplates.length;
@@ -90,17 +92,17 @@ export function AddProviderPicker({
               {filteredTemplates.length > 0 && (
                 <div style={{ gridColumn: "1 / -1", fontSize: 11, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("provider.custom")}</div>
               )}
-              {filteredTemplates.map((t) => (
+              {filteredTemplates.map((tpl) => (
                 <button
-                  key={t.id}
-                  onClick={() => { onAddCustom(t.api); onClose(); }}
+                  key={tpl.id}
+                  onClick={() => { onAddCustom(tpl.api); onClose(); }}
                   style={cardStyle}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--bg-hover)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--bg-panel)"; }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.label}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>{t.desc} · {t.api}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tpl.label}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>{tpl.desc} · {tpl.api}</div>
                   </div>
                   <span style={{ width: 26, height: 26, borderRadius: 5, background: "var(--bg-hover)", border: "1px dashed var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-dim)" }}>

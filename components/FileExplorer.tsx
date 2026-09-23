@@ -202,7 +202,7 @@ function TreeNode({
           ))}
           {children.length === 0 && loaded && (
             <div style={{ paddingLeft: 8 + (depth + 1) * 14, fontSize: 12, color: "var(--text-dim)", height: 22, display: "flex", alignItems: "center" }}>
-              空
+              {t("explorer.empty")}
             </div>
           )}
         </div>
@@ -212,6 +212,7 @@ function TreeNode({
 }
 
 export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props) {
+  const { t } = useI18n();
   const [roots, setRoots] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -244,7 +245,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
   if (loading) {
     return (
       <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-dim)" }}>
-        加载文件中…
+        {t("explorer.loadingFile")}
       </div>
     );
   }
@@ -274,7 +275,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
       ))}
       {roots.length === 0 && (
         <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-dim)" }}>
-          未找到文件
+          {t("explorer.fileNotFound")}
         </div>
       )}
     </div>

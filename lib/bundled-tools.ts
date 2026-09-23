@@ -61,7 +61,7 @@ export function installBundledTools(
   }
 
   if (installed.length > 0) {
-    console.log(`[bundled-tools] 已装入随包搜索工具：${installed.join(", ")} → ${targetDir}`);
+    console.log(`[bundled-tools] installed bundled search tools: ${installed.join(", ")} -> ${targetDir}`);
   }
   return { installed, target: targetDir };
 }

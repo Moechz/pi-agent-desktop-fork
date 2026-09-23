@@ -88,6 +88,7 @@ export const MessageView = React.memo(function MessageView({
   showTimestamp,
   prevTimestamp,
 }: Props) {
+  const { t } = useI18n();
   if (message.role === "user") {
     return (
       <UserMessageView
@@ -130,8 +131,8 @@ export const MessageView = React.memo(function MessageView({
             </svg>
             <span>
               {/abort/i.test((message as AssistantMessage).errorMessage ?? "")
-                ? `本轮已中断：${(message as AssistantMessage).errorMessage}（多为工具调用超时/被终止或手动停止，非模型服务故障，可直接继续对话）`
-                : `模型请求失败：${(message as AssistantMessage).errorMessage}`}
+                ? t("chat.turnInterrupted", { message: (message as AssistantMessage).errorMessage ?? "" })
+                : t("chat.modelRequestFailed", { message: (message as AssistantMessage).errorMessage ?? "" })}
             </span>
           </div>
         );

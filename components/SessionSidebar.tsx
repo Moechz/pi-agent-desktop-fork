@@ -287,7 +287,7 @@ export function SessionSidebar({
               >
                 <span
                   role="button"
-                  aria-label={collapsed ? "展开分组" : "收起分组"}
+                  aria-label={collapsed ? t("sidebar.expandGroup") : t("sidebar.collapseGroup")}
                   onClick={(e) => {
                     e.stopPropagation();
                     setCollapsedGroups((m) => ({ ...m, [g.cwd]: !m[g.cwd] }));
@@ -318,7 +318,7 @@ export function SessionSidebar({
                   const run = g.sessions.filter((s) => runningIds.has(s.id)).length;
                   return run > 0 ? (
                     <span
-                      title="运行中"
+                      title={t("sidebar.running")}
                       className="shrink-0"
                       style={{
                         fontSize: 11, fontWeight: 700, padding: "1px 6px", borderRadius: 9999,

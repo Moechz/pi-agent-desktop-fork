@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "../I18nProvider";
+
 
 
 
@@ -23,6 +25,7 @@ export function ThinkingLevelMapEditor({
   value: Record<string, string | null> | undefined;
   onChange: (v: Record<string, string | null> | undefined) => void;
 }) {
+  const { t } = useI18n();
   const map = value ?? {};
 
   const setLevel = (level: ThinkingLevel, entry: string | null | "omit") => {
@@ -98,13 +101,13 @@ export function ThinkingLevelMapEditor({
                 onClick={() => setLevel(level, "omit")}
                 style={{ ...btnBase, ...(state === "omit" ? btnActive : {}) }}
               >
-                默认
+                {t("thinkingMap.default")}
               </button>
               <button
                 onClick={() => setLevel(level, null)}
                 style={{ ...btnBase, borderLeft: "1px solid var(--border)", ...(state === "null" ? btnActiveDisabled : {}) }}
               >
-                禁用
+                {t("thinkingMap.disabled")}
               </button>
             </div>
 
@@ -114,7 +117,7 @@ export function ThinkingLevelMapEditor({
                 onClick={() => setLevel(level, strVal || level)}
                 style={{ ...btnBase, ...(state === "string" ? btnActive : {}), borderRight: "1px solid var(--border)", flexShrink: 0 }}
               >
-                自定义
+                {t("thinkingMap.custom")}
               </button>
               <input
                 value={strVal}

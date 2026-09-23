@@ -35,9 +35,6 @@ export const PRESET_FULL: readonly string[] = [SHELL_TOOL, "read", "edit", "writ
 export const DEFAULT_AGENT_MODE: AgentMode = "full";
 export const DEFAULT_TOOL_PRESET: ToolPreset = "default";
 
-export const EXECUTE_PLAN_PROMPT =
-  "请按你刚才的计划开始执行。需要写入文件或运行命令前会请求我确认。";
-
 export function isAgentMode(value: unknown): value is AgentMode {
   return value === "plan" || value === "ask" || value === "full";
 }

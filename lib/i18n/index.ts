@@ -48,4 +48,8 @@ export function translate(
   return interpolate(dictionary[key] ?? en[key], values);
 }
 
+export function hasTranslationKey(key: string): key is TranslationKey {
+  return Object.prototype.hasOwnProperty.call(en, key);
+}
+
 export type { TranslationKey, TranslationValues } from "./dictionaries.ts";

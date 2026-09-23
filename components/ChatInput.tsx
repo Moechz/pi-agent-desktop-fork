@@ -194,7 +194,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
 
   const slashQuery = useMemo(() => getSlashTriggerQuery(value, caretIndex), [value, caretIndex]);
   const slashItems = useMemo(
-    () => slashQuery === null ? [] : buildSlashCommandItems(slashQuery, slashSkills),
+    () => slashQuery === null ? [] : buildSlashCommandItems(slashQuery, slashSkills, t),
     [slashQuery, slashSkills]
   );
   const slashMenuOpen = inputFocused && slashQuery !== null && slashDismissedValue !== value && slashItems.length > 0;
@@ -477,13 +477,13 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               }}
               title={currentCwd ?? ""}
             >
-              {currentCwd ? currentCwd.split("/").filter(Boolean).slice(-1)[0] : "未选择目录"}
+              {currentCwd ? currentCwd.split("/").filter(Boolean).slice(-1)[0] : t("chatInput.noDirectory")}
             </span>
             <div ref={piRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
               <button
                 type="button"
                 onClick={() => setPiOpen((v) => !v)}
-                title="切换目录"
+                title={t("chatInput.switchDirectory")}
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "center",
                   gap: 2, padding: "1px 4px", background: "none", border: "none",
@@ -505,10 +505,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                   }}
                 >
                   <div style={{ padding: "5px 8px 6px", fontSize: 13, fontWeight: 600, color: "var(--text-strong)" }}>
-                    已添加目录
+                    {t("chatInput.addedDirectories")}
                   </div>
                   {piDirs.length === 0 && (
-                    <div style={{ padding: "6px 8px", fontSize: 13, color: "var(--text-dim)" }}>暂无记录</div>
+                    <div style={{ padding: "6px 8px", fontSize: 13, color: "var(--text-dim)" }}>{t("chatInput.noRecentDirectories")}</div>
                   )}
                   {piDirs.map((cwd) => {
                     const active = cwd === currentCwd;
@@ -541,7 +541,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                     className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent text-text"
                     style={{ borderRadius: 6, fontSize: 13, opacity: piBusy ? 0.6 : 1 }}
                   >
-                    使用默认目录
+                    {t("chatInput.useDefaultDirectory")}
                   </button>
                   <button
                     onClick={() => void piPickOther()}
@@ -549,7 +549,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                     className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent text-text"
                     style={{ borderRadius: 6, fontSize: 13, opacity: piBusy ? 0.6 : 1 }}
                   >
-                    选择其他目录…
+                    {t("chatInput.chooseOtherDirectory")}
                   </button>
                 </div>
               )}

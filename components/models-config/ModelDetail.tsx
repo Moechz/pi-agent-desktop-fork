@@ -163,7 +163,7 @@ export function ModelDetail({
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <Field label="ID *"><TextInput value={model.id} onChange={(v) => set("id", v)} placeholder="例如 deepseek-chat" mono /></Field>
+        <Field label="ID *"><TextInput value={model.id} onChange={(v) => set("id", v)} placeholder={t("modelsConfig.exampleModelId")} mono /></Field>
         <Field label={t("provider.name")}><TextInput value={model.name ?? ""} onChange={(v) => set("name", v || undefined)} placeholder={t("provider.displayName")} /></Field>
       </div>
 
@@ -180,7 +180,7 @@ export function ModelDetail({
       {model.reasoning && (
         <>
           <Check
-            label="DeepSeek 思考兼容"
+            label={t("modelsConfig.deepseekThinkingCompat")}
             checked={hasDeepseekCompat(model)}
             onChange={(v) => onChange(setDeepseekCompat(model, v))}
           />

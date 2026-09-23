@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/components/I18nProvider";
 
 import { useCallback, useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
 import type { AgentMessage, SessionInfo, CustomMessage, Skill, UserMessage } from "@/lib/types";
@@ -9,7 +10,6 @@ import type { StreamAction } from "./stream-state";
 import type { AgentPhase } from "./agent-phase";
 import type { ThinkingLevelOption } from "./session-lifecycle-reset";
 import type { AgentMode } from "@/lib/approval-policy";
-import { EXECUTE_PLAN_PROMPT } from "@/lib/approval-policy";
 import { ensureTrustThenFetch } from "@/lib/trust-fetch";
 import type { NeedsTrustPayload } from "@/lib/trust-types";
 import type { AttachedImage } from "@/components/chat-input/types";
@@ -59,6 +59,7 @@ export type UseSessionCommandsOptions = {
 };
 
 export function useSessionCommands(opts: UseSessionCommandsOptions) {
+  const { t } = useI18n();
   const {
     session,
     newSessionCwd,
@@ -347,7 +348,7 @@ export function useSessionCommands(opts: UseSessionCommandsOptions) {
     } catch (e) {
       console.error("Failed to switch to ask for execute plan:", e);
     }
-    await handleSend(EXECUTE_PLAN_PROMPT);
+    await handleSend(t("plan.executePrompt"));
   }, [agentRunning, handleSend, sessionIdRef, setAgentMode, setCanExecutePlan]);
 
   const handleAbort = useCallback(async () => {

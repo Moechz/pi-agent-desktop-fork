@@ -294,7 +294,7 @@ function SessionItem({
             style={{ width: 21, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
           >
             {isRunning && (
-              <span title="运行中" style={{ width: 8, height: 8, borderRadius: 9999, background: "#22e06b" }} />
+              <span title={t("sidebar.running")} style={{ width: 8, height: 8, borderRadius: 9999, background: "#22e06b" }} />
             )}
           </span>
           {/* Fork indicator for child sessions */}

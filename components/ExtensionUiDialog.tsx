@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import type { ExtensionUiRequestEvent } from "@/hooks/agent-session/agent-events-manager";
+import { useI18n } from "./I18nProvider";
+import { hasTranslationKey } from "@/lib/i18n";
 
 export type ExtensionUiResponsePayload = {
   id: string;
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export function ExtensionUiDialog({ request, onRespond }: Props) {
+  const { t } = useI18n();
   const [text, setText] = useState("");
 
   useEffect(() => {
@@ -28,13 +31,21 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
 
   if (!request) return null;
 
+  // 服务端不知道界面语言：标题以 i18n:<key>|<参数> 形式传来，这里按当前语言解析
+  const titleText = (() => {
+    if (!request.title.startsWith("i18n:")) return request.title;
+    const [key, param] = request.title.slice("i18n:".length).split("|");
+    if (!hasTranslationKey(key)) return request.title;
+    return t(key, param ? { tool: param } : undefined);
+  })();
+
   const close = (payload: ExtensionUiResponsePayload) => onRespond(payload);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={request.title}
+      aria-label={titleText}
       className="ui-dialog-backdrop"
       style={{
         position: "fixed",
@@ -63,7 +74,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{request.title}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{titleText}</div>
         {request.method === "confirm" && (
           <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
             {request.message}
@@ -142,7 +153,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
               fontSize: 13,
             }}
           >
-            取消
+            {t("common.cancel")}
           </button>
           {request.method === "confirm" && (
             <>
@@ -159,7 +170,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                   fontSize: 13,
                 }}
               >
-                拒绝
+                {t("approval.deny")}
               </button>
               <button
                 type="button"
@@ -175,7 +186,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                   fontWeight: 600,
                 }}
               >
-                允许
+                {t("approval.allow")}
               </button>
             </>
           )}
@@ -194,7 +205,7 @@ export function ExtensionUiDialog({ request, onRespond }: Props) {
                 fontWeight: 600,
               }}
             >
-              确定
+              {t("common.confirm")}
             </button>
           )}
         </div>

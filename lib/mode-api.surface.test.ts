@@ -6,9 +6,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { AGENT_COMMAND_TYPES, validateAgentCommand } from "./agent-commands.ts";
+import { en, zhCN } from "./i18n/dictionaries.ts";
 import {
   ASK_CONFIRM_TOOLS,
-  EXECUTE_PLAN_PROMPT,
   effectiveToolsForMode,
   needsAskConfirm,
 } from "./approval-policy.ts";
@@ -31,7 +31,8 @@ test("plan/ask/full tool policy is shipped", () => {
   assert.deepEqual(effectiveToolsForMode("plan", "full").sort(), ["find", "grep", "ls", "read"]);
   for (const t of ASK_CONFIRM_TOOLS) assert.equal(needsAskConfirm("ask", t), true);
   assert.equal(needsAskConfirm("full", "bash"), false);
-  assert.match(EXECUTE_PLAN_PROMPT, /计划/);
+  assert.match(zhCN["plan.executePrompt"], /计划/, "zh 计划执行提示应在字典中");
+  assert.match(en["plan.executePrompt"], /plan/i, "en 计划执行提示应在字典中");
 });
 
 test("wrapper set_agent_mode + extension_ui_response path", async () => {

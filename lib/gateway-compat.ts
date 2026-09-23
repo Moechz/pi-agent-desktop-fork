@@ -85,8 +85,8 @@ export function applyGatewayDeveloperRoleCompat(modelsPath: string | null | unde
 
   writeFileSync(modelsPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
   console.log(
-    `[gateway-compat] 已为 ${patched.join(", ")} 补写 compat.supportsDeveloperRole=false` +
-      "（第三方网关多不识别 developer role；如需 developer 请在 models.json 显式写 true）",
+    `[gateway-compat] set compat.supportsDeveloperRole=false for ${patched.join(", ")}` +
+      " (third-party gateways usually reject the developer role; set it to true explicitly in models.json if needed)",
   );
   return patched;
 }

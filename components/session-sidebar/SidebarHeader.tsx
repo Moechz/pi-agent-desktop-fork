@@ -185,13 +185,13 @@ export function SidebarHeader({
             <line x1="6" y1="2.5" x2="6" y2="9.5" />
             <line x1="2.5" y1="6" x2="9.5" y2="6" />
           </svg>
-          新会话
+          {t("sidebar.newSession")}
         </button>
         <button
           onClick={() => void handleCustomPath()}
           disabled={customPathOpen}
-          title="新建目录（选择本地文件夹作为工作目录）"
-          aria-label="新建目录（选择本地文件夹作为工作目录）"
+          title={t("sidebar.newDirectoryTitle")}
+          aria-label={t("sidebar.newDirectoryTitle")}
           className={`sidebar-new-dir-button flex h-7 w-7 shrink-0 items-center justify-center rounded-control border p-0 bg-chrome-button-bg border-border text-text-muted hover:bg-chrome-button-hover hover:text-accent hover:border-focus-ring cursor-pointer transition-[background-color,border-color,color,transform] duration-150 ${
             customPathOpen ? "opacity-60" : ""
           }`}
@@ -205,8 +205,8 @@ export function SidebarHeader({
         </button>
         <button
           onClick={() => setDropdownOpen((v) => !v)}
-          title="历史目录列表"
-          aria-label="历史目录列表"
+          title={t("sidebar.directoryHistory")}
+          aria-label={t("sidebar.directoryHistory")}
           className={`sidebar-dir-dropdown-button flex h-7 w-7 shrink-0 items-center justify-center rounded-control border p-0 transition-[background-color,border-color,color,transform] duration-150 cursor-pointer ${
             dropdownOpen
               ? "bg-chrome-button-hover border-border text-accent"
