@@ -65,6 +65,18 @@ dpkg -r piagentfortos && dpkg --purge piagentfortos   # 数据保留 → 彻底�
 | 目录选择 | 复用 TOS 官方文件管理 API（`/fileManage/list` `folderInfoAll` `CreateFolder`） | 同源 Cookie + `X-Csrf-Token`，权限由 TOS 统一管控，桌面版自动回落 Electron 原生弹窗 |
 | 署名 | `config.ini.publisher` / `control.Maintainer` = Moechz；`.lang` 的 `auth` = 上游项目语义 | 指南坑 49 铁律 |
 
+## 真机发现的坑（已修，勿回退）
+
+1. **前端 JS 全 404**：Next standalone 输出**不含** `.next/static` 与 `public`（桌面版由
+   electron-builder 的 extraResources 带入）。TOS 打包必须显式拷贝到
+   `standalone/.next/static`、`standalone/public`；`build.sh` 已加断言防回退。
+2. **重定向死循环**：应用以 `basePath=/piagentfortos` 运行时，规范形式是**不带尾斜杠**，
+   平台路由 `/piagentfortos/` 会被应用 308 到 `/piagentfortos`；若 nginx 只有
+   `location /piagentfortos/`，这个不带斜杠的请求会落到平台层补斜杠逻辑 → 二者互相
+   308/301 死循环。必须额外写 `location = /piagentfortos`（已在模板中）。
+3. **CI 上的 SIGPIPE 假失败**：`set -o pipefail` 下 `tar … | grep -q` 会因 grep 提前
+   退出给 tar 发 SIGPIPE（"tar: stdout: write error"）。校验 tar 内容一律先落清单文件。
+
 ## 已知限制
 
 - arm64 包**尚未在 arm64 真机验证**（手头测试机为 amd64）；已用 glibc ≤ 2.35 门禁兜底。

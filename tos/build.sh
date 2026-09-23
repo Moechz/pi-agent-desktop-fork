@@ -25,6 +25,9 @@ REPO_DIR="$(cd .. && pwd)"
 STANDALONE=""
 BUILD_STANDALONE=0
 ARCH_OVERRIDE=""
+# 应用仓库根：Next standalone 默认**不含** .next/static 与 public（桌面版由
+# electron-builder 的 extraResources 单独带入），TOS 包必须自己拷贝，否则前端 JS 404。
+APP_ROOT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --standalone)
@@ -36,6 +39,12 @@ while [ $# -gt 0 ]; do
       shift 2 ;;
     --build-standalone) BUILD_STANDALONE=1; shift ;;
     --arch) ARCH_OVERRIDE="$2"; shift 2 ;;
+    --app-root)
+      case "$2" in
+        /*) APP_ROOT="$2" ;;
+        *) APP_ROOT="$CALLER_PWD/$2" ;;
+      esac
+      shift 2 ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
@@ -170,8 +179,23 @@ if [ -z "$STANDALONE" ] || [ ! -d "$STANDALONE" ]; then
   echo "   请用 --standalone <dir>（相对调用方 cwd 或绝对路径）或 --build-standalone" >&2
   exit 1
 fi
+if [ -z "$APP_ROOT" ]; then APP_ROOT="$CALLER_PWD"; fi
 echo "  应用本体: $STANDALONE"
+echo "  仓库根  : $APP_ROOT"
 cp -R "$STANDALONE" "$APP_DIR/standalone"
+
+# Next standalone 不含静态资源：手工带入（与桌面版 extraResources 等价）
+if [ ! -d "$APP_ROOT/.next/static" ]; then
+  echo "❌ 缺少 $APP_ROOT/.next/static —— standalone 默认不含静态资源，必须从构建产物目录拷贝" >&2
+  exit 1
+fi
+mkdir -p "$APP_DIR/standalone/.next"
+cp -R "$APP_ROOT/.next/static" "$APP_DIR/standalone/.next/static"
+if [ -d "$APP_ROOT/public" ]; then
+  cp -R "$APP_ROOT/public" "$APP_DIR/standalone/public"
+else
+  echo "⚠️ 未找到 $APP_ROOT/public（图标等静态文件可能缺失）" >&2
+fi
 # 构建机污染清理（.DS_Store / AppleDouble / 各类缓存）
 find "$APP_DIR/standalone" \( -name '.DS_Store' -o -name '._*' -o -name '__MACOSX' \) -prune -exec rm -rf {} + 2>/dev/null || true
 
@@ -338,6 +362,12 @@ else
 fi
 
 # 6) 应用本体存在且含 server.js（standalone 入口）
+# 静态资源必须在位（否则页面能开但 JS 全 404 —— 真机实测过的坑）
+assert "standalone 含 .next/static（前端 JS）" test -d "$APP_DIR/standalone/.next/static"
+n=$(find "$APP_DIR/standalone/.next/static" -name '*.js' 2>/dev/null | wc -l | tr -d ' ')
+assert_ok "静态资源含 JS（$n 个）" "$([ "$n" -gt 3 ] && echo 1 || echo 0)"
+assert "standalone 含 public（图标等）" test -d "$APP_DIR/standalone/public"
+
 assert "应用本体含 server.js" test -f "$APP_DIR/standalone/server.js"
 assert "应用本体含 .next" test -d "$APP_DIR/standalone/.next"
 assert "实例自带 node 运行时" test -x "$BIN_DIR/node"
@@ -375,7 +405,12 @@ python3 ./makedeb.py \
   --vars "$WORK/vars.env"
 
 # 校验文件（商店要求必须附 .sha256）
-sha256_of "$DEB" > "$DEB.sha256"
+# 标准校验文件格式："<hash>  <文件名>"（商店与用户都用得上：shasum -c / sha256sum -c）
+( cd "$DIST" && if command -v sha256sum > /dev/null 2>&1; then
+    sha256sum "$(basename "$DEB")" > "$(basename "$DEB").sha256"
+  else
+    shasum -a 256 "$(basename "$DEB")" > "$(basename "$DEB").sha256"
+  fi )
 echo "  ✓ 已写校验文件 $(basename "$DEB").sha256"
 
 say "完成"
