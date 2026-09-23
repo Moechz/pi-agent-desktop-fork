@@ -128,7 +128,11 @@ export const MessageView = React.memo(function MessageView({
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span>模型请求失败：{(message as AssistantMessage).errorMessage}</span>
+            <span>
+              {/abort/i.test((message as AssistantMessage).errorMessage ?? "")
+                ? `本轮已中断：${(message as AssistantMessage).errorMessage}（多为工具调用超时/被终止或手动停止，非模型服务故障，可直接继续对话）`
+                : `模型请求失败：${(message as AssistantMessage).errorMessage}`}
+            </span>
           </div>
         );
       }

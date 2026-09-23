@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
     '*': [
       'release/**/*',
       '.git/**/*',
+      // 随包搜索工具由 extraResources 落到 resources/bin；不要被追踪进 standalone（避免重复 + universal 合并冲突）
+      'vendor/**/*',
       'dist/**/*',
       '**/*.test.ts',
       '**/*.test.tsx',

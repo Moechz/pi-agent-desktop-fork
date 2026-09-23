@@ -125,7 +125,10 @@ mac:
   # Brace includes standalone/.next: minimatch skips dotdirs unless named.
   # NFT copies native addons under hashed pi-coding-agent there; both arch
   # builds contain the same .node/.dylib and must not be lipo'd.
-  x64ArchFiles: "Contents/Resources/standalone{,/.next}/**/{@earendil-works/pi-tui/native/darwin/prebuilds/**,@mariozechner/clipboard-darwin-{arm64,x64}/**,@img/sharp-darwin-{arm64,x64}/**,@img/sharp-libvips-darwin-{arm64,x64}/**}"
+  # 随包搜索工具按架构分目录（darwin-arm64 / darwin-x64），两个构建内容相同：
+  # 必须声明进 x64ArchFiles，否则 universal 合并报 "same in both x64 and arm64 builds"
+  x64ArchFiles: "Contents/Resources/{bin/**,standalone{,/vendor}/bin/**,standalone{,/.next}/**/{@earendil-works/pi-tui/native/darwin/prebuilds/**,@mariozechner/clipboard-darwin-{arm64,x64}/**,@img/sharp-darwin-{arm64,x64}/**,@img/sharp-libvips-darwin-{arm64,x64}/**}}"
+
   artifactName: "Pi-Agent-Desktop-${version}-mac-${arch}.${ext}"
 
 dmg:
