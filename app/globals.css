@@ -243,7 +243,7 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
   font-size: 14px;
   overscroll-behavior: none;
 }
@@ -766,6 +766,7 @@ span.linenumber {
   overflow: hidden;
   border: 1px solid color-mix(in srgb, white 32%, var(--border));
   border-radius: 50%;
+  animation: liquid-thinking-fallback-breathe 2600ms ease-in-out infinite;
   background:
     radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.78), transparent 24%),
     radial-gradient(circle at 68% 72%, rgba(91, 126, 184, 0.68), transparent 46%),
@@ -788,7 +789,7 @@ span.linenumber {
   );
   filter: blur(5px);
   mix-blend-mode: screen;
-  animation: liquid-thinking-fallback-shift 3200ms linear infinite;
+  animation: liquid-thinking-fallback-shift 1800ms linear infinite;
 }
 .liquid-thinking-fallback::after {
   content: "";
@@ -801,6 +802,36 @@ span.linenumber {
 }
 @keyframes liquid-thinking-fallback-shift {
   to { transform: rotate(1turn); }
+}
+
+/* 降级球增强：无 WebGPU 时它只靠缓慢旋转，几乎看不出“在思考”（真机反馈），
+   叠加呼吸缩放 + 亮度脉动，让明文 HTTP 部署也有明确的进行中观感。 */
+@keyframes liquid-thinking-fallback-breathe {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.07); filter: brightness(1.25); }
+}
+
+@keyframes liquid-thinking-fallback-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 尊重减弱动效：去掉缩放/旋转，仅保留低幅透明度脉动（状态指示仍需可感知） */
+  .liquid-thinking-fallback { animation: liquid-thinking-fallback-pulse 2600ms ease-in-out infinite; }
+  .liquid-thinking-fallback::before { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   运行时差异收敛区
+   宿主标记由 lib/runtime-env.ts 在首帧前写到 <html> 上：
+     data-runtime="electron | tos | web"，data-secure="true | false"
+   以后所有“只在某种宿主下需要”的调整都写在这里，不要再散落到各组件里。
+   --------------------------------------------------------------------------- */
+[data-runtime="tos"] {
+  /* 桌面版（macOS）是覆盖式滚动条不占宽度，TOS 走浏览器经典滚动条会吃掉约 15px，
+     宽度差异会让响应式断点、文本截断成片漂移；固定预留槽位可消除滚动条出现/消失时的跳动 */
+  scrollbar-gutter: stable;
 }
 
 /* grid-template-rows 0fr → 1fr gives a clean height animation
@@ -1091,7 +1122,7 @@ html[data-electron-platform="darwin"] .macos-titlebar-leading-safe-area.is-activ
   --warning:#f59e0b;--warning-bg:#f59e0b1f;--warning-border:#f59e0b57;
   --info:#3b82f6;--info-bg:#3b82f61c;--info-border:#3b82f652;
   --focus-ring:#ff8f405c;
-  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC","Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 html.dark,.dark{
   --bg:#151517;--bg-panel:#1b1b1c;--bg-elevated:#2c2c2e;
