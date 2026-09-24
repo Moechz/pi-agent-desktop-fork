@@ -1,16 +1,18 @@
+import { withBasePath } from "./base-path.ts";
 /**
- * TOS 官方「文件管理 API」客户端（TOS 7）。
+ * TOS 官方「文件管理 API」客户端（TOS 7）—— 经本应用服务端代理调用。
  *
- * 文档：https://help.terra-master.com/developer/api/overview/ （TOS API → Browse & Query）
+ * TOS 侧接口（文档：help.terra-master.com/developer/api/overview/）：
  *   GET  /fileManage/list?path=/Volume1/Public     列目录
  *   GET  /fileManage/folderInfoAll?path=…          目录详情（含 is_only_read）
- *   POST /fileManage/CreateFolder                 新建目录（body: {"path":…,"type":2}）
+ *   POST /fileManage/CreateFolder                  新建目录
  *
- * 鉴权：同源 Cookie（userName / TMSESSNAME）+ 请求头 X-Csrf-Token；
- * CSRF 令牌同时存放在 Cookie 里，因此前端可直接读取后回填请求头。
+ * 为什么前端不直连 TOS：TOS 的会话 Cookie（TMSESSNAME）很可能是 HttpOnly，
+ * 前端既读不到"是否已登录"，也取不到 CSRF 令牌 → 直连会静默失败。
+ * 改由服务端代理：`/api/tos/fs/{list,info,mkdir}` 把浏览器 Cookie 原样带给 TOS，
+ * 并把 X-Csrf-Token 从 Cookie 取出回填到头里（服务端能读到 HttpOnly Cookie）。
  *
- * 关键点：这些接口挂在 **TOS 根路径** 上（/fileManage/…），不能被应用的 basePath 前缀污染，
- * 故统一用 `location.origin` 拼绝对 URL。
+ * 这些代理路径属于本应用，必须带 basePath（withBasePath）。
  */
 
 const TOS_API_ROOT = "/fileManage";
@@ -63,14 +65,30 @@ function currentCookieString(): string {
   return typeof document === "undefined" ? "" : document.cookie;
 }
 
-export function isTosApiAvailable(cookieString = currentCookieString()): boolean {
-  return parseTosSession(cookieString);
+/**
+ * 是否可用 = 代理能否打通 TOS API（不依赖 JS 可读 Cookie）。
+ * 探测一次 /api/tos/fs/list?path=/ ：200 → 可用；403/4xx → 会话缺失或未授权。
+ */
+export async function probeTosAvailability(fetchImpl: typeof fetch = fetch): Promise<boolean> {
+  try {
+    const response = await fetchImpl(withBasePath(`${PROXY_ROOT}/list?path=%2F`), {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
-function apiUrl(origin: string, path: string, query?: Record<string, string>): string {
+/** 代理路由（属于本应用，需要 basePath 前缀） */
+const PROXY_ROOT = "/api/tos/fs";
+
+function apiUrl(_origin: string, action: string, query?: Record<string, string>): string {
   const params = new URLSearchParams(query ?? {});
   const suffix = params.toString() ? `?${params.toString()}` : "";
-  return `${origin}${TOS_API_ROOT}${path}${suffix}`;
+  return withBasePath(`${PROXY_ROOT}${action}${suffix}`);
 }
 
 function authHeaders(cookieString: string): Record<string, string> {
@@ -140,7 +158,7 @@ export async function tosFolderInfo(path: string, options: TosApiOptions = {}): 
   const cookieString = options.cookieString ?? currentCookieString();
   const fetchImpl = options.fetchImpl ?? fetch;
 
-  const response = await fetchImpl(apiUrl(origin, "/folderInfoAll", { path }), {
+  const response = await fetchImpl(apiUrl(origin, "/info", { path }), {
     method: "GET",
     credentials: "same-origin",
     headers: authHeaders(cookieString),
@@ -158,11 +176,11 @@ export async function tosCreateFolder(path: string, options: TosApiOptions = {})
   const cookieString = options.cookieString ?? currentCookieString();
   const fetchImpl = options.fetchImpl ?? fetch;
 
-  const response = await fetchImpl(apiUrl(origin, "/CreateFolder"), {
+  const response = await fetchImpl(apiUrl(origin, "/mkdir"), {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json", ...authHeaders(cookieString) },
-    body: JSON.stringify({ path, type: 2 }),
+    body: JSON.stringify({ path }),
   });
   await readEnvelope<unknown>(response);
 }

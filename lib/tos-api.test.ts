@@ -53,11 +53,8 @@ test("tosListDirectory：请求同源根路径 + 带 CSRF 头，并规范化返�
 
   assert.equal(calls.length, 1);
   // 必须是 TOS 根路径（不能被应用 basePath 前缀污染）
-  assert.equal(
-    calls[0].url,
-    "http://nas:8181/fileManage/list?path=%2FVolume1%2Fpublic",
-  );
-  assert.deepEqual((calls[0].init?.headers as Record<string, string>)["X-Csrf-Token"], "xyz789");
+  // 走本应用的服务端代理（同源，Cookie 自动携带；令牌由服务端从 Cookie 取出回填）
+  assert.equal(calls[0].url, "/api/tos/fs/list?path=%2FVolume1%2Fpublic");
   assert.equal(entries.length, 2, "缺少必要字段的行应被过滤");
   assert.deepEqual(entries[0], {
     name: "Music",
@@ -97,9 +94,7 @@ test("tosCreateFolder：POST JSON body type=2", async () => {
   });
 
   assert.equal(calls[0].method, "POST");
-  assert.deepEqual(JSON.parse(String(calls[0].body)), { path: "/Volume1/public/New", type: 2 });
-  assert.equal((calls[0].headers as Record<string, string>)["Content-Type"], "application/json");
-  assert.equal((calls[0].headers as Record<string, string>)["X-Csrf-Token"], "xyz789");
+  assert.deepEqual(JSON.parse(String(calls[0].body)), { path: "/Volume1/public/New" });
 });
 
 test("业务失败（code=false）抛出带错误码的 TosApiError，并可映射 i18n 键", async () => {

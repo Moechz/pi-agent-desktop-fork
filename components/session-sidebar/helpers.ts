@@ -1,6 +1,6 @@
 import { withBasePath } from "../../lib/base-path.ts";
 import { isDirectoryPickerAvailable, requestDirectoryPick } from "../../lib/directory-picker.ts";
-import { isTosApiAvailable } from "../../lib/tos-api.ts";
+import { probeTosAvailability } from "../../lib/tos-api.ts";
 import type { SessionInfo } from "@/lib/types";
 import { normalizeLocale, translate, type Locale } from "@/lib/i18n";
 
@@ -59,9 +59,14 @@ export async function pickDirectoryFromHost(): Promise<string | null> {
   }
 
   // TOS（浏览器）环境：用 TOS 官方文件管理 API 的应用内目录选择器
-  // （桌面版 Electron 原生弹窗优先；两者都没有时才走服务端回退）
-  if (isTosApiAvailable() && isDirectoryPickerAvailable()) {
-    return requestDirectoryPick();
+  // 可用性经服务端代理探测（TOS 会话 Cookie 多为 HttpOnly，前端读不到）。
+  if (isDirectoryPickerAvailable()) {
+    if (await probeTosAvailability()) {
+      return requestDirectoryPick();
+    }
+    // 浏览器里但没有可用的 TOS 会话：给出明确指引，而不是回落到"仅 Windows"的报错
+    const locale = normalizeLocale(document.documentElement.lang) ?? "en";
+    throw new Error(translate(locale, "tos.sessionMissing"));
   }
 
   const res = await fetch(withBasePath("/api/select-directory"), { method: "POST" });
