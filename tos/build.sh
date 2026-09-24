@@ -255,6 +255,25 @@ PY
 
 # 资产落位
 cp assets/piagentfortos.lang "$APP_DIR/$APP_ID.lang"
+
+# 语言文件模板里带 @@VERSION@@ 占位符，必须替换为真实版本。
+# 曾遗漏此步 → 包内 .lang 出现字面 "@@VERSION@@"（平台校验/展示都会出问题，
+# 真机安装失败疑与此有关）；下面的守卫断言会拦住任何残留占位符。
+python3 - "$APP_DIR/$APP_ID.lang" "$VERSION" <<'PYLANG'
+import pathlib, sys
+path, version = pathlib.Path(sys.argv[1]), sys.argv[2]
+text = path.read_text(encoding="utf-8")
+path.write_text(text.replace("@@VERSION@@", version), encoding="utf-8")
+PYLANG
+
+# 守卫：语言文件不得残留任何 @@ 占位符（曾因漏替换导致包内 .lang 出现 @@VERSION@@，
+# 平台校验/展示出错，真机安装失败）
+if grep -q "@@" "$APP_DIR/$APP_ID.lang"; then
+  echo "  ❌ 语言文件残留占位符：$(grep -o '@@[A-Z_]*@@' "$APP_DIR/$APP_ID.lang" | sort -u | tr '\n' ' ')"
+  fail=1
+else
+  echo "  ✓ 语言文件占位符已全部替换为版本号"
+fi
 cp assets/piagentfortos.env.example "$APP_DIR/$APP_ID.env.example"
 cp assets/privacy-policy.html "$APP_DIR/privacy-policy.html"
 cp assets/index.html "$APP_DIR/index.html"
