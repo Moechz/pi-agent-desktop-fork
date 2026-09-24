@@ -1,5 +1,7 @@
 "use client";
 
+import { withBasePath } from "../lib/base-path.ts";
+
 import React, { useState, useEffect } from "react";
 import type { TranslationKey } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
@@ -116,7 +118,7 @@ export function BranchCloneModal({
                 workspaceMode === "worktree" ? branchName.trim() || undefined : undefined,
             };
 
-      const res = await fetch(endpoint, {
+      const res = await fetch(withBasePath(endpoint), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

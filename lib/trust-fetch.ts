@@ -9,9 +9,14 @@ export async function ensureTrustThenFetch(
   init: RequestInit | undefined,
   promptTrust: (payload: NeedsTrustPayload) => Promise<string | null>
 ): Promise<Response> {
+  // 子路径部署（TOS basePath）时，调用方传进来的是站内路径字面量（如 "/api/agent/new"），
+  // 必须在入口统一补前缀 —— 否则请求会打到根路径 404，表现为"消息发出去了但没有会话、
+  // 模型也无响应"（真机实测）。
+  const target: RequestInfo | URL = typeof input === "string" ? withBasePath(input) : input;
+
   // Avoid infinite loops if trust keep failing
   for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(input, init);
+    const res = await fetch(target, init);
     if (res.status !== 409) return res;
     let body: NeedsTrustPayload;
     try {
@@ -37,5 +42,5 @@ export async function ensureTrustThenFetch(
       return trustRes;
     }
   }
-  return fetch(input, init);
+  return fetch(target, init);
 }
