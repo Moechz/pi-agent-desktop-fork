@@ -1,4 +1,5 @@
 "use client";
+import { createPortal } from "react-dom";
 import { withBasePath } from "../lib/base-path.ts";
 
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
@@ -56,6 +57,8 @@ export function AppShell() {
   const [extensionsModalOpen, setExtensionsModalOpen] = useState(false);
   const [shellMenuOpen, setShellMenuOpen] = useState(false);
   const shellMenuRef = useRef<HTMLDivElement>(null);
+  // 菜单本体（portal 到 body 后与按钮容器分处两棵子树）
+  const shellMenuPanelRef = useRef<HTMLDivElement>(null);
   const shellMenuButtonRef = useRef<HTMLButtonElement>(null);
   const [shellMenuPosition, setShellMenuPosition] = useState<{ top: number; right: number } | null>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -145,7 +148,7 @@ export function AppShell() {
     setActiveTopPanel((cur) => (cur === panel ? null : panel));
   }, []);
 
-  useDismissOnOutsideClick(shellMenuRef, shellMenuOpen, (reason) => {
+  useDismissOnOutsideClick([shellMenuRef, shellMenuPanelRef], shellMenuOpen, (reason) => {
     setShellMenuOpen(false);
     if (reason === "escape") shellMenuButtonRef.current?.focus();
   });
@@ -155,11 +158,22 @@ export function AppShell() {
     if (!button) return;
 
     const rect = button.getBoundingClientRect();
+    // 视口内夹取：菜单用 fixed + 视口坐标定位，任何引擎下都不能跑出可视区域。
+    // （真机反馈过弹窗“跑到最下层”——根因是祖先元素成为固定定位包含块时坐标被错误解释）
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const menuHeight = shellMenuPanelRef.current?.offsetHeight ?? 0;
+    const preferredTop = rect.bottom + SHELL_MENU_GAP;
+    const maxTop = viewportHeight - menuHeight - SHELL_MENU_EDGE_PADDING;
+
     setShellMenuPosition({
-      top: rect.bottom + SHELL_MENU_GAP,
+      top:
+        menuHeight > 0
+          ? Math.max(SHELL_MENU_EDGE_PADDING, Math.min(preferredTop, maxTop))
+          : preferredTop,
       right: Math.max(
         SHELL_MENU_EDGE_PADDING,
-        window.innerWidth - rect.right + SHELL_MENU_RIGHT_OFFSET,
+        viewportWidth - rect.right + SHELL_MENU_RIGHT_OFFSET,
       ),
     });
   }, []);
@@ -601,14 +615,20 @@ export function AppShell() {
                   <circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" />
                 </svg>
               </button>
-              {shellMenuOpen && shellMenuPosition && (
-                <div
-                  id="workbench-menu"
-                  role="menu"
-                  className="t-dropdown is-open material-popover fixed z-[700] w-52 rounded-panel border border-border p-1.5 shadow-popover"
-                  style={shellMenuPosition}
-                  data-origin="top-right"
-                >
+              {shellMenuOpen &&
+                shellMenuPosition &&
+                typeof document !== "undefined" &&
+                // portal 到 body：菜单不再受侧边栏/工具条的层叠上下文、
+                // transform / backdrop-filter 等“固定定位包含块”影响 —— 始终在最上层且可点击。
+                createPortal(
+                  <div
+                    ref={shellMenuPanelRef}
+                    id="workbench-menu"
+                    role="menu"
+                    className="t-dropdown is-open material-popover fixed z-[1000] w-52 rounded-panel border border-border p-1.5 shadow-popover"
+                    style={shellMenuPosition}
+                    data-origin="top-right"
+                  >
                   <button
                     type="button"
                     role="menuitem"
@@ -668,8 +688,9 @@ export function AppShell() {
                       <option value="zh-CN">{t("language.chineseSimplified")}</option>
                     </select>
                   </label>
-                </div>
-              )}
+                  </div>,
+                  document.body,
+                )}
             </div>
             {!rightPanelOpen && (
               <>
