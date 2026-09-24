@@ -764,62 +764,67 @@ span.linenumber {
   width: 38px;
   height: 38px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, white 32%, var(--border));
+  /* 混色只在内部生效：避免子层的混合绘制穿透父级圆角裁剪而露出方角（真机反馈） */
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, white 26%, var(--border));
   border-radius: 50%;
-  animation: liquid-thinking-fallback-breathe 2600ms ease-in-out infinite;
+  /* 配色取自 WebGPU shader 的调色板（paletteStop 系列），保证降级球与真球同色系：
+     #ffffff / #b9c0ca / #343a43 / #030405。原先用的是偏饱和的蓝，颜色明显不对。 */
   background:
-    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.78), transparent 24%),
-    radial-gradient(circle at 68% 72%, rgba(91, 126, 184, 0.68), transparent 46%),
-    #111827;
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.3), transparent 42%),
+    radial-gradient(circle at 70% 76%, rgba(185, 192, 202, 0.34), transparent 54%),
+    #030405;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 5px 7px 10px rgba(255, 255, 255, 0.1),
+    inset -6px -7px 12px rgba(0, 0, 0, 0.45),
     0 8px 20px -12px var(--focus-ring);
 }
+/* 两个图层自身即为圆形（inset: 0 + border-radius: 50%，不溢出父级）：
+   旋转的锥形渐变 + 游走的高光 —— 动感明显，且结构上不可能露出方角。
+   此前用“超大模糊方块 + mix-blend-mode: screen”，既露角又把颜色冲淡了。 */
 .liquid-thinking-fallback::before {
   content: "";
   position: absolute;
-  inset: -30%;
+  inset: 0;
+  border-radius: 50%;
   background: conic-gradient(
     from 20deg,
-    transparent,
-    rgba(179, 207, 247, 0.72),
-    rgba(74, 96, 143, 0.62),
-    transparent 58%,
-    rgba(225, 235, 255, 0.6)
+    transparent 0deg,
+    rgba(185, 192, 202, 0.92) 110deg,
+    rgba(52, 58, 67, 0.95) 200deg,
+    transparent 320deg
   );
   filter: blur(5px);
-  mix-blend-mode: screen;
-  animation: liquid-thinking-fallback-shift 1800ms linear infinite;
+  animation: liquid-thinking-fallback-spin 1600ms linear infinite;
 }
 .liquid-thinking-fallback::after {
   content: "";
   position: absolute;
-  inset: 1px;
-  border-radius: inherit;
-  box-shadow:
-    inset 5px 7px 10px rgba(255, 255, 255, 0.12),
-    inset -6px -7px 12px rgba(0, 0, 0, 0.34);
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.72), transparent 46%);
+  animation: liquid-thinking-fallback-orbit 2200ms ease-in-out infinite;
 }
-@keyframes liquid-thinking-fallback-shift {
+@keyframes liquid-thinking-fallback-spin {
   to { transform: rotate(1turn); }
 }
-
-/* 降级球增强：无 WebGPU 时它只靠缓慢旋转，几乎看不出“在思考”（真机反馈），
-   叠加呼吸缩放 + 亮度脉动，让明文 HTTP 部署也有明确的进行中观感。 */
-@keyframes liquid-thinking-fallback-breathe {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.07); filter: brightness(1.25); }
+@keyframes liquid-thinking-fallback-orbit {
+  0%, 100% { transform: translate(2px, -2px) scale(0.94); opacity: 0.8; }
+  50% { transform: translate(-2px, 3px) scale(1.04); opacity: 1; }
 }
 
 @keyframes liquid-thinking-fallback-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* 尊重减弱动效：去掉缩放/旋转，仅保留低幅透明度脉动（状态指示仍需可感知） */
-  .liquid-thinking-fallback { animation: liquid-thinking-fallback-pulse 2600ms ease-in-out infinite; }
+  /* 尊重减弱动效：去掉旋转/位移，仅保留低幅透明度脉动（状态指示仍需可感知） */
   .liquid-thinking-fallback::before { animation: none; }
+  .liquid-thinking-fallback::after {
+    animation: liquid-thinking-fallback-pulse 2600ms ease-in-out infinite;
+  }
 }
 
 /* ---------------------------------------------------------------------------
