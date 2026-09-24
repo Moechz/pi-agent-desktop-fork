@@ -77,6 +77,31 @@ dpkg -r piagentfortos && dpkg --purge piagentfortos   # 数据保留 → 彻底�
 3. **CI 上的 SIGPIPE 假失败**：`set -o pipefail` 下 `tar … | grep -q` 会因 grep 提前
    退出给 tar 发 SIGPIPE（"tar: stdout: write error"）。校验 tar 内容一律先落清单文件。
 
+## 运行用户与目录权限（真机实测）
+
+- 服务以专用低权系统用户 **`piagentfortos`** 运行（preinst 与平台都会创建，同一用户）。
+- 智能体的一切读写都受该用户在 TOS 里的实际权限约束。要让它在你的共享目录里干活，
+  二选一：
+  - **按目录授权**：`setfacl -m u:piagentfortos:rwx /Volume1/Public/<dir>`（真机实测可写）
+  - **按组授权**：`usermod -aG <组> piagentfortos && systemctl restart piagentfortos`
+  - 或使用应用自有工作区：`/Volume1/@apps/piagentfortos/data/workspace`
+- ⚠️ **TOS UI 的「应用用户」列表依赖平台注册**：只有经**应用中心**安装（手动安装页上传 deb）
+  才会在 `/Volume1/@apps/<appid>/` 写入 `.userid`/`.groupid`/`ROUTER` 等注册元数据；
+  直接 `dpkg -i` 不会注册，因此 UI 里可能看不到该用户（也就无法在 UI 中配权限）。
+  两种路径都可用，但**同一台机器只走一条**（切换会 purge 预存注册 → 清数据，见指南坑 16）。
+
+## TOS 目录选择器（应用内）
+
+前端不直连 TOS API（会话 Cookie 多为 HttpOnly，JS 读不到，也取不到 CSRF 令牌），
+而是走本应用服务端代理：
+
+```
+浏览器 → /api/tos/fs/{list,info,mkdir} → 服务端带 Cookie 转发 → TOS /fileManage/*
+```
+
+目标固定 `http://127.0.0.1:8181`（`TOS_API_BASE` 可覆盖），`path` 仅作 query 参数 → 无 SSRF 面；
+权限完全沿用 TOS 自身模型（代理只是"带着当前用户 Cookie 再问一次 TOS"）。
+
 ## 已知限制
 
 - arm64 包**尚未在 arm64 真机验证**（手头测试机为 amd64）；已用 glibc ≤ 2.35 门禁兜底。
