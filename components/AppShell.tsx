@@ -625,7 +625,9 @@ export function AppShell() {
                     ref={shellMenuPanelRef}
                     id="workbench-menu"
                     role="menu"
-                    className="t-dropdown is-open material-popover fixed z-[1000] w-52 overflow-hidden rounded-panel border border-border p-1.5 shadow-popover"
+                    /* 宽度内容自适应（w-max）+ 上下限：英文等较长文案下弹窗自然变宽，
+                       而不是挤压/截断内部控件；上限 + overflow-hidden 兼作极端长文案的兜底。 */
+                    className="t-dropdown is-open material-popover fixed z-[1000] min-w-52 w-max max-w-[min(92vw,20rem)] overflow-hidden rounded-panel border border-border p-1.5 shadow-popover"
                     style={shellMenuPosition}
                     data-origin="top-right"
                   >
@@ -679,16 +681,34 @@ export function AppShell() {
                     {/* min-w-0 + truncate：flex 子项默认不能收缩到 min-content 以下，
                         英文 “Language” 比中文 “语言” 长得多，会把选择框顶出弹窗（真机截图）。 */}
                     <span className="min-w-0 flex-1 truncate">{t("language.label")}</span>
-                    <select
-                      value={localePreference}
-                      onChange={(event) => setLocalePreference(event.target.value as "system" | "en" | "zh-CN")}
-                      aria-label={t("language.label")}
-                      className="min-w-0 max-w-[58%] shrink rounded-control border border-border bg-bg-panel px-1.5 py-1 text-[12px] text-text outline-none focus:border-focus-ring"
-                    >
-                      <option value="system">{t("language.system")}</option>
-                      <option value="en">{t("language.english")}</option>
-                      <option value="zh-CN">{t("language.chineseSimplified")}</option>
-                    </select>
+                    <span className="relative flex min-w-0 max-w-[58%] shrink items-center">
+                      {/* appearance-none：原生 select 外观随引擎差异极大（真机反馈“样式太老”），
+                          显式接管外观后三端一致，并与设计系统的圆角/边框/焦点色统一。 */}
+                      <select
+                        value={localePreference}
+                        onChange={(event) => setLocalePreference(event.target.value as "system" | "en" | "zh-CN")}
+                        aria-label={t("language.label")}
+                        className="w-full min-w-0 appearance-none truncate rounded-control border border-border bg-bg-panel py-1 pl-2 pr-7 text-[12px] text-text outline-none transition-colors hover:bg-bg-elevated focus:border-focus-ring"
+                      >
+                        <option value="system">{t("language.system")}</option>
+                        <option value="en">{t("language.english")}</option>
+                        <option value="zh-CN">{t("language.chineseSimplified")}</option>
+                      </select>
+                      <svg
+                        aria-hidden="true"
+                        className="pointer-events-none absolute right-2 text-text-muted"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </span>
                   </label>
                   </div>,
                   document.body,
