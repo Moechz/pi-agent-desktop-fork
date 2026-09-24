@@ -7,6 +7,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { ayuDarkSyntaxTheme, ayuLightSyntaxTheme } from "@/lib/ayu-syntax-theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "./I18nProvider";
+import { copyToClipboard } from "../lib/random-id.ts";
 import type {
   AgentMessage,
   UserMessage,
@@ -55,22 +56,9 @@ function formatTime(ts?: number): string | null {
 }
 
 function copyText(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    return navigator.clipboard.writeText(text);
-  }
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
-    return Promise.resolve();
-  } catch {
-    return Promise.reject();
-  }
+  // 明文 HTTP（TOS 默认部署）下 navigator.clipboard 不可用或会被拒：
+  // 统一走 lib/random-id.ts 的 copyToClipboard（内部含 textarea 兜底）。
+  return copyToClipboard(text).then(() => undefined);
 }
 
 export const MessageView = React.memo(function MessageView({

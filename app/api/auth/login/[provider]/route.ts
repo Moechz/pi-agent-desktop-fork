@@ -1,3 +1,4 @@
+import { randomId } from "@/lib/random-id";
 import { validateProviderName } from "@/lib/auth-policy";
 import {
   createPiRuntime,
@@ -90,7 +91,7 @@ export async function GET(
       let pendingManualRequest: { token: string; promise: Promise<string> } | undefined;
 
       const createClientInputRequest = () => {
-        const token = `${provider}-${Date.now()}-${crypto.randomUUID()}`;
+        const token = `${provider}-${Date.now()}-${randomId()}`;
         activeTokens.add(token);
 
         const promise = new Promise<string>((resolve, reject) => {

@@ -1,3 +1,4 @@
+import { randomId } from "./random-id.ts";
 import type { SessionEntry, SessionHeader } from "./types.ts";
 
 export interface BranchPayload {
@@ -203,7 +204,7 @@ export function createBranchedHeader(options: {
 
   return {
     type: "session",
-    id: options.newSessionId ?? crypto.randomUUID(),
+    id: options.newSessionId ?? randomId(),
     timestamp: new Date().toISOString(),
     cwd: options.cwd,
     parentSession: options.sourceSessionId,
@@ -223,7 +224,7 @@ export function createClonedHeader(options: {
 
   const header: SessionHeader = {
     ...options.sourceHeader,
-    id: options.newSessionId ?? crypto.randomUUID(),
+    id: options.newSessionId ?? randomId(),
     timestamp: new Date().toISOString(),
     cwd: options.targetCwd ?? options.sourceHeader.cwd,
   };

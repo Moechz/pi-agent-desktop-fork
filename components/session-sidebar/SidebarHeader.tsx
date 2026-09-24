@@ -1,4 +1,5 @@
 "use client";
+import { randomId } from "../../lib/random-id.ts";
 import { withBasePath } from "../../lib/base-path.ts";
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -95,9 +96,7 @@ export function SidebarHeader({
   const handleNewSession = useCallback(() => {
     if (!selectedCwd) return;
     const tempId =
-      typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+      randomId();
     onNewSession?.(tempId, selectedCwd);
   }, [selectedCwd, onNewSession]);
 

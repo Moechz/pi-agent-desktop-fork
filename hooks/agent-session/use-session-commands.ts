@@ -1,4 +1,5 @@
 "use client";
+import { randomId } from "../../lib/random-id.ts";
 import { withBasePath } from "../../lib/base-path.ts";
 import { useI18n } from "@/components/I18nProvider";
 
@@ -197,7 +198,7 @@ export function useSessionCommands(opts: UseSessionCommandsOptions) {
       if (!commandTarget) return;
       if (!tryStartPromptDispatch(promptDispatchStateRef.current)) return;
 
-      const clientMessageId = globalThis.crypto.randomUUID();
+      const clientMessageId = randomId();
       onPendingPromptQueued({ id: clientMessageId, message });
 
       const imageBlocks = images?.map((img) => ({
@@ -449,7 +450,7 @@ export function useSessionCommands(opts: UseSessionCommandsOptions) {
     async (message: string, images?: AttachedImage[]) => {
       const sid = sessionIdRef.current;
       if (!sid) return;
-      const clientMessageId = globalThis.crypto.randomUUID();
+      const clientMessageId = randomId();
       const imageBlocks = images?.map((img) => ({
         type: "image" as const,
         source: { type: "base64" as const, media_type: img.mimeType, data: img.data },
