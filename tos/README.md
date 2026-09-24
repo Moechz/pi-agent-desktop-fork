@@ -115,3 +115,21 @@ dpkg -r piagentfortos && dpkg --purge piagentfortos   # 数据保留 → 彻底�
 2. 版本三处一致由 `build.sh` 断言保证：`config.ini` / `DEBIAN/control` / `.lang`
 3. 推 tag `tos-v<版本>`（例如 `tos-v0.8.8.6-1`）→ CI 出双架构 deb 并发布 Release
 4. 商店提交：上传 `<appid>_<版本>_<架构>.deb` + `.sha256`，类目 `Utilities`
+
+## 真机验收记录
+
+### 2026-09-24 · `7e2d166`（0.8.8.6-1，tnas-57 amd64）
+
+| 核对项 | 结果 |
+| --- | --- |
+| 版本 / 提交 | `0.8.8.6-1`，`BUILD-INFO` = `7e2d1668…` |
+| 修复指纹（三处 basePath 漏网） | `trust-fetch` 3 处 ✓ / `session-loader-api` 3 处 ✓ / `BranchCloneModal` 2 处 ✓ |
+| 服务 | `systemd=active`、`enabled`、仅监听 `127.0.0.1:18141` ✓ |
+| 平台路由 | `/piagentfortos/` → 308（基路径规范化）、`/api/models` → 200、`/api/sessions` → 200 ✓ |
+| 静态资源 | `_next/static/chunks/*.js` → 200 ✓ |
+| 近 25 分钟日志 | `error` / `ENOENT` 出现 **0** 次 ✓ |
+| 端到端（发消息 → 读回会话） | 新建会话 → `2+2=?` → 回复 `4`（`stop=stop`、`err=None`）✓ |
+
+**本次修复的故障形态**（排查成本极高，值得记住）：前端看起来发送成功、后端毫无记录。
+根因是**参数形式**的站内路径漏补 `basePath`（批量替换只覆盖了字面量），
+请求打到站点根 → 404。现已由 `lib/client-basepath.test.ts` 常驻守护。
