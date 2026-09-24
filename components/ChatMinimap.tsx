@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo, RefObject } from "react";
 import type { AgentMessage, AssistantMessage, TextContent } from "@/lib/types";
-import { buildTickLayout, entryIndexFor, tickIndexAt, tickTopPct } from "../lib/minimap-ticks.ts";
+import { buildRackLayout, entryIndexForTick, ratioForTick, tickIndexAtY, tickTopPx } from "../lib/minimap-ticks.ts";
 import { useI18n } from "./I18nProvider";
 
 interface Props {
@@ -83,7 +83,17 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
     () => allMessages.filter((msg) => hasTextContent(msg)),
     [allMessages],
   );
-  const layout = useMemo(() => buildTickLayout(entries.length), [entries.length]);
+  // 固定节距的刻度架：放得下就整条居中，放不下就让当前阅读位置停在中心。
+  // activeRatio 取视口中心在整篇中的比例（不再把间距拉伸铺满容器）。
+  const layout = useMemo(
+    () =>
+      buildRackLayout({
+        entryCount: entries.length,
+        railHeight: minimapHeightPx,
+        activeRatio: scrollRatio + viewportRatio / 2,
+      }),
+    [entries.length, minimapHeightPx, scrollRatio, viewportRatio],
+  );
 
   const allMessagesRef = useRef(allMessages);
   allMessagesRef.current = allMessages;
@@ -158,21 +168,23 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!visible) return;
+      if (!visible || layout.count === 0) return;
 
       draggingRef.current = true;
       const rect = e.currentTarget.getBoundingClientRect();
-      const clickRatio = (e.clientY - rect.top) / rect.height;
-      const grabOffset = clickRatio - scrollRatio * (1 - viewportRatio);
-      const insideBox = grabOffset >= 0 && grabOffset <= viewportRatio;
-      const offset = insideBox ? grabOffset : viewportRatio / 2;
 
-      scrollToMinimapRatio(clickRatio - offset);
+      // 点击/拖动的语义：把命中的条目转到视口中心（刻度是离散的，这样最可预测）
+      const jumpTo = (clientY: number) => {
+        const tick = tickIndexAtY(clientY - rect.top, layout);
+        if (tick === null) return;
+        scrollToMinimapRatio(ratioForTick(tick, layout) - viewportRatio / 2);
+      };
+
+      jumpTo(e.clientY);
 
       const onMove = (ev: MouseEvent) => {
         if (!draggingRef.current) return;
-        const r = (ev.clientY - rect.top) / rect.height;
-        scrollToMinimapRatio(r - offset);
+        jumpTo(ev.clientY);
       };
       const onUp = () => {
         draggingRef.current = false;
@@ -182,17 +194,26 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     },
-    [visible, viewportRatio, scrollRatio, scrollToMinimapRatio],
+    [visible, layout, viewportRatio, scrollToMinimapRatio],
   );
 
   if (!visible) return null;
 
-  const viewportBoxTop = scrollRatio * (1 - viewportRatio) * 100;
-  const viewportBoxHeight = viewportRatio * 100;
+  // 视口指示框：映射到刻度架上（与跟随逻辑同一坐标系，不会出现“框在 60%、当前刻度在中心”的矛盾）
+  const totalForBox = Math.max(1, entries.length);
+  const boxFrom = Math.floor(scrollRatio * totalForBox);
+  const boxTo = Math.ceil((scrollRatio + viewportRatio) * totalForBox);
+  const rawBoxTop = tickTopPx(boxFrom, layout);
+  const rawBoxHeight = Math.max(layout.pitch, (boxTo - boxFrom) * layout.pitch);
+  const viewportBoxTop = Math.max(0, Math.min(minimapHeightPx, rawBoxTop));
+  const viewportBoxHeight = Math.max(
+    4,
+    Math.min(minimapHeightPx - viewportBoxTop, rawBoxTop + rawBoxHeight - viewportBoxTop),
+  );
 
   const hoveredEntry =
     hoveredTick !== null && layout.count > 0
-      ? entries[entryIndexFor(hoveredTick, layout, entries.length)]
+      ? entries[entryIndexForTick(hoveredTick, layout)]
       : undefined;
   const hoveredPreview = hoveredEntry ? getMessagePreview(hoveredEntry) : "";
   const tooltipTop =
@@ -201,7 +222,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
           0,
           Math.min(
             minimapHeightPx - TOOLTIP_HEIGHT,
-            (tickTopPct(hoveredTick, layout) / 100) * minimapHeightPx - TOOLTIP_HEIGHT / 2,
+            tickTopPx(hoveredTick, layout) + layout.pitch / 2 - TOOLTIP_HEIGHT / 2,
           ),
         )
       : 0;
@@ -213,8 +234,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
       onMouseLeave={() => setHoveredTick(null)}
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        const ratio = (e.clientY - rect.top) / rect.height;
-        setHoveredTick(tickIndexAt(ratio, layout));
+        setHoveredTick(tickIndexAtY(e.clientY - rect.top, layout));
       }}
       style={{
         width: MINIMAP_WIDTH,
@@ -233,8 +253,8 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
           position: "absolute",
           left: 0,
           right: 0,
-          top: `${viewportBoxTop}%`,
-          height: `${viewportBoxHeight}%`,
+          top: viewportBoxTop,
+          height: viewportBoxHeight,
           background: "var(--bg-subtle)",
           borderTop: "1px solid var(--border-subtle)",
           borderBottom: "1px solid var(--border-subtle)",
@@ -257,10 +277,11 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
         }}
       />
 
-      {/* 会话刻度：等分槽位，刻度画在槽中心（均匀分布 + 命中唯一） */}
+      {/* 会话刻度：固定节距，只渲染轨道内的那些（条目上千时 DOM 也只有几十个节点） */}
       {layout.count > 0 &&
-        Array.from({ length: layout.count }, (_, tick) => {
-          const entry = entries[entryIndexFor(tick, layout, entries.length)];
+        Array.from({ length: layout.lastVisible - layout.firstVisible + 1 }, (_, offset) => {
+          const tick = layout.firstVisible + offset;
+          const entry = entries[entryIndexForTick(tick, layout)];
           if (!entry) return null;
           const isUser = entry.role === "user";
           const isHovered = hoveredTick === tick;
@@ -269,8 +290,8 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
               key={tick}
               style={{
                 position: "absolute",
-                top: `${tick * layout.slotPct}%`,
-                height: `${layout.slotPct}%`,
+                top: tickTopPx(tick, layout),
+                height: layout.pitch,
                 left: 0,
                 right: 0,
                 display: "flex",
