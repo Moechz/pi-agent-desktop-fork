@@ -625,7 +625,7 @@ export function AppShell() {
                     ref={shellMenuPanelRef}
                     id="workbench-menu"
                     role="menu"
-                    className="t-dropdown is-open material-popover fixed z-[1000] w-52 rounded-panel border border-border p-1.5 shadow-popover"
+                    className="t-dropdown is-open material-popover fixed z-[1000] w-52 overflow-hidden rounded-panel border border-border p-1.5 shadow-popover"
                     style={shellMenuPosition}
                     data-origin="top-right"
                   >
@@ -674,14 +674,16 @@ export function AppShell() {
                     <span className="w-4 text-center">⇩</span> {t("shell.exportSession")}
                   </button>
                   <div className="my-1 border-t border-divider" />
-                  <label className="flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-[13px] text-text">
+                  <label className="flex w-full min-w-0 items-center gap-2 rounded-control px-2.5 py-1.5 text-[13px] text-text">
                     <span className="w-4 text-center" aria-hidden="true">🌐</span>
-                    <span className="flex-1">{t("language.label")}</span>
+                    {/* min-w-0 + truncate：flex 子项默认不能收缩到 min-content 以下，
+                        英文 “Language” 比中文 “语言” 长得多，会把选择框顶出弹窗（真机截图）。 */}
+                    <span className="min-w-0 flex-1 truncate">{t("language.label")}</span>
                     <select
                       value={localePreference}
                       onChange={(event) => setLocalePreference(event.target.value as "system" | "en" | "zh-CN")}
                       aria-label={t("language.label")}
-                      className="max-w-28 rounded-control border border-border bg-bg-panel px-1.5 py-1 text-[12px] text-text outline-none focus:border-focus-ring"
+                      className="min-w-0 max-w-[58%] shrink rounded-control border border-border bg-bg-panel px-1.5 py-1 text-[12px] text-text outline-none focus:border-focus-ring"
                     >
                       <option value="system">{t("language.system")}</option>
                       <option value="en">{t("language.english")}</option>
