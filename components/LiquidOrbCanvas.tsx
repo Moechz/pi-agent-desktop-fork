@@ -27,7 +27,8 @@ export function LiquidOrbCanvas({ speed = 3 }: Props) {
     let removeRuntimeListeners: (() => void) | undefined;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    const stopWithFallback = () => {
+    // 降级原因只打一次日志：TOS 等环境排查“球不动”时必须能一眼看出走的哪条路
+    const stopWithFallback = (reason?: unknown) => {
       if (stopped || failed) return;
       failed = true;
       cancelAnimationFrame(animationFrame);
@@ -39,9 +40,16 @@ export function LiquidOrbCanvas({ speed = 3 }: Props) {
       context = null;
       device = null;
       setWebGpuFailed(true);
+      const detail = reason instanceof Error ? reason.message : String(reason ?? "unknown");
+      console.info(
+        `[liquid-orb] WebGPU unavailable, falling back to the CSS orb. reason=${detail} secureContext=${window.isSecureContext === true}`,
+      );
     };
 
     const start = async () => {
+      // 减弱动效偏好：不启动 WebGPU，直接交给 CSS 降级球（其 reduced-motion 变体只做低幅透明度脉冲）。
+      // 原实现会让 WebGPU 球把时间参数钉死为 0 → 完全静止，用户会以为“球坏了”（真机反馈）。
+      if (reduceMotion.matches) throw new Error("prefers-reduced-motion: reduce");
       if (!navigator.gpu) throw new Error("WebGPU unavailable");
       const adapter = await navigator.gpu.requestAdapter();
       if (!adapter) throw new Error("No WebGPU adapter");
@@ -131,8 +139,8 @@ export function LiquidOrbCanvas({ speed = 3 }: Props) {
           if (!reduceMotion.matches && canvasVisible && document.visibilityState === "visible") {
             animationFrame = requestAnimationFrame(render);
           }
-        } catch {
-          stopWithFallback();
+        } catch (error) {
+          stopWithFallback(error);
         }
       };
 
@@ -153,6 +161,11 @@ export function LiquidOrbCanvas({ speed = 3 }: Props) {
         cancelAnimationFrame(animationFrame);
         animationFrame = 0;
         lastRenderedAt = 0;
+        // 运行中切到“减弱动效”→ 改用 CSS 降级球（脉冲），而不是把画面冻住
+        if (reduceMotion.matches) {
+          stopWithFallback(new Error("prefers-reduced-motion: reduce (changed)"));
+          return;
+        }
         resume();
       };
 
@@ -172,13 +185,13 @@ export function LiquidOrbCanvas({ speed = 3 }: Props) {
       });
       const handleGpuError = (event: GPUUncapturedErrorEvent) => {
         event.preventDefault();
-        stopWithFallback();
+        stopWithFallback(new Error("WebGPU uncaptured error"));
       };
 
       document.addEventListener("visibilitychange", handleVisibility);
       reduceMotion.addEventListener("change", handleMotionPreference);
       device.addEventListener("uncapturederror", handleGpuError);
-      device.lost.then(() => stopWithFallback());
+      device.lost.then(() => stopWithFallback(new Error("WebGPU device lost")));
       visibilityObserver.observe(canvas);
       resizeObserver.observe(canvas);
       resume();
