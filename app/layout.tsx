@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/components/I18nProvider";
 import GlobalRuntimeErrorReporter from "@/components/GlobalRuntimeErrorReporter";
 import { InsecureContextNotice } from "@/components/InsecureContextNotice";
+import { APP_NAME } from "@/lib/app-identity.ts";
 import { BASE_PATH } from "@/lib/base-path.ts";
 import { resolveRuntimeTag, runtimeBootstrapScript } from "@/lib/runtime-env.ts";
 
@@ -27,7 +28,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pi Agent Desktop",
+  title: APP_NAME,
   description: "Pi Coding Agent Desktop Application",
 };
 

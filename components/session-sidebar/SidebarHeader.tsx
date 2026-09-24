@@ -1,5 +1,6 @@
 "use client";
 import { randomId } from "../../lib/random-id.ts";
+import { APP_NAME } from "@/lib/app-identity.ts";
 import { withBasePath } from "../../lib/base-path.ts";
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -122,7 +123,7 @@ export function SidebarHeader({
             （沿用已验证的可见性方案：内联字号/字重/合成层，不依赖类样式） */}
         <span
           className="pi-title-light"
-          title="Pi Agent Desktop"
+          title={APP_NAME}
           style={{
             position: "relative",
             zIndex: 999,
@@ -140,11 +141,11 @@ export function SidebarHeader({
             WebkitUserSelect: "none",
           }}
         >
-          Pi Agent Desktop
+          {APP_NAME}
         </span>
         <span
           className="pi-title-dark"
-          title="Pi Agent Desktop"
+          title={APP_NAME}
           style={{
             position: "relative",
             zIndex: 999,
@@ -162,7 +163,7 @@ export function SidebarHeader({
             WebkitUserSelect: "none",
           }}
         >
-          Pi Agent Desktop
+          {APP_NAME}
         </span>
       </div>
 
