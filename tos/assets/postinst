@@ -41,6 +41,10 @@ case "$1" in
     # 2. 应用目录属主（node 运行时与 standalone 都归运行用户）
     chown -R "$APP_USER:$APP_USER" "$APP_DIR" 2>/dev/null || true
 
+    # 2b. Next 图片缓存目录：standalone 里不含 .next/cache，运行时会因 mkdir ENOENT
+    #     抛 unhandledRejection（真机日志实测；虽不致命但污染日志且可能影响图片优化）
+    mkdir -p "$APP_DIR/standalone/.next/cache" 2>/dev/null || true
+
     # 3. 解压 webui.bz2（官方模板行为；External Open 模式下是占位落地页）
     if [ -f "$APP_DIR/webui.bz2" ]; then
       ( cd "$APP_DIR" && tar -xjf webui.bz2 2>/dev/null || true )
