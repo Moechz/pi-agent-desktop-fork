@@ -5,7 +5,7 @@ import { I18nProvider } from "@/components/I18nProvider";
 import GlobalRuntimeErrorReporter from "@/components/GlobalRuntimeErrorReporter";
 import { InsecureContextNotice } from "@/components/InsecureContextNotice";
 import { APP_NAME } from "@/lib/app-identity.ts";
-import { ICON_BASES, iconUrl } from "@/lib/app-icons.ts";
+import { iconUrl } from "@/lib/app-icons.ts";
 import { BASE_PATH } from "@/lib/base-path.ts";
 import { resolveRuntimeTag, runtimeBootstrapScript } from "@/lib/runtime-env.ts";
 
@@ -35,12 +35,12 @@ export const metadata: Metadata = {
   // 顺序上把 .ico 放最前 —— Safari 对 multi-size .ico 最稳，否则会回退去取站点根的 /favicon.ico
   icons: {
     icon: [
-      { url: iconUrl({ ...ICON_BASES.favicon, basePath: BASE_PATH }), sizes: "16x16 32x32 48x48", type: "image/x-icon" },
-      { url: iconUrl({ ...ICON_BASES.icon, basePath: BASE_PATH }), sizes: "512x512", type: "image/png" },
+      { url: iconUrl("favicon", BASE_PATH), sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+      { url: iconUrl("icon", BASE_PATH), sizes: "512x512", type: "image/png" },
     ],
-    shortcut: iconUrl({ ...ICON_BASES.favicon, basePath: BASE_PATH }),
+    shortcut: iconUrl("favicon", BASE_PATH),
     apple: [
-      { url: iconUrl({ ...ICON_BASES.apple, basePath: BASE_PATH }), sizes: "180x180", type: "image/png" },
+      { url: iconUrl("apple", BASE_PATH), sizes: "180x180", type: "image/png" },
     ],
   },
   description: "Pi Coding Agent Desktop Application",
