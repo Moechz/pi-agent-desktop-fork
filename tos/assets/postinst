@@ -155,7 +155,8 @@ case "$1" in
       systemctl --no-pager -l status $APP_ID.service 2>/dev/null | head -20 >> "$MAINT_LOG" 2>/dev/null || true
     fi
 
-    # 10. git 依赖提示（本包声明 Depends: git，但手动 dpkg -i 不解析依赖）
+    # 10. git 提示：本包声明 Recommends: git（不能声明硬 Depends —— dpkg 按数据库校验，
+    #     真机实测存在“git 二进制可用但未在 dpkg 数据库登记”的 TOS，硬依赖会直接卡住配置阶段）
     if ! command -v git > /dev/null 2>&1; then
       echo "提示: 未检测到 git —— 智能体的本地提交与会话分支功能将不可用。" >&2
       echo "      安装: apt-get install -y git" >&2

@@ -3,7 +3,8 @@ Version: @@VERSION@@
 Architecture: @@ARCH@@
 Maintainer: @@MAINTAINER@@
 Installed-Size: @@SIZE@@
-Depends: git, systemd
+Depends: systemd
+Recommends: git
 Section: utils
 Priority: optional
 Homepage: https://github.com/Moechz/pi-agent-desktop-fork
