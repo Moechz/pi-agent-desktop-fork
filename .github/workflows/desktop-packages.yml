@@ -13,7 +13,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
   # 不再禁止签名：electron-builder.yml 里 identity: "-" 要求 ad-hoc 签名，
   # 未签名会让 macOS 把应用认成通用 “Electron”，TCC 授权反复弹窗（真机实测）。
 
