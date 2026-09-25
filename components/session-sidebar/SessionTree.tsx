@@ -1,7 +1,8 @@
 "use client";
+import { createPortal } from "react-dom";
 import { withBasePath } from "../../lib/base-path.ts";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import type { SessionInfo } from "@/lib/types";
 import { type SessionTreeNode } from "./helpers";
 import { useI18n } from "../I18nProvider";
@@ -145,6 +146,9 @@ function SessionItem({
   const inputRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  // 菜单用 portal 渲染到 body，位置需要按视口夹取（否则靠近边缘会被裁/跑出屏幕）
+  const [menuStyle, setMenuStyle] = useState<{ top: number; left: number } | null>(null);
 
   const title = session.name || session.firstMessage.slice(0, 50) || session.id.slice(0, 12);
   const actionsVisible = hovered || rowFocused;
@@ -193,7 +197,34 @@ function SessionItem({
     e.stopPropagation();
     setConfirmDelete(false);
   }, []);
-  useDismissOnOutsideClick(menuRef, menuOpen, () => setMenuOpen(false));
+  useDismissOnOutsideClick([menuRef, moreButtonRef], menuOpen, () => setMenuOpen(false));
+
+  // 菜单渲染在 body（portal）后，fixed 不再受行内 overflow/层叠上下文影响；
+  // 位置按视口夹取，避免贴边时被裁掉大半（真机反馈：文字看不见）。
+  useLayoutEffect(() => {
+    if (!menuOpen || !menuPos) {
+      setMenuStyle(null);
+      return;
+    }
+    const el = menuRef.current;
+    const height = el?.offsetHeight ?? 0;
+    const width = el?.offsetWidth ?? 176;
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const pad = 8;
+    setMenuStyle({
+      top: Math.max(pad, Math.min(menuPos.y, vh - height - pad)),
+      left: Math.max(pad, Math.min(menuPos.x, vw - width - pad)),
+    });
+  }, [menuOpen, menuPos]);
+
+  // 列表滚动后固定定位的菜单会与行脱节 → 直接关闭
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [menuOpen]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -352,6 +383,7 @@ function SessionItem({
             }`}
           >
             <button
+              ref={moreButtonRef}
               onClick={(e) => {
                 e.stopPropagation();
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -373,13 +405,13 @@ function SessionItem({
           </div>
 
           {/* Context Menu Dropdown */}
-          {menuOpen && menuPos && (
+          {menuOpen && menuStyle && typeof document !== "undefined" && createPortal(
             <div
               ref={menuRef}
               style={{
                 position: "fixed",
-                top: menuPos.y,
-                left: menuPos.x,
+                top: menuStyle.top,
+                left: menuStyle.left,
                 zIndex: 1000,
               }}
               className="t-dropdown is-open material-popover w-44 border border-divider rounded-panel shadow-popover py-1 text-[13px] text-text"
@@ -467,6 +499,8 @@ function SessionItem({
                 {t("sidebar.deleteAction")}
               </button>
             </div>
+          ,
+          document.body,
           )}
         </>
       )}
