@@ -5,6 +5,7 @@ import { I18nProvider } from "@/components/I18nProvider";
 import GlobalRuntimeErrorReporter from "@/components/GlobalRuntimeErrorReporter";
 import { InsecureContextNotice } from "@/components/InsecureContextNotice";
 import { APP_NAME } from "@/lib/app-identity.ts";
+import { versionedIconUrl } from "@/lib/app-icons.ts";
 import { BASE_PATH } from "@/lib/base-path.ts";
 import { resolveRuntimeTag, runtimeBootstrapScript } from "@/lib/runtime-env.ts";
 
@@ -29,6 +30,16 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: APP_NAME,
+  // 图标 URL 带内容哈希：图标一改 URL 就变，浏览器（尤其 Safari）的图标缓存无法再残留旧图标
+  icons: {
+    icon: [
+      { url: versionedIconUrl({ file: "pi-agent-icon.png", basePath: BASE_PATH }), sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: [versionedIconUrl({ file: "pi-agent-favicon.ico", basePath: BASE_PATH })],
+    apple: [
+      { url: versionedIconUrl({ file: "pi-agent-touch-icon.png", basePath: BASE_PATH }), sizes: "180x180", type: "image/png" },
+    ],
+  },
   description: "Pi Coding Agent Desktop Application",
 };
 
