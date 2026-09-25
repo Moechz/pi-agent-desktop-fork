@@ -5,7 +5,7 @@ import { I18nProvider } from "@/components/I18nProvider";
 import GlobalRuntimeErrorReporter from "@/components/GlobalRuntimeErrorReporter";
 import { InsecureContextNotice } from "@/components/InsecureContextNotice";
 import { APP_NAME } from "@/lib/app-identity.ts";
-import { versionedIconUrl } from "@/lib/app-icons.ts";
+import { ICON_BASES, iconUrl } from "@/lib/app-icons.ts";
 import { BASE_PATH } from "@/lib/base-path.ts";
 import { resolveRuntimeTag, runtimeBootstrapScript } from "@/lib/runtime-env.ts";
 
@@ -31,13 +31,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: APP_NAME,
   // 图标 URL 带内容哈希：图标一改 URL 就变，浏览器（尤其 Safari）的图标缓存无法再残留旧图标
+  // 图标：URL 不带查询串（Safari 不认带 ? 的图标），哈希放在文件名里（缓存仍然会失效）
+  // 顺序上把 .ico 放最前 —— Safari 对 multi-size .ico 最稳，否则会回退去取站点根的 /favicon.ico
   icons: {
     icon: [
-      { url: versionedIconUrl({ file: "pi-agent-icon.png", basePath: BASE_PATH }), sizes: "512x512", type: "image/png" },
+      { url: iconUrl({ ...ICON_BASES.favicon, basePath: BASE_PATH }), sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+      { url: iconUrl({ ...ICON_BASES.icon, basePath: BASE_PATH }), sizes: "512x512", type: "image/png" },
     ],
-    shortcut: [versionedIconUrl({ file: "pi-agent-favicon.ico", basePath: BASE_PATH })],
+    shortcut: iconUrl({ ...ICON_BASES.favicon, basePath: BASE_PATH }),
     apple: [
-      { url: versionedIconUrl({ file: "pi-agent-touch-icon.png", basePath: BASE_PATH }), sizes: "180x180", type: "image/png" },
+      { url: iconUrl({ ...ICON_BASES.apple, basePath: BASE_PATH }), sizes: "180x180", type: "image/png" },
     ],
   },
   description: "Pi Coding Agent Desktop Application",

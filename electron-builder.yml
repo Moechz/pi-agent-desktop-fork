@@ -84,7 +84,11 @@ win:
       arch:
         - x64
   icon: build/icon.ico
-  signAndEditExecutable: false
+  # 必须签名：未签名/通用身份会让 macOS 把应用认成 “Electron”，
+  # TCC 授权无法绑定稳定身份 → “访问其他 App 的数据”弹窗反复出现（真机实测）。
+  # identity: "-" = ad-hoc 签名：不需要证书，但身份固定为 appId，授权可被记住。
+  identity: "-"
+  hardenedRuntime: false
 
 nsis:
   oneClick: false
