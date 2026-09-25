@@ -401,7 +401,10 @@ assert_ok "无 .DS_Store/._* 残留（坑 8）" "$([ "$n" = "0" ] && echo 1 || e
 bash scripts/check-glibc.sh "$PKGROOT" 2.35
 
 # 8) control 模板必填字段（真正渲染由 makedeb.py 完成）
-assert "control 模板声明 Depends: git（本地提交需 git，且不在脚本里联网装）" grep -q '^Depends: .*git' "$TOS_DIR/control.in"
+# git 必须是 Recommends 而非 Depends —— 真机实锤：TOS 预装的 git 常无 dpkg 数据库记录，
+# 硬依赖会让 dpkg 在配置阶段直接失败（状态卡在 iU），而 git 缺失并不影响核心对话功能。
+assert "control 模板用 Recommends: git（不可用 Depends，否则真机安装失败）" grep -q '^Recommends: .*git' "$TOS_DIR/control.in"
+assert_ok "control 模板未把 git 放进 Depends" "$(grep -q '^Depends: .*git' "$TOS_DIR/control.in" && echo 0 || echo 1)"
 assert "control 模板含 Maintainer" grep -q '^Maintainer: @@MAINTAINER@@' "$TOS_DIR/control.in"
 assert "control 模板版本占位符" grep -q '^Version: @@VERSION@@' "$TOS_DIR/control.in"
 n=$(grep -cE '@[A-Z0-9_]+@' "$TOS_DIR/assets/postinst" "$TOS_DIR/assets/preinst" "$TOS_DIR/assets/prerm" "$TOS_DIR/assets/postrm" 2>/dev/null | awk -F: '{s+=$2} END{print s+0}')
