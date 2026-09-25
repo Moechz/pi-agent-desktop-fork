@@ -98,7 +98,10 @@ jobs:
           head -8 control.txt
           grep -q '^Package: piagentfortos$' control.txt
           grep -q '^Architecture: ${{ matrix.arch }}$' control.txt
-          grep -q '^Depends: git' control.txt
+          # git 必须是 Recommends：真机实测 TOS 预装 git 常无 dpkg 数据库记录，
+          # 声明硬 Depends 会让 dpkg 卡在配置阶段（状态 iU）导致安装失败。
+          grep -q '^Recommends: git' control.txt
+          ! grep -q '^Depends: .*git' control.txt
 
           tar tJf data.tar.xz > data-list.txt
           for f in \
