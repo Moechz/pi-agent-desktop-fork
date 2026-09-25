@@ -100,3 +100,29 @@ export function ratioForTick(tick: number, layout: RackLayout): number {
   if (layout.count <= 1) return 0;
   return entryIndexForTick(tick, layout) / (layout.count - 1);
 }
+
+/**
+ * 把消息按“一轮对话”分组：**每条用户消息开启新一轮**，其后的助手/工具消息归入该轮。
+ *
+ * 真机反馈：原来“每条消息一根刻度”导致一个问答来回就是两根，会话一长刻度非常密、
+ * 很难筛选。改为按轮（用户消息为界）分组后刻度数量约减半，且每根刻度天然对应
+ * “用户问什么 + 助手答什么”，语义清晰。
+ */
+export interface TurnGroup {
+  /** 该轮第一条消息在原始数组中的下标 —— 用于精确滚动到该轮 */
+  anchorIndex: number;
+  /** 该轮包含的所有原始下标 */
+  indices: number[];
+}
+
+export function groupTurnsByUser(roles: readonly (string | undefined)[]): TurnGroup[] {
+  const groups: TurnGroup[] = [];
+  roles.forEach((role, index) => {
+    if (groups.length === 0 || role === "user") {
+      groups.push({ anchorIndex: index, indices: [index] });
+      return;
+    }
+    groups[groups.length - 1].indices.push(index);
+  });
+  return groups;
+}

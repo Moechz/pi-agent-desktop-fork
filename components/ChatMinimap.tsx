@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo, RefObject } from "react";
 import type { AgentMessage, AssistantMessage, TextContent } from "@/lib/types";
-import { buildRackLayout, entryIndexForTick, ratioForTick, tickIndexAtY, tickTopPx } from "../lib/minimap-ticks.ts";
+import {
+  buildRackLayout,
+  entryIndexForTick,
+  groupTurnsByUser,
+  ratioForTick,
+  tickIndexAtY,
+  tickTopPx,
+  type TurnGroup,
+} from "../lib/minimap-ticks.ts";
 import { useI18n } from "./I18nProvider";
 
 interface Props {
@@ -14,7 +22,8 @@ interface Props {
 }
 
 const MINIMAP_WIDTH = 30;
-const TOOLTIP_HEIGHT = 26;
+const TOOLTIP_HEIGHT = 92; // 三行：用户一行 + 助手两行
+const TOOLTIP_WIDTH = 260;
 
 function getMessagePreview(msg: AgentMessage | Partial<AgentMessage>): string {
   if (msg.role === "user") {
@@ -45,6 +54,23 @@ function getMessagePreview(msg: AgentMessage | Partial<AgentMessage>): string {
   return "";
 }
 
+/** 一轮的提示内容：用户问的（一行）+ 助手答的（两行） */
+function buildTurnPreview(
+  all: (AgentMessage | Partial<AgentMessage>)[],
+  turn: TurnGroup,
+): { ask: string; reply: string } {
+  let ask = "";
+  let reply = "";
+  for (const index of turn.indices) {
+    const msg = all[index];
+    if (!msg) continue;
+    const text = getMessagePreview(msg);
+    if (msg.role === "user" && !ask) ask = text;
+    else if (msg.role === "assistant" && !reply) reply = text;
+  }
+  return { ask, reply: reply || ask };
+}
+
 /** 刻度颜色：用户消息用品牌色系，助手消息用中性色系 */
 function getTickColor(msg: AgentMessage | Partial<AgentMessage>, hovered: boolean): string {
   if (msg.role === "user") return hovered ? "var(--accent)" : "var(--user-border)";
@@ -60,7 +86,7 @@ function hasTextContent(msg: AgentMessage | Partial<AgentMessage>): boolean {
   return false;
 }
 
-export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Props) {
+export function ChatMinimap({ messages, streamingMessage, scrollContainer, messageRefs }: Props) {
   const { t } = useI18n();
   const [scrollRatio, setScrollRatio] = useState(0);
   const [viewportRatio, setViewportRatio] = useState(1);
@@ -79,20 +105,21 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
   );
 
   // 每个可显示条目 → 一根刻度（不再依赖 DOM 位置，故渲染顺序即分布顺序）
-  const entries = useMemo(
-    () => allMessages.filter((msg) => hasTextContent(msg)),
-    [allMessages],
-  );
+  // 刻度单位 = 一轮对话（以用户消息为界）：比“每条消息一根”少一半，且更好筛选（真机反馈）
+  const turns = useMemo(() => {
+    const groups = groupTurnsByUser(allMessages.map((msg) => msg.role));
+    return groups.filter((group) => group.indices.some((index) => hasTextContent(allMessages[index])));
+  }, [allMessages]);
   // 固定节距的刻度架：放得下就整条居中，放不下就让当前阅读位置停在中心。
   // activeRatio 取视口中心在整篇中的比例（不再把间距拉伸铺满容器）。
   const layout = useMemo(
     () =>
       buildRackLayout({
-        entryCount: entries.length,
+        entryCount: turns.length,
         railHeight: minimapHeightPx,
         activeRatio: scrollRatio + viewportRatio / 2,
       }),
-    [entries.length, minimapHeightPx, scrollRatio, viewportRatio],
+    [turns.length, minimapHeightPx, scrollRatio, viewportRatio],
   );
 
   const allMessagesRef = useRef(allMessages);
@@ -177,6 +204,12 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
       const jumpTo = (clientY: number) => {
         const tick = tickIndexAtY(clientY - rect.top, layout);
         if (tick === null) return;
+        const turn = turns[entryIndexForTick(tick, layout)];
+        const anchor = turn ? messageRefs?.current?.[turn.anchorIndex] : null;
+        if (anchor && typeof anchor.scrollIntoView === "function") {
+          anchor.scrollIntoView({ block: "start", behavior: "auto" });
+          return;
+        }
         scrollToMinimapRatio(ratioForTick(tick, layout) - viewportRatio / 2);
       };
 
@@ -194,13 +227,13 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     },
-    [visible, layout, viewportRatio, scrollToMinimapRatio],
+    [visible, layout, turns, viewportRatio, scrollToMinimapRatio, messageRefs],
   );
 
   if (!visible) return null;
 
   // 视口指示框：映射到刻度架上（与跟随逻辑同一坐标系，不会出现“框在 60%、当前刻度在中心”的矛盾）
-  const totalForBox = Math.max(1, entries.length);
+  const totalForBox = Math.max(1, turns.length);
   const boxFrom = Math.floor(scrollRatio * totalForBox);
   const boxTo = Math.ceil((scrollRatio + viewportRatio) * totalForBox);
   const rawBoxTop = tickTopPx(boxFrom, layout);
@@ -211,11 +244,11 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
     Math.min(minimapHeightPx - viewportBoxTop, rawBoxTop + rawBoxHeight - viewportBoxTop),
   );
 
-  const hoveredEntry =
+  const hoveredTurn =
     hoveredTick !== null && layout.count > 0
-      ? entries[entryIndexForTick(hoveredTick, layout)]
+      ? turns[entryIndexForTick(hoveredTick, layout)]
       : undefined;
-  const hoveredPreview = hoveredEntry ? getMessagePreview(hoveredEntry) : "";
+  const hoveredPreview = hoveredTurn ? buildTurnPreview(allMessages, hoveredTurn) : null;
   const tooltipTop =
     hoveredTick !== null
       ? Math.max(
@@ -281,7 +314,8 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
       {layout.count > 0 &&
         Array.from({ length: layout.lastVisible - layout.firstVisible + 1 }, (_, offset) => {
           const tick = layout.firstVisible + offset;
-          const entry = entries[entryIndexForTick(tick, layout)];
+          const turn = turns[entryIndexForTick(tick, layout)];
+          const entry = turn ? allMessages[turn.anchorIndex] : undefined;
           if (!entry) return null;
           const isUser = entry.role === "user";
           const isHovered = hoveredTick === tick;
@@ -315,7 +349,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
         })}
 
       {/* 只渲染悬停那一条的简要（不再全部渲染后互相避让） */}
-      {hoveredEntry && hoveredPreview && (
+      {hoveredPreview && (
         <div
           style={{
             position: "absolute",
@@ -327,36 +361,50 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer }: Pro
             borderRight: "1px solid var(--border)",
             borderBottom: "1px solid var(--border)",
             borderLeft: `2px solid ${
-              hoveredEntry.role === "user" ? "var(--user-border)" : "var(--border)"
+              hoveredTurn && allMessages[hoveredTurn.anchorIndex]?.role === "user"
+                ? "var(--user-border)"
+                : "var(--border)"
             }`,
             borderRadius: "var(--radius-control)",
-            padding: "2px 7px",
-            width: 220,
+            padding: "4px 8px",
+            width: TOOLTIP_WIDTH,
             zIndex: 100,
             pointerEvents: "none",
           }}
         >
-          <div
-            style={{
-              fontSize: 11,
-              color: "var(--text-dim)",
-              lineHeight: 1.2,
-              marginBottom: 1,
-            }}
-          >
-            {hoveredEntry.role === "user" ? t("minimap.you") : t("minimap.assistant")}
+          <div style={{ fontSize: 11, color: "var(--text-dim)", lineHeight: 1.2, marginBottom: 2 }}>
+            {t("minimap.you")}
           </div>
           <div
             style={{
               fontSize: 12,
               color: "var(--text)",
-              lineHeight: 1.4,
-              whiteSpace: "nowrap",
+              lineHeight: 1.35,
+              whiteSpace: "normal",
               overflow: "hidden",
-              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 1,
+              WebkitBoxOrient: "vertical",
             }}
           >
-            {hoveredPreview}
+            {hoveredPreview.ask}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-dim)", lineHeight: 1.2, marginTop: 4, marginBottom: 2 }}>
+            {t("minimap.assistant")}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--text)",
+              lineHeight: 1.35,
+              whiteSpace: "normal",
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {hoveredPreview.reply}
           </div>
         </div>
       )}

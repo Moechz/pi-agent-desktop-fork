@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   TICK_PITCH,
+  groupTurnsByUser,
   buildRackLayout,
   entryIndexForTick,
   ratioForTick,
@@ -112,4 +113,22 @@ test("刻度 ↔ 条目 ↔ 跳转比例的一一映射", () => {
   assert.equal(ratioForTick(0, layout), 0);
   assert.equal(ratioForTick(10, layout), 1);
   assert.equal(ratioForTick(5, layout), 0.5);
+});
+
+test("按轮分组：每条用户消息开启新一轮，助手/工具归入前一轮", () => {
+  const groups = groupTurnsByUser(["user", "assistant", "user", "assistant", "tool", "assistant"]);
+  assert.equal(groups.length, 2, "两轮（两条用户消息）");
+  assert.deepEqual(groups[0], { anchorIndex: 0, indices: [0, 1] });
+  assert.deepEqual(groups[1], { anchorIndex: 2, indices: [2, 3, 4, 5] });
+});
+
+test("首条消息不是用户消息时也能成组（会话可能以助手/工具开头）", () => {
+  const groups = groupTurnsByUser(["assistant", "tool", "user", "assistant"]);
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups[0], { anchorIndex: 0, indices: [0, 1] });
+  assert.deepEqual(groups[1], { anchorIndex: 2, indices: [2, 3] });
+});
+
+test("空会话返回空分组", () => {
+  assert.deepEqual(groupTurnsByUser([]), []);
 });
