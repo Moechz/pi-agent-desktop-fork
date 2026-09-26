@@ -117,6 +117,16 @@ jobs:
             ./etc/nginx/conf.d/piagentfortos.conf ; do
             grep -qx "$f" data-list.txt || { echo "data 包缺少 $f"; exit 1; }
           done
+
+          # 权限门禁（坑 57）：包内文件必须对非 root 运行用户可读、目录可遍历。
+          # 构建环境 umask 与源树权限会经 cp -R 原样进包（027 → 0640/0750），
+          # 真机上运行用户读不到自己的 package.json → 服务秒退、应用中心卡「安装中」。
+          mkdir -p /tmp/debdata && rm -rf /tmp/debdata/* && tar xJf data.tar.xz -C /tmp/debdata
+          bad="$(find /tmp/debdata -type f ! -perm -o=r -print -quit)"
+          [ -z "$bad" ] || { echo "❌ 包内文件对其它用户不可读：$bad"; exit 1; }
+          bad="$(find /tmp/debdata -type d ! -perm -o=rx -print -quit)"
+          [ -z "$bad" ] || { echo "❌ 包内目录不可被其它用户遍历：$bad"; exit 1; }
+          echo "✓ 权限门禁通过（文件 o+r / 目录 o+rx）"
           echo "结构复核通过"
 
       - uses: actions/upload-artifact@v4
