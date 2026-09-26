@@ -9,6 +9,19 @@
 
 # Changelog
 
+## 2026-09-26 — 降级思考球定版（慢转 + 反向焦散 + 暖色外发光）+ 思考球实验室
+
+| 类别 | 内容 |
+|---|---|
+| 背景 | 降级球（浏览器拿不到 WebGPU 时显示，TOS 明文 HTTP 下就是这颗）此前是「1600ms 单层锥形扫光」，观感像旋转的陀螺而不是液体 |
+| 改动 | `app/globals.css`：`.liquid-thinking-fallback` 改为四子层（`.sweep` 扫光 / `.caustic` 反向焦散 / `.hi` Lissajous 游走高光 / `.rim` 边缘光），参数全部提为 `--orb-*` 自定义属性；`components/LiquidOrbCanvas.tsx`：降级分支渲染这四个子层 |
+| 定版参数 | 扫光 9.2s、焦散 24s×0.3、高光 7.7s、模糊 7.5px、外发光 0.7（#ff6251）、边缘光关 —— 由仓库所有者在本页的 orb-lab 里拖定 |
+| 工具 | 新增 `scripts/build-orb-lab.mjs` + `orb-lab.template.html`：生成 `public/orb-lab.html` 实验页。着色器/seed/降级球 CSS **全部从源码抽取**（不复制），真球 6 组预设 + 12 个 uniform 滑块 + 128 float seed 导出；降级球 5 组预设（含「改版前」对照）+ 参数滑块 + CSS 导出 |
+| 测试 | 新增 `scripts/orb-lab.test.mjs`（2 例）：守着「源码改形状 → 生成器先红」与「无 WebGPU 分支 + 26 个滑块全部可跑」 |
+| 兼容 | `prefers-reduced-motion`（扫光/焦散停、高光转低幅脉动）与 `prefers-reduced-transparency` / `prefers-contrast` 三处媒体查询同步跟进 |
+| 基线 | 基于 `05d5c3c`（= 已发布 0.8.8.9-18）；本改动只碰 `app/globals.css` 与 `LiquidOrbCanvas.tsx`，不涉及 0.8.8-8/-9 的超长会话修复 |
+| 验证 | tsc 零错误；693 项测试 685 通过（5 例失败全为 `lib/git-worktree` 依赖 git ≥2.36 的 `-z`，本机 git 2.34.1 的既有环境问题）；版本 0.8.8.9-19 |
+
 ## 2026-09-23 — 发布 v0.8.8-6（Windows 工具能力补齐）
 
 | 类别 | 内容 |

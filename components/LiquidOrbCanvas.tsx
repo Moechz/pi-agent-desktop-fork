@@ -224,7 +224,17 @@ export function LiquidOrbCanvas({ speed = 3 }: Props) {
   return (
     <span className="liquid-thinking-orb" aria-hidden="true">
       <canvas ref={canvasRef} className={webGpuFailed ? "hidden" : "liquid-thinking-canvas"} />
-      {webGpuFailed && <span className="liquid-thinking-fallback" />}
+      {/* 降级球的四个子层：扫光 / 反向焦散 / 游走高光 / 边缘光。
+          全部 inset:0 + border-radius:50%，自身即圆形、不溢出父级 ——
+          结构上不可能出现“方角”（真机反馈过）。层级与参数见 globals.css。 */}
+      {webGpuFailed && (
+        <span className="liquid-thinking-fallback">
+          <span className="sweep" />
+          <span className="caustic" />
+          <span className="hi" />
+          <span className="rim" />
+        </span>
+      )}
     </span>
   );
 }

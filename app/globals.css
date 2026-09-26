@@ -758,7 +758,24 @@ span.linenumber {
   width: 46px;
   height: 46px;
 }
+/* 降级球（浏览器拿不到 WebGPU，或设备中途丢失时显示）。
+   四个子层各自 inset:0 + border-radius:50%，自身即圆形、不溢出父级 ——
+   结构上不可能露出方角；混色也只在 isolation 内部生效。
+   （此前用“超大模糊方块 + mix-blend-mode: screen”，既露角又把颜色冲淡，真机反馈过。）
+
+   下面这组参数 2026-09-26 在 orb-lab 里定版：
+   慢转扫光 9.2s + 反向焦散 24s(0.3) + 暖色外发光 0.7，边缘光关。
+   要再调：npm run serve:orb-lab 拖滑块，把导出贴回这里。 */
 .liquid-thinking-fallback {
+  --orb-spin: 9200ms;
+  --orb-caustic-spin: 24000ms;
+  --orb-hi: 7700ms;
+  --orb-blur: 7.5px;
+  --orb-caustic: 0.3;
+  --orb-glow: 0.7;
+  --orb-rim: 0;
+  --orb-glow-color: #ff6251;
+
   position: relative;
   display: block;
   width: 38px;
@@ -778,16 +795,18 @@ span.linenumber {
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     inset 5px 7px 10px rgba(255, 255, 255, 0.1),
     inset -6px -7px 12px rgba(0, 0, 0, 0.45),
-    0 8px 20px -12px var(--focus-ring);
+    /* 外发光：强度与颜色可调（0 = 关），取代原先写死的 --focus-ring 投影 */
+    0 0 calc(22px * var(--orb-glow)) calc(3px * var(--orb-glow))
+      color-mix(in srgb, var(--orb-glow-color) 62%, transparent);
 }
-/* 两个图层自身即为圆形（inset: 0 + border-radius: 50%，不溢出父级）：
-   旋转的锥形渐变 + 游走的高光 —— 动感明显，且结构上不可能露出方角。
-   此前用“超大模糊方块 + mix-blend-mode: screen”，既露角又把颜色冲淡了。 */
-.liquid-thinking-fallback::before {
-  content: "";
+.liquid-thinking-fallback > span {
   position: absolute;
   inset: 0;
+  display: block;
   border-radius: 50%;
+}
+/* 主扫光：银色锥形带缓慢绕行 —— 球“活着”的主要信号 */
+.liquid-thinking-fallback .sweep {
   background: conic-gradient(
     from 20deg,
     transparent 0deg,
@@ -795,23 +814,45 @@ span.linenumber {
     rgba(52, 58, 67, 0.95) 200deg,
     transparent 320deg
   );
-  filter: blur(5px);
-  animation: liquid-thinking-fallback-spin 1600ms linear infinite;
+  filter: blur(var(--orb-blur));
+  animation: liquid-thinking-fallback-spin var(--orb-spin) linear infinite;
 }
-.liquid-thinking-fallback::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
+/* 反向焦散：更糊、更慢、更淡的一层 —— 单层扫光像陀螺，两层才像液体 */
+.liquid-thinking-fallback .caustic {
+  background: conic-gradient(
+    from 200deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.55) 70deg,
+    transparent 150deg,
+    rgba(120, 140, 170, 0.45) 250deg,
+    transparent 330deg
+  );
+  filter: blur(calc(var(--orb-blur) * 2));
+  opacity: var(--orb-caustic);
+  animation: liquid-thinking-fallback-spin var(--orb-caustic-spin) linear infinite reverse;
+}
+/* 高光走一条不闭合的游走路径（Lissajous 式），比直线往返更像液体在晃 */
+.liquid-thinking-fallback .hi {
   background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.72), transparent 46%);
-  animation: liquid-thinking-fallback-orbit 2200ms ease-in-out infinite;
+  animation: liquid-thinking-fallback-orbit var(--orb-hi) ease-in-out infinite;
+}
+/* 边缘光：浅色背景上把球“托”起来，默认关 */
+.liquid-thinking-fallback .rim {
+  opacity: var(--orb-rim);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 -2px 6px rgba(255, 255, 255, 0.12);
 }
 @keyframes liquid-thinking-fallback-spin {
   to { transform: rotate(1turn); }
 }
 @keyframes liquid-thinking-fallback-orbit {
-  0%, 100% { transform: translate(2px, -2px) scale(0.94); opacity: 0.8; }
-  50% { transform: translate(-2px, 3px) scale(1.04); opacity: 1; }
+  0%   { transform: translate(14%, -18%) scale(0.92); opacity: 0.72; }
+  20%  { transform: translate(-16%, -6%) scale(1.02); opacity: 1; }
+  40%  { transform: translate(-10%, 16%) scale(1.06); opacity: 0.88; }
+  60%  { transform: translate(16%, 10%) scale(1); opacity: 1; }
+  80%  { transform: translate(8%, -14%) scale(0.96); opacity: 0.84; }
+  100% { transform: translate(14%, -18%) scale(0.92); opacity: 0.72; }
 }
 
 @keyframes liquid-thinking-fallback-pulse {
@@ -821,8 +862,9 @@ span.linenumber {
 
 @media (prefers-reduced-motion: reduce) {
   /* 尊重减弱动效：去掉旋转/位移，仅保留低幅透明度脉动（状态指示仍需可感知） */
-  .liquid-thinking-fallback::before { animation: none; }
-  .liquid-thinking-fallback::after {
+  .liquid-thinking-fallback .sweep,
+  .liquid-thinking-fallback .caustic { animation: none; }
+  .liquid-thinking-fallback .hi {
     animation: liquid-thinking-fallback-pulse 2600ms ease-in-out infinite;
   }
 }
@@ -1071,7 +1113,8 @@ html[data-electron-platform="darwin"] .macos-titlebar-leading-safe-area.is-activ
     filter: none !important;
   }
   .t-think-text::before,
-  .liquid-thinking-fallback::before {
+  .liquid-thinking-fallback .sweep,
+  .liquid-thinking-fallback .caustic {
     animation: none !important;
   }
 }

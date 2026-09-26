@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="zh-CN" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>思考球实验室 · orb-lab</title>
+<!--
+  本文件由 scripts/build-orb-lab.mjs 生成，请勿直接编辑：
+  着色器与 seed 从 components/liquid-orb-source.ts 抽取，改源码后重新生成。
+-->
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-panel: #f5f6f7;
+    --bg-elevated: #ffffff;
+    --border: #e1e5ee;
+    --border-subtle: #e9ecf2;
+    --text: #0f1115;
+    --text-strong: #0f1115;
+    --text-muted: #61666b;
+    --text-dim: #adb2b8;
+    --accent: #ff8f40;
+    --lab-orb-size: 38px;
+    --radius-panel: 8px;
+    color-scheme: light;
+  }
+  html.dark {
+    --bg: #151517;
+    --bg-panel: #1b1b1c;
+    --bg-elevated: #2c2c2e;
+    --border: #ffffff1a;
+    --border-subtle: #ffffff0f;
+    --text: #f9fafb;
+    --text-strong: #ffffff;
+    --text-muted: #cfd3d6;
+    --text-dim: #81858c;
+    --accent: #ffb454;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 13px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 0 0 64px;
+  }
+  code, textarea, pre { font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
+
+  /* ---------- 顶栏 ---------- */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+    padding: 10px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+  .bar .sub { color: var(--text-dim); font-size: 12px; }
+  .bar .spacer { flex: 1; }
+  .ctrl { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); }
+  .ctrl output { color: var(--text); font-variant-numeric: tabular-nums; min-width: 46px; }
+  input[type="range"] { width: 128px; accent-color: var(--accent); }
+  button {
+    font: inherit; font-size: 12px; color: var(--text);
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.is-on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 0; }
+  section { margin-bottom: 40px; }
+  h2 { font-size: 14px; font-weight: 650; margin: 0 0 4px; }
+  h3 { font-size: 12px; font-weight: 650; margin: 0 0 10px; color: var(--text-muted); }
+  .desc { color: var(--text-muted); font-size: 12px; margin: 0 0 16px; max-width: 900px; }
+  .desc code { background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 0 4px; }
+
+  .banner {
+    margin: 16px auto 0; max-width: 1140px;
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    background: var(--bg-panel); border-radius: var(--radius-panel);
+    padding: 10px 14px; font-size: 12px; color: var(--text-muted);
+  }
+  .banner strong { color: var(--text-strong); }
+
+  /* ---------- 卡片网格 ---------- */
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .card {
+    margin: 0; width: 176px;
+    border: 1px solid var(--border); border-radius: var(--radius-panel);
+    background: var(--bg-panel); padding: 12px 10px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .card.is-picked { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .card .stage {
+    width: var(--lab-orb-size); height: var(--lab-orb-size);
+    display: grid; place-items: center;
+  }
+  .card .stage.wide { width: min(100%, var(--lab-orb-size)); }
+  .card figcaption { font-size: 11.5px; color: var(--text-muted); text-align: center; line-height: 1.45; }
+  .card figcaption b { color: var(--text); font-weight: 600; }
+  .card .pick { font-size: 11px; padding: 2px 8px; }
+  .orb-canvas { display: block; width: var(--lab-orb-size); height: var(--lab-orb-size); }
+
+  /* ---------- 调参面板 ---------- */
+  .tuner {
+    margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius-panel);
+    background: var(--bg-panel); padding: 14px 16px;
+  }
+  .tuner-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .tuner-head .tag { color: var(--accent); font-weight: 650; }
+  .sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 8px 22px; }
+  .slider { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center; }
+  .slider span { font-size: 11.5px; color: var(--text-muted); }
+  .slider span b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 500; }
+  .slider input { grid-column: 1 / -1; width: 100%; }
+
+  .colors { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+  .colors label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-muted); }
+  .colors input[type="color"] {
+    width: 54px; height: 26px; padding: 0; border: 1px solid var(--border);
+    border-radius: 5px; background: none; cursor: pointer;
+  }
+
+  .export { margin-top: 16px; }
+  .export-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .export-head strong { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+  textarea {
+    width: 100%; resize: vertical; font-size: 11px; line-height: 1.55;
+    background: var(--bg-elevated); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+  }
+  .foot { max-width: 1140px; margin: 0 auto; padding: 0 20px; color: var(--text-dim); font-size: 11.5px; }
+  .foot ol { padding-left: 20px; }
+  .foot code { color: var(--text-muted); }
+
+  /* ---------- CSS 降级球 ----------
+     下面这段**原样注入** app/globals.css 里的真实规则（生成时抽取，不是复刻）——
+     实验页看到的就是线上那颗球，参数改了源码、重新生成即可。 */
+__ORB_CSS__
+
+  /* 实验用覆盖：线上 .liquid-thinking-fallback 写死 38px，这里跟随球径滑块 */
+  .orb-stage .liquid-thinking-fallback {
+    width: var(--lab-orb-size);
+    height: var(--lab-orb-size);
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <h1>思考球实验室</h1>
+  <span class="sub">真实着色器 + 真实降级 CSS，都不改线上</span>
+  <span class="spacer"></span>
+  <label class="ctrl">球径
+    <input id="sizeRange" type="range" min="28" max="180" step="2" value="38">
+    <output id="sizeOut">38px</output>
+  </label>
+  <label class="ctrl"><input id="fpsCap" type="checkbox" checked> 30fps 上限</label>
+  <button id="themeBtn">切浅色</button>
+</header>
+
+<div id="gpuBanner" class="banner" hidden></div>
+
+<main>
+  <section>
+    <h2>一、真球 · WebGPU 液态玻璃着色器</h2>
+    <p class="desc">
+      与线上 <code>LiquidOrbCanvas</code> 同源同参：着色器与 128 个 uniform 全部从
+      <code>components/liquid-orb-source.ts</code> 抽取，画面即线上画面。
+      容器 46px、DPR 上限 2、30fps —— 与线上一致，改了这几项看到的就不是线上效果了。
+      <br>点「调这颗」把某一张设成调参对象，下面滑块/取色实时生效，满意后复制 seed 抄回源码。
+    </p>
+    <div id="gpuGrid" class="grid"></div>
+    <div class="tuner">
+      <div class="tuner-head">
+        <h3 style="margin:0">调参对象：</h3><span class="tag" id="gpuTarget">—</span>
+        <span class="spacer" style="flex:1"></span>
+        <button id="gpuReset">还原该预设</button>
+      </div>
+      <div id="gpuSliders" class="sliders"></div>
+      <div id="gpuColors" class="colors"></div>
+      <div class="export">
+        <div class="export-head">
+          <strong>LIQUID_ORB_UNIFORM_SEED（128 float，直接替换源码里的数组）</strong>
+          <button id="copySeed">复制</button>
+        </div>
+        <textarea id="seedOut" rows="9" readonly spellcheck="false"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>二、降级球 · 纯 CSS（没有 WebGPU 时你看到的就是它）</h2>
+    <p class="desc">
+      左边是调参球，右边是候选预设：① 就是线上定版（默认 38px，与线上一致）。
+      ⑤ 是改版前的旧参数近似（旧版用 ::before/::after 两层、另有 --focus-ring 投影，
+      这里用同一套层叠结构近似复现，仅供 A/B 感受差别）。
+      其他三个逐步加上「慢转 → 第二层反向焦散 → 外发光 / 边缘光」。
+      脚本层只有 <code>.sweep / .caustic / .hi / .rim</code> 四个圆内子层，
+      都 <code>inset:0 + border-radius:50%</code>，结构上不可能露出方角。
+    </p>
+    <div class="grid" id="cssGrid"></div>
+    <div class="tuner">
+      <div class="tuner-head">
+        <h3 style="margin:0">调参对象：</h3><span class="tag" id="cssTarget">CSS 调参球</span>
+      </div>
+      <div id="cssSliders" class="sliders"></div>
+      <div class="export">
+        <div class="export-head">
+          <strong>CSS（替换 app/globals.css 里 .liquid-thinking-fallback 相关规则）</strong>
+          <button id="copyCss">复制</button>
+        </div>
+        <textarea id="cssOut" rows="12" readonly spellcheck="false"></textarea>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="foot">
+  <h2>看完之后怎么落地</h2>
+  <ol>
+    <li>真球：把上面 textarea 的 128 个 float 覆盖 <code>components/liquid-orb-source.ts</code> 的 <code>LIQUID_ORB_UNIFORM_SEED</code>。若要做「相位反应」，改的是 <code>AgentThinkingOrb.tsx</code> 往 <code>LiquidOrbCanvas</code> 传参、以及 <code>LiquidOrbCanvas</code> 里写 uniform 的一段。</li>
+    <li>降级球：把 CSS textarea 粘回 <code>app/globals.css</code>（注意保留原有的 reduced-motion / reduced-transparency / contrast 三个媒体查询）。</li>
+    <li>然后 <code>npm run build</code> 重建、按 TOS 打包流程推进版本。</li>
+  </ol>
+</div>
+
+<script id="orb-shader" type="text/x-wgsl">
+__ORB_SHADER__
+</script>
+<script id="orb-seed" type="application/json">[__ORB_SEED__]</script>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------- 常量
+  const SHADER = document.getElementById("orb-shader").textContent;
+  const BASE_SEED = new Float32Array(JSON.parse(document.getElementById("orb-seed").textContent));
+
+  // WGSL Uniforms 结构的字段偏移（顺序即结构声明顺序；改动结构必须同步这里）
+  const F = {
+    size: 0, time: 2, speed: 3, radius: 4, zoom: 5, warp: 6, ridgeAmt: 7, sharp: 8,
+    shade: 9, sheen: 10, gloss: 11, shellMidAlpha: 12, shellEdgeAlpha: 13, exposure: 14,
+    style: 15, edgeSoftness: 16, edgeGlow: 17, paletteCount: 18, glassEnabled: 19,
+    glassOpacity: 20, contourDeform: 21, bandDensity: 22, chromaticShift: 23,
+    metalScale: 24, metalStretch: 25, metalAngle: 26, metalOffset: 27, metalPhase: 28,
+    metalEvolution: 29, metalRoughness: 30, metalDepth: 31,
+    colorA: 32, colorB: 36, colorC: 40, colorD: 44, highlightColor: 48,
+    shellInner: 52, shellMid: 56, shellEdge: 60, sheenColor: 64, specColor: 68,
+    canvasColor: 72, glowColor: 76,
+  };
+  const VEC4 = ["colorA", "colorB", "colorC", "colorD", "highlightColor", "shellInner",
+    "shellMid", "shellEdge", "sheenColor", "specColor", "canvasColor", "glowColor"];
+
+  const DPR_CAP = 2; // 与线上一致
+
+  // ---------------------------------------------------------------- 工具
+  const toHex = (v) =>
+    "#" + [0, 1, 2].map((i) =>
+      Math.round(Math.min(1, Math.max(0, v[i])) * 255).toString(16).padStart(2, "0")).join("");
+  const fromHex = (h) => [
+    parseInt(h.slice(1, 3), 16) / 255,
+    parseInt(h.slice(3, 5), 16) / 255,
+    parseInt(h.slice(5, 7), 16) / 255,
+    1,
+  ];
+
+  function applyOverrides(target, ov) {
+    for (const key of Object.keys(ov)) {
+      const i = F[key];
+      if (i === undefined) continue;
+      const value = ov[key];
+      if (Array.isArray(value)) {
+        target[i] = value[0]; target[i + 1] = value[1];
+        target[i + 2] = value[2]; target[i + 3] = value[3];
+      } else {
+        target[i] = value;
+      }
+    }
+    return target;
+  }
+  const buildSeed = (ov) => applyOverrides(new Float32Array(BASE_SEED), ov || {});
+
+  function copyText(text, btn) {
+    const done = (ok) => {
+      const old = btn.textContent;
+      btn.textContent = ok ? "已复制 ✓" : "复制失败";
+      setTimeout(() => { btn.textContent = old; }, 1400);
+    };
+    // 明文 HTTP 下 navigator.clipboard 不存在（真机踩过），必须留 execCommand 退路
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => done(true), () => fallback());
+    } else fallback();
+
+    function fallback() {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;top:-1000px";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        done(ok);
+      } catch (e) { done(false); }
+    }
+  }
+
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // ---------------------------------------------------------------- WebGPU
+  let gpuPromise = null;
+  function initGpu() {
+    if (gpuPromise) return gpuPromise;
+    gpuPromise = (async () => {
+      try {
+        if (!navigator.gpu) {
+          throw new Error("navigator.gpu 不存在（非安全上下文，或浏览器不支持 WebGPU）");
+        }
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) throw new Error("没有可用的 GPU adapter");
+        const device = await adapter.requestDevice();
+        const format = navigator.gpu.getPreferredCanvasFormat();
+        const module = device.createShaderModule({ code: SHADER });
+        const info = await module.getCompilationInfo();
+        const errors = info.messages.filter((m) => m.type === "error");
+        if (errors.length) {
+          throw new Error("着色器编译失败：" + errors.map((e) => e.message).join(" / "));
+        }
+        const pipeline = await device.createRenderPipelineAsync({
+          layout: "auto",
+          vertex: { module, entryPoint: "vs_main" },
+          fragment: { module, entryPoint: "fs_main", targets: [{ format }] },
+          primitive: { topology: "triangle-list" },
+        });
+        return { device, format, pipeline };
+      } catch (error) {
+        return { error: error && error.message ? error.message : String(error) };
+      }
+    })();
+    return gpuPromise;
+  }
+
+  class GpuOrb {
+    constructor(canvas, seed) {
+      this.canvas = canvas;
+      this.seed = new Float32Array(seed);
+      this.values = new Float32Array(128);
+      this.visible = true;
+      this.ready = false;
+    }
+    async attach() {
+      const gpu = await initGpu();
+      if (gpu.error) { this.failed = gpu.error; return; }
+      const ctx = this.canvas.getContext("webgpu");
+      if (!ctx) { this.failed = "canvas.getContext('webgpu') 返回空"; return; }
+      ctx.configure({ device: gpu.device, format: gpu.format, alphaMode: "premultiplied" });
+      this.ctx = ctx;
+      this.buf = gpu.device.createBuffer({
+        size: 512,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      });
+      this.bind = gpu.device.createBindGroup({
+        layout: gpu.pipeline.getBindGroupLayout(0),
+        entries: [{ binding: 0, resource: { buffer: this.buf } }],
+      });
+      this.resize();
+      this.ready = true;
+    }
+    setSeed(seed) { this.seed.set(seed); }
+    resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+      const w = Math.max(1, Math.round(this.canvas.clientWidth * dpr));
+      const h = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
+      if (this.canvas.width !== w || this.canvas.height !== h) {
+        this.canvas.width = w; this.canvas.height = h;
+      }
+    }
+    render(now, t0) {
+      if (!this.ready || this.failed || !this.visible) return;
+      const gpu = gpuCache;
+      this.resize();
+      this.values.set(this.seed);
+      this.values[0] = this.canvas.width;
+      this.values[1] = this.canvas.height;
+      this.values[2] = (now - t0) / 1000; // 时间以秒计，speed 仍在 seed 里
+      gpu.device.queue.writeBuffer(this.buf, 0, this.values);
+      const encoder = gpu.device.createCommandEncoder();
+      const pass = encoder.beginRenderPass({
+        colorAttachments: [{
+          view: this.ctx.getCurrentTexture().createView(),
+          clearValue: { r: 0, g: 0, b: 0, a: 0 },
+          loadOp: "clear", storeOp: "store",
+        }],
+      });
+      pass.setPipeline(gpu.pipeline);
+      pass.setBindGroup(0, this.bind);
+      pass.draw(3);
+      pass.end();
+      gpu.device.queue.submit([encoder.finish()]);
+    }
+  }
+
+  let gpuCache = null;
+  const gpuOrbs = [];
+  const t0 = performance.now();
+  let lastFrame = 0;
+  let fpsCap = true;
+
+  function loop(now) {
+    const minDelta = fpsCap ? 1000 / 30 : 0;
+    if (!lastFrame || now - lastFrame >= minDelta - 0.5) {
+      lastFrame = now;
+      for (const orb of gpuOrbs) orb.render(now, t0);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  const visibility = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const orb = gpuOrbs.find((o) => o.canvas === entry.target);
+      if (orb) orb.visible = entry.isIntersecting;
+    }
+  });
+
+  // ---------------------------------------------------------------- 真球预设
+  const LIGHT_PALETTE = {
+    colorA: [1, 1, 1, 1],
+    colorB: [0.87, 0.90, 0.94, 1],
+    colorC: [0.52, 0.58, 0.66, 1],
+    colorD: [0.16, 0.19, 0.24, 1],
+    canvasColor: [0.55, 0.60, 0.68, 1],
+  };
+  const WARM_PALETTE = {
+    colorB: [1.0, 0.78, 0.45, 1],
+    colorC: [0.55, 0.32, 0.12, 1],
+    canvasColor: [0.06, 0.045, 0.03, 1],
+  };
+
+  const GPU_PRESETS = [
+    { id: "current", name: "① 现状（线上原样）", note: "radius 0.72、speed 3", ov: {} },
+    { id: "big", name: "② 放大", note: "radius 0.90（球径 33→41px）", ov: { radius: 0.90 } },
+    { id: "slow", name: "③ 放大 + 慢", note: "等待模型：speed 1.4", ov: { radius: 0.90, speed: 1.4 } },
+    { id: "fast", name: "④ 放大 + 快 + 暖", note: "跑工具：speed 4.6", ov: Object.assign({ radius: 0.90, speed: 4.6 }, WARM_PALETTE) },
+    { id: "light", name: "⑤ 浅色主题", note: "亮底座，不在白底上发黑", ov: Object.assign({ radius: 0.90 }, LIGHT_PALETTE) },
+    { id: "glow", name: "⑥ 强高光 + 外发光", note: "sheen/gloss↑、edgeGlow 0.6", ov: { radius: 0.90, sheen: 0.9, gloss: 0.7, edgeGlow: 0.6, exposure: 1.25 } },
+  ];
+
+  const GPU_SLIDERS = [
+    ["radius", "球半径 radius", 0.30, 0.98, 0.01],
+    ["speed", "流动速度 speed", 0.2, 8, 0.1],
+    ["zoom", "zoom", 0, 1, 0.01],
+    ["warp", "warp 域扭曲", 0, 8, 0.1],
+    ["sharp", "sharp 折痕锐度", 0, 10, 0.1],
+    ["shade", "shade 明暗对比", 0, 1.5, 0.01],
+    ["sheen", "sheen 主高光", 0, 2, 0.01],
+    ["gloss", "gloss 色散/光泽", 0, 2, 0.01],
+    ["glassOpacity", "glassOpacity 玻璃强度", 0, 1, 0.01],
+    ["exposure", "exposure 曝光", 0, 2, 0.01],
+    ["edgeSoftness", "edgeSoftness 边缘柔度", 0.001, 0.05, 0.001],
+    ["edgeGlow", "edgeGlow 外发光", 0, 1.5, 0.01],
+  ];
+  const GPU_COLORS = ["colorA", "colorB", "colorC", "colorD", "canvasColor"];
+
+  // ---------------------------------------------------------------- 真球 UI
+  const gpuGrid = document.getElementById("gpuGrid");
+  const gpuBanner = document.getElementById("gpuBanner");
+  const seedOut = document.getElementById("seedOut");
+  const gpuTargetLabel = document.getElementById("gpuTarget");
+  const gpuSlidersBox = document.getElementById("gpuSliders");
+  const gpuColorsBox = document.getElementById("gpuColors");
+
+  const gpuState = { id: "current", ov: Object.assign({}, GPU_PRESETS[0].ov) };
+  const gpuCards = new Map();
+
+  for (const preset of GPU_PRESETS) {
+    const card = el("figure", "card");
+    card.dataset.id = preset.id;
+    const stage = el("div", "stage");
+    const canvas = el("canvas", "orb-canvas");
+    stage.appendChild(canvas);
+    const cap = el("figcaption");
+    cap.innerHTML = "<b>" + preset.name.replace(/^[①②③④⑤⑥]\s*/, "") + "</b><br>" + preset.note;
+    const pick = el("button", "pick", "调这颗");
+    pick.addEventListener("click", () => selectGpu(preset.id));
+    card.append(stage, cap, pick);
+    gpuGrid.appendChild(card);
+    const orb = new GpuOrb(canvas, buildSeed(preset.ov));
+    gpuOrbs.push(orb);
+    visibility.observe(canvas);
+    gpuCards.set(preset.id, { card, orb, canvas });
+  }
+
+  function selectGpu(id) {
+    const preset = GPU_PRESETS.find((p) => p.id === id);
+    if (!preset) return;
+    gpuState.id = id;
+    gpuState.ov = Object.assign({}, preset.ov);
+    for (const [key, entry] of gpuCards) entry.card.classList.toggle("is-picked", key === id);
+    gpuTargetLabel.textContent = preset.name;
+    renderGpuSliders();
+    refreshGpu();
+  }
+
+  /** 只更新导出框（seed 的 size/time 由运行时写，导出时不带上） */
+  function writeSeedOut(ov) {
+    const seed = buildSeed(ov);
+    seed[0] = 1; seed[1] = 1; seed[2] = 0;
+    const nums = Array.from(seed, (n) => String(n));
+    const lines = [];
+    for (let i = 0; i < nums.length; i += 6) lines.push("  " + nums.slice(i, i + 6).join(", ") + ",");
+    seedOut.value = lines.join("\n").replace(/,\s*$/, "");
+  }
+
+  function refreshGpu() {
+    const entry = gpuCards.get(gpuState.id);
+    if (entry) entry.orb.setSeed(buildSeed(gpuState.ov));
+    writeSeedOut(gpuState.ov);
+  }
+
+  function renderGpuSliders() {
+    gpuSlidersBox.textContent = "";
+    for (const [key, label, min, max, step] of GPU_SLIDERS) {
+      const wrap = el("label", "slider");
+      const name = el("span");
+      name.textContent = label + " ";
+      const value = el("b");
+      const current = gpuState.ov[key] !== undefined ? gpuState.ov[key] : BASE_SEED[F[key]];
+      value.textContent = String(Number(current.toFixed ? current.toFixed(4) : current));
+      name.appendChild(value);
+      const input = document.createElement("input");
+      input.type = "range";
+      input.min = min; input.max = max; input.step = step;
+      input.value = current;
+      input.addEventListener("input", () => {
+        const v = parseFloat(input.value);
+        gpuState.ov[key] = v;
+        value.textContent = String(v);
+        refreshGpu();
+      });
+      wrap.append(name, input);
+      gpuSlidersBox.appendChild(wrap);
+    }
+    gpuColorsBox.textContent = "";
+    for (const key of GPU_COLORS) {
+      const label = el("label");
+      label.textContent = key;
+      const input = document.createElement("input");
+      input.type = "color";
+      const vec = gpuState.ov[key] || [
+        BASE_SEED[F[key]], BASE_SEED[F[key] + 1], BASE_SEED[F[key] + 2], BASE_SEED[F[key] + 3],
+      ];
+      input.value = toHex(vec);
+      input.addEventListener("input", () => {
+        gpuState.ov[key] = fromHex(input.value);
+        refreshGpu();
+      });
+      label.appendChild(input);
+      gpuColorsBox.appendChild(label);
+    }
+  }
+
+  document.getElementById("gpuReset").addEventListener("click", () => selectGpu(gpuState.id));
+  document.getElementById("copySeed").addEventListener("click", (e) => copyText(seedOut.value, e.currentTarget));
+
+  // 启动真球
+  initGpu().then((gpu) => {
+    if (gpu.error) {
+      gpuBanner.hidden = false;
+      gpuBanner.innerHTML =
+        "<strong>本浏览器拿不到 WebGPU，真球区显示的是降级球。</strong>原因：" + gpu.error +
+        "<br>所以你在会话里看到的极可能也是下面这一颗——优先调降级球。" +
+        "（线上还会往控制台打一行 <code>[liquid-orb] WebGPU unavailable…</code>，可据此确认。）";
+      for (const [, entry] of gpuCards) {
+        entry.canvas.replaceWith(makeCssOrb("current"));
+      }
+      return;
+    }
+    gpuCache = gpu;
+    for (const orb of gpuOrbs) orb.attach();
+    requestAnimationFrame(loop);
+  });
+
+  // ---------------------------------------------------------------- CSS 降级球
+  const CSS_PRESETS = [
+    { id: "current", name: "① 线上现状（定版）", note: "扫光 9.2s · 焦散 24s/.3 · 暖光 .7", vars: {} },
+    { id: "fast", name: "② 扫光更快", note: "4.6s：更活跃，也更像陀螺", vars: { "--orb-spin": "4600ms" } },
+    { id: "cool", name: "③ 冷色 + 边缘光", note: "发光改蓝、边缘光开", vars: { "--orb-glow-color": "#9fb6d4", "--orb-rim": "1" } },
+    { id: "strong", name: "④ 强焦散", note: "0.55 / 11s：液体感更重", vars: { "--orb-caustic": "0.55", "--orb-caustic-spin": "11000ms" } },
+    { id: "legacy", name: "⑤ 改版前（近似）", note: "1600ms 单层、无焦散无发光", vars: { "--orb-spin": "1600ms", "--orb-hi": "2200ms", "--orb-caustic": "0", "--orb-glow": "0", "--orb-blur": "5px" } },
+  ];
+
+  const cssGrid = document.getElementById("cssGrid");
+  const cssOut = document.getElementById("cssOut");
+  const cssSlidersBox = document.getElementById("cssSliders");
+
+  const CSS_DEFAULTS = {
+    "--orb-spin": "9200ms",
+    "--orb-hi": "7700ms",
+    "--orb-caustic": "0.3",
+    "--orb-caustic-spin": "24000ms",
+    "--orb-blur": "7.5px",
+    "--orb-glow": "0.7",
+    "--orb-rim": "0",
+    "--orb-glow-color": "#ff6251",
+  };
+  /** 线上尺寸写死在 .liquid-thinking-fallback（38px），因此不列入可调项。 */
+  const cssState = Object.assign({}, CSS_DEFAULTS);
+
+  function makeCssOrb(variantId) {
+    const preset = CSS_PRESETS.find((p) => p.id === variantId) || CSS_PRESETS[0];
+    const orb = el("span", "liquid-thinking-fallback");
+    orb.dataset.variant = preset.id;
+    for (const [k, v] of Object.entries(preset.vars)) orb.style.setProperty(k, v);
+    orb.append(el("span", "sweep"), el("span", "caustic"), el("span", "hi"), el("span", "rim"));
+    return orb;
+  }
+
+  for (const preset of CSS_PRESETS) {
+    const card = el("figure", "card");
+    const stage = el("div", "stage orb-stage");
+    stage.appendChild(makeCssOrb(preset.id));
+    const cap = el("figcaption");
+    cap.innerHTML = "<b>" + preset.name.replace(/^[①②③④⑤⑥]\s*/, "") + "</b><br>" + preset.note;
+    card.append(stage, cap);
+    cssGrid.appendChild(card);
+  }
+
+  // 调参球（放在最后，跟着滑块走）
+  const tunerCard = el("figure", "card is-picked");
+  const tunerStage = el("div", "stage orb-stage");
+  const tunerOrb = makeCssOrb("current");
+  tunerStage.appendChild(tunerOrb);
+  tunerCard.append(tunerStage, el("figcaption", null, "调参球（线上 38px）"));
+  cssGrid.appendChild(tunerCard);
+
+  const CSS_SLIDERS = [
+    ["--orb-spin", "扫光转速", 800, 12000, 100, "ms"],
+    ["--orb-hi", "高光周期", 800, 12000, 100, "ms"],
+    ["--orb-caustic", "焦散强度", 0, 1, 0.05, ""],
+    ["--orb-caustic-spin", "焦散转速", 2000, 24000, 200, "ms"],
+    ["--orb-blur", "扫光模糊", 0, 16, 0.5, "px"],
+    ["--orb-glow", "外发光", 0, 2, 0.05, ""],
+    ["--orb-rim", "边缘光", 0, 1, 0.05, ""],
+  ];
+  const CSS_COLORS = [["--orb-glow-color", "发光色"]];
+
+  function renderCssSliders() {
+    cssSlidersBox.textContent = "";
+    for (const [key, label, min, max, step, unit] of CSS_SLIDERS) {
+      const wrap = el("label", "slider");
+      const name = el("span");
+      name.textContent = label + " ";
+      const value = el("b");
+      const raw = cssState[key].replace(/[a-z%]+$/i, "");
+      value.textContent = raw + unit;
+      name.appendChild(value);
+      const input = document.createElement("input");
+      input.type = "range";
+      input.min = min; input.max = max; input.step = step;
+      input.value = parseFloat(raw);
+      input.addEventListener("input", () => {
+        cssState[key] = input.value + unit;
+        value.textContent = input.value + unit;
+        applyCss();
+      });
+      wrap.append(name, input);
+      cssSlidersBox.appendChild(wrap);
+    }
+    for (const [key, label] of CSS_COLORS) {
+      const wrap = el("label", "slider");
+      wrap.style.gridTemplateColumns = "auto auto";
+      wrap.textContent = label + " ";
+      const input = document.createElement("input");
+      input.type = "color";
+      input.value = cssState[key];
+      input.style.width = "54px";
+      input.addEventListener("input", () => {
+        cssState[key] = input.value;
+        applyCss();
+      });
+      wrap.appendChild(input);
+      cssSlidersBox.appendChild(wrap);
+    }
+  }
+
+  function cssDump() {
+    const v = cssState;
+    return [
+      "/* 粘贴到 app/globals.css 的 .liquid-thinking-fallback 规则开头的自定义属性区。",
+      "   规则体（> span / .sweep / .caustic / .hi / .rim 与 keyframes）已在源码里，无需重复。",
+      "   线上尺寸写死 38px。 */",
+      "--orb-spin: " + v["--orb-spin"] + ";",
+      "--orb-caustic-spin: " + v["--orb-caustic-spin"] + ";",
+      "--orb-hi: " + v["--orb-hi"] + ";",
+      "--orb-blur: " + v["--orb-blur"] + ";",
+      "--orb-caustic: " + v["--orb-caustic"] + ";",
+      "--orb-glow: " + v["--orb-glow"] + ";",
+      "--orb-rim: " + v["--orb-rim"] + ";",
+      "--orb-glow-color: " + v["--orb-glow-color"] + ";",
+    ].join("\n");
+  }
+
+  function applyCss() {
+    for (const [k, v] of Object.entries(cssState)) tunerOrb.style.setProperty(k, v);
+    cssOut.value = cssDump();
+  }
+
+  document.getElementById("copyCss").addEventListener("click", (e) => copyText(cssOut.value, e.currentTarget));
+
+  // ---------------------------------------------------------------- 全局控件
+  const sizeRange = document.getElementById("sizeRange");
+  const sizeOut = document.getElementById("sizeOut");
+  sizeRange.addEventListener("input", () => {
+    document.documentElement.style.setProperty("--lab-orb-size", sizeRange.value + "px");
+    sizeOut.textContent = sizeRange.value + "px";
+    for (const orb of gpuOrbs) orb.resize();
+  });
+
+  document.getElementById("fpsCap").addEventListener("change", (e) => { fpsCap = e.target.checked; });
+
+  const themeBtn = document.getElementById("themeBtn");
+  themeBtn.addEventListener("click", () => {
+    const dark = document.documentElement.classList.toggle("dark");
+    themeBtn.textContent = dark ? "切浅色" : "切深色";
+  });
+  themeBtn.textContent = "切浅色";
+
+  // ---------------------------------------------------------------- 启动
+  selectGpu("current");
+  renderCssSliders();
+  applyCss();
+})();
+</script>
+</body>
+</html>
