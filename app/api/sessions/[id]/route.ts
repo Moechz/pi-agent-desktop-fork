@@ -17,6 +17,7 @@ import { getRpcSession } from "@/lib/rpc-manager";
 import { rewriteChildHeader } from "@/lib/session-cascade";
 import { withFileLock } from "@/lib/session-lock";
 import { errorMessage, getRequestId, jsonError, logApiError } from "@/lib/api-error";
+import { jsonResponseDeep } from "@/lib/json-safe";
 
 export async function GET(
   req: Request,
@@ -75,7 +76,9 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    // 深树安全：tree 按 parentId 嵌套，长会话可达数千层；
+    // JSON.stringify 递归序列化在栈较小的运行时（Electron utilityProcess）会 500。
+    return jsonResponseDeep({
       sessionId: id,
       filePath,
       info,
