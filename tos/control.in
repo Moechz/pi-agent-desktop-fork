@@ -21,4 +21,4 @@ Description: Pi Agent Desktop for TOS (web UI, self-contained Node runtime)
  不占系统盘；服务以专用非特权用户运行并施加 systemd 沙箱加固；
  目录选择复用 TOS 官方文件管理 API，权限由 TOS 统一管控。
  .
- Upstream author: Pi Agent Desktop (MIT) / Packaged for TOS by Moechz.
+ Upstream author: Earendil Works (Pi Agent Desktop, MIT) / Packaged for TOS by Moechz.

@@ -13,7 +13,8 @@ LANGS = [
 ]
 
 NAME = "Pi Agent for TOS"
-AUTH = "Pi Agent Desktop"  # 指南坑 49：auth 填上游项目/作者语义；publisher 在 config.ini=Moechz
+AUTH = "Earendil Works"  # 指南坑 49：auth 填上游作者（这里是 pi 编码代理的作者组织
+#  earendil-works，包 author 字段 = Mario Zechner）；publisher 在 config.ini=Moechz（打包者）
 
 EN = {
     "descript": (

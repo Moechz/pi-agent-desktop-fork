@@ -13,10 +13,15 @@ APP_DIR=/usr/local/$APP_ID
 DATA_DEFAULT=/var/lib/$APP_ID
 APP_PORT=18141
 BASE_PATH=/piagentfortos
-MAINT_LOG=/var/log/${APP_ID}-maint.log
+# 维护日志：TOS 7 上 /var/log 可能是指向 /tmp/log 的符号链接（且目标目录不一定存在）——
+# 直接 `mkdir -p /var/log` 会因“符号链接已存在”而失败，日志就静默丢了。
+# 这里先解析真实路径再建目录（真机 tnas-57 实测：/var/log -> /tmp/log，目标缺失）。
+LOG_DIR="$(readlink -f /var/log 2>/dev/null || echo /var/log)"
+[ -n "$LOG_DIR" ] || LOG_DIR=/var/log
+MAINT_LOG="$LOG_DIR/${APP_ID}-maint.log"
 
 pkg_log() {
-  mkdir -p /var/log 2>/dev/null || true
+  mkdir -p "$LOG_DIR" 2>/dev/null || true
   echo "$(date '+%F %T') $*" >> "$MAINT_LOG" 2>/dev/null || true
 }
 pkg_log postinst "$1" "new=@VERSION@${2:+ old=$2}"
