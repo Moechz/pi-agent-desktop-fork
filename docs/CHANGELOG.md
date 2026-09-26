@@ -9,6 +9,18 @@
 
 # Changelog
 
+## 2026-09-26 — 修「半成品本体进包」：-21 所有 /api/* 500，界面「无法加载会话」（真机 tnas-57 实证）
+
+| 类别 | 内容 |
+|---|---|
+| 现象 | -21 装好后服务 `active`、首页 200，但**每个 API 路由都 500**（`/api/sessions` 500）→ 侧栏「无法加载会话」，同时 TOS 会话探测失败导致提示「未找到 TOS 登录会话，请重新登录 TOS」 |
+| 报错 | `Failed to load external module next/dist/compiled/next-server/app-route-turbo.runtime.prod.js: Cannot find module`（服务不崩，只在请求时炸） |
+| 根因 | 打包用的 `.next/standalone` 是**「只跑了 next build」的半成品**：包内 `node_modules/next/dist/compiled/next-server/` 只有 3 个 runtime 文件（完整构建有 6 个），且链接农场是空目录。完整本体必须由 `npm run build:standalone:linux` 产出 = `next build` + `ensure-standalone-next-runtimes` + `ensure-standalone-pi-runtime` + `dereference-standalone-symlinks` + smoke **一整条链**；NAS 侧那份 12:24 的产物只有 2683 文件（完整本体 17687），明显是只跑了第一条 |
+| 修复 | `build.sh` stage 阶段新增**本体体检**（本体体检三项：① API 路由运行时齐全 ② 无指向树外的符号链接 ③ `.next/node_modules` 链接农场每项都能解析出 package.json），不达标直接 fail 并提示「请用 npm run build:standalone:linux 重新打包」；verify 另加一条 `app-route-turbo.runtime.prod.js` 存在断言 |
+| 为什么 CI 没拦住 | CI 本来就走完整 `npm run build:standalone:linux`，本体是好的；坏的是本地/NAS 手工打包路径。**但 CI 也无法替本地把关**，所以门禁加在 `build.sh`（两条路径共用） |
+| 验证 | 体检脚本对两个真实树实测：完整本体 pass、12:24 半成品 fail（报缺 2 个 runtime 文件）；真机用 CI 重打的包验证所有 API 恢复 |
+| 版本 | 0.8.8.9-21 → **0.8.8.9-22**（应用代码不变） |
+
 ## 2026-09-26 — 修「权限随构建环境 umask 进包」：-20 安装后服务秒退（真机 tnas-57 实证）
 
 | 类别 | 内容 |

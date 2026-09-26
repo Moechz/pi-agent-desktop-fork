@@ -29,10 +29,20 @@ bash tos/build.sh --standalone .next/standalone --arch amd64     # 或 arm64
 #   或手动运行 workflow_dispatch（只产 artifact）
 ```
 
+> **本体的唯一合法来源 = `npm run build:standalone:linux`**（= `next build` + 三个
+> `ensure-*` 补丁 + `dereference-standalone-symlinks` + smoke）。它是**一条命令的组合**，
+> 手工只跑 `next build` 得到的 `.next/standalone` 是**半成品**：Next 16 的 Turbopack
+> 产物不带 API 路由运行时（每个 `/api/*` 都 500，界面表现是「无法加载会话」），
+> 链接农场里还会留下空目录/指向构建树的断链 —— 两种都不会让服务启动失败，极难排查。
+> `build.sh` 的**本体体检**（stage 阶段）会拦住这类半成品；真机上若看到 `/api/*` 全 500，
+> 先查包内 `standalone/node_modules/next/dist/compiled/next-server/` 是否只有 3 个 runtime 文件。
+
 `build.sh` 会在 fetch 阶段对 **Node 运行时 / ripgrep / fd** 逐个做 SHA-256 校验（pin 在
-`config.env`），在 verify 阶段断言：ExecStart 无 `$`、单元无 `Restart=`、config.ini 合规
-（open_path / 无 type / publisher=Moechz / 版本一致）、语言文件 23 语六节点齐全且 LF 无 BOM、
-图标 ≤ 50 节点、二进制架构与目标一致、无 `.DS_Store`/`._*`、**全部 ELF 的 glibc 需求 ≤ 2.35**。
+`config.env`），在 stage 阶段做**本体体检**（API 路由运行时齐全 / 无树外符号链接 /
+链接农场可解析）与权限归一（坑 57/58），在 verify 阶段断言：ExecStart 无 `$`、单元无 `Restart=`、
+config.ini 合规（open_path / 无 type / publisher=Moechz / 版本一致）、语言文件 23 语六节点
+齐全且 LF 无 BOM、图标 ≤ 50 节点、二进制架构与目标一致、包内文件对其它用户可读、
+无 `.DS_Store`/`._*`、**全部 ELF 的 glibc 需求 ≤ 2.35**。
 
 ## 真机验证清单（TOS 7，web 端口 8181）
 

@@ -195,6 +195,54 @@ echo "  应用本体: $STANDALONE"
 echo "  仓库根  : $APP_ROOT"
 cp -R "$STANDALONE" "$APP_DIR/standalone"
 
+# ---------- 本体体检（坑 58：半成品 body）----------
+# `npm run build:standalone[:linux]` = next build + 三个 ensure-* 脚本 + dereference + smoke；
+# 若有人把「只跑了 next build」的 .next/standalone 直接拿来打包，包会隐性地坏掉：
+# Next 16 的 Turbopack 产物不带 API 路由运行时（每个 /api/* 都 500，界面表现是
+# 「无法加载会话」），链接农场里还会留下一堆空目录/指向构建树的断链。
+# 这类缺陷不会让服务启动失败，所以必须在打包期拦住。
+python3 - "$APP_DIR/standalone" <<'PYBODY' || { echo "❌ 应用本体不完整：请用 npm run build:standalone:linux 生成 .next/standalone 后重新打包" >&2; exit 1; }
+import os, sys
+
+root = os.path.realpath(sys.argv[1])
+problems = []
+
+# 1) Next 16 Turbopack 漏掉的 API 路由运行时（scripts/ensure-standalone-next-runtimes.mjs 的产出）
+runtime_dir = os.path.join(root, "node_modules", "next", "dist", "compiled", "next-server")
+for name in ("app-route-turbo.runtime.prod.js", "pages-api-turbo.runtime.prod.js"):
+    if not os.path.isfile(os.path.join(runtime_dir, name)):
+        problems.append(f"缺 {os.path.relpath(runtime_dir, root)}/{name}（API 路由会全部 500）")
+
+# 2) 符号链接不得指向树外（scripts/dereference-standalone-symlinks.mjs 的职责）：
+#    指向构建树 node_modules 的链接装到真机全是断链。
+for base, dirs, files in os.walk(root):
+    for name in dirs + files:
+        path = os.path.join(base, name)
+        if os.path.islink(path):
+            real = os.path.realpath(path)
+            if real != root and not real.startswith(root + os.sep):
+                problems.append(f"符号链接指向树外：{os.path.relpath(path, root)} -> {real}")
+
+# 3) .next/node_modules 链接农场每一项都必须是能用的包（空目录/断链在这里暴露）
+farm = os.path.join(root, ".next", "node_modules")
+if os.path.isdir(farm):
+    for scope in os.listdir(farm):
+        entries = [os.path.join(farm, scope)]
+        if scope.startswith("@"):
+            entries = [os.path.join(farm, scope, n) for n in os.listdir(os.path.join(farm, scope))]
+        for entry in entries:
+            if not os.path.isfile(os.path.join(entry, "package.json")):
+                problems.append(f"链接农场项不可用：{os.path.relpath(entry, root)}（无 package.json）")
+
+if problems:
+    for item in problems[:5]:
+        print(f"  ❌ {item}", file=sys.stderr)
+    if len(problems) > 5:
+        print(f"  ❌ 另有 {len(problems) - 5} 项同类问题", file=sys.stderr)
+    sys.exit(1)
+print("  ✓ 应用本体体检通过（Next 运行时齐全 / 无树外链接 / 链接农场可解析）")
+PYBODY
+
 # Next standalone 不含静态资源：手工带入（与桌面版 extraResources 等价）
 if [ ! -d "$APP_ROOT/.next/static" ]; then
   echo "❌ 缺少 $APP_ROOT/.next/static —— standalone 默认不含静态资源，必须从构建产物目录拷贝" >&2
@@ -428,6 +476,7 @@ assert_ok "standalone 未挟带构建临时区 tos/build" \
   "$([ -d "$APP_DIR/standalone/tos/build" ] && echo 0 || echo 1)"
 
 assert "应用本体含 server.js" test -f "$APP_DIR/standalone/server.js"
+assert "应用本体含 API 路由运行时（坑 58）" test -f "$APP_DIR/standalone/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js"
 assert "应用本体含 .next" test -d "$APP_DIR/standalone/.next"
 assert "实例自带 node 运行时" test -x "$BIN_DIR/node"
 
