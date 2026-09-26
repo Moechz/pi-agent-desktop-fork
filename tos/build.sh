@@ -343,7 +343,13 @@ cp assets/index.html "$APP_DIR/index.html"
 cp assets/images/icons/$APP_ID.svg "$APP_DIR/images/icons/$APP_ID.svg"
 cp assets/init.d/$APP_ID.service "$APP_DIR/init.d/$APP_ID.service"
 cp assets/nginx/$APP_ID.conf "$APP_DIR/nginx/$APP_ID.conf"
-chmod 0755 "$APP_DIR/init.d/$APP_ID.service"
+# 单元文件必须是 0644（**不可执行**）：与团队其他 7 个 TOS 项目（kavita / alist /
+# audiobookshelf / metube / navidrome / sftpgo / Beszel）的包完全一致 —— 它们的
+# init.d/<appid>.service 与 etc/systemd/system/<appid>.service 都是 -rw-r--r--。
+# 曾误设为 0755：TOS 装机流程会遍历/处理 init.d 下的条目，一个**可执行**的 unit
+# 会被当作脚本去跑（真的执行就会炸）；systemd 也会对可执行 unit 打警告。
+# 真正的可执行文件（node / rg / fd、init.d 下的脚本）才给 0755。
+chmod 0644 "$APP_DIR/init.d/$APP_ID.service"
 for f in "$APP_DIR/$APP_ID.lang" "$APP_DIR/$APP_ID.env.example" "$APP_DIR/privacy-policy.html" \
          "$APP_DIR/index.html" "$APP_DIR/config.ini" "$APP_DIR/npm-placeholder"; do
   [ -f "$f" ] && normalize_text "$f"
@@ -355,6 +361,7 @@ tar -cjf "$APP_DIR/webui.bz2" -C "$APP_DIR" index.html
 # dpkg 实体文件双落盘（不依赖 postinst 拷贝即可生效）
 mkdir -p "$PKGROOT/etc/systemd/system" "$PKGROOT/etc/nginx/conf.d"
 cp "$APP_DIR/init.d/$APP_ID.service" "$PKGROOT/etc/systemd/system/$APP_ID.service"
+chmod 0644 "$PKGROOT/etc/systemd/system/$APP_ID.service"
 cp "$APP_DIR/nginx/$APP_ID.conf" "$PKGROOT/etc/nginx/conf.d/$APP_ID.conf"
 
 # 文本清洗 + 污染清理（整棵树）
@@ -447,6 +454,10 @@ unreadable="$(find "$PKGROOT" -type f ! -perm -o=r -print -quit 2>/dev/null || t
 assert_ok "包内文件对其它用户可读${unreadable:+（违规示例: $unreadable）}" "$([ -z "$unreadable" ] && echo 1 || echo 0)"
 untraversable="$(find "$PKGROOT" -type d ! -perm -o=rx -print -quit 2>/dev/null || true)"
 assert_ok "包内目录可被其它用户遍历${untraversable:+（违规示例: $untraversable）}" "$([ -z "$untraversable" ] && echo 1 || echo 0)"
+# 单元文件必须是 0644（与团队其他 7 个 TOS 项目一致；可执行 unit 会被 TOS 装机流程
+# 当脚本处理，也会让 systemd 报 "marked executable" 警告）
+executable_units="$(find "$PKGROOT" -name '*.service' -perm -u+x -print -quit 2>/dev/null || true)"
+assert_ok "包内 systemd unit 不可执行（0644）${executable_units:+（违规: $executable_units）}" "$([ -z "$executable_units" ] && echo 1 || echo 0)"
 
 # 5) 二进制架构防呆（坑 28：绝不允许异构二进制混入）
 if command -v file > /dev/null 2>&1; then
