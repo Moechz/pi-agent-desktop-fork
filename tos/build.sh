@@ -16,6 +16,14 @@
 # ============================================================================
 set -euo pipefail
 
+# 构建环境不得影响包内容：显式固定 umask（坑 50）。
+# `cp -R` 不带 -p 时目标权限 = 源权限 & ~umask；在 TOS 应用内自建包时，
+# systemd 单元的 UMask=0027 会随会话传下来 → 包内文件变 0640/0750。
+# 真机实测后果：安装成功但运行用户读不到 package.json，服务秒退（“卡在安装中”）。
+# 注意：仅设 umask 不够（源树本身就是 0640 时 cp 也只会得到 0640），
+# stage 阶段末尾还有一次权限归一兜底。
+umask 022
+
 CALLER_PWD="$PWD"
 cd "$(dirname "$0")"
 TOS_DIR="$PWD"
@@ -304,6 +312,19 @@ cp "$APP_DIR/nginx/$APP_ID.conf" "$PKGROOT/etc/nginx/conf.d/$APP_ID.conf"
 # 文本清洗 + 污染清理（整棵树）
 find "$PKGROOT" \( -name '.DS_Store' -o -name '._*' -o -name '__MACOSX' \) -prune -exec rm -rf {} + 2>/dev/null || true
 
+# ---------- 权限归一（坑 50：构建机的 umask 与源树权限会原样进包）----------
+# deb 里没有任何“别人不可读”的正当理由：目录一律 0755，文件按“原本可执行与否”
+# 决定 0755 / 0644。否则一旦带上 0640/0750，安装后运行用户（非 root）读不到自身
+# 文件，服务直接退出（真机 tnas-57 实证）。
+normalize_modes() {
+  local root="$1"
+  find "$root" -type d -exec chmod 0755 {} + 2>/dev/null || true
+  find "$root" -type f -perm -u+x -exec chmod 0755 {} + 2>/dev/null || true
+  find "$root" -type f ! -perm -u+x -exec chmod 0644 {} + 2>/dev/null || true
+}
+normalize_modes "$PKGROOT"
+echo "  ✓ 权限归一完成（目录 0755；文件 0644，原本可执行者为 0755）"
+
 # ============================== 3. verify ==============================
 say "3/4 verify（规范断言）"
 fail=0
@@ -372,6 +393,12 @@ ok = ("viewBox=" in s) and (tags + anchors <= 50)
 print(("  ✓ " if ok else "  ❌ ") + f"图标（viewBox 存在，元素 {tags} + 锚点 {anchors} = {tags+anchors} ≤ 50）")
 sys.exit(0 if ok else 1)
 PY
+
+# 4b) 权限：包内一切文件必须对运行用户（非 root）可读（坑 50）
+unreadable="$(find "$PKGROOT" -type f ! -perm -o=r -print -quit 2>/dev/null || true)"
+assert_ok "包内文件对其它用户可读${unreadable:+（违规示例: $unreadable）}" "$([ -z "$unreadable" ] && echo 1 || echo 0)"
+untraversable="$(find "$PKGROOT" -type d ! -perm -o=rx -print -quit 2>/dev/null || true)"
+assert_ok "包内目录可被其它用户遍历${untraversable:+（违规示例: $untraversable）}" "$([ -z "$untraversable" ] && echo 1 || echo 0)"
 
 # 5) 二进制架构防呆（坑 28：绝不允许异构二进制混入）
 if command -v file > /dev/null 2>&1; then

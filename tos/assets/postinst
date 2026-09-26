@@ -38,8 +38,22 @@ case "$1" in
       useradd --system --user-group --no-create-home --shell /usr/sbin/nologin "$APP_USER" 2>/dev/null || true
     fi
 
-    # 2. 应用目录属主（node 运行时与 standalone 都归运行用户）
-    chown -R "$APP_USER:$APP_USER" "$APP_DIR" 2>/dev/null || true
+    # 2. 应用目录属主 + 读权限（坑 50）
+    #    $APP_DIR 是指向数据卷的**符号链接**，而 `chown -R` 默认不跟随顶层符号链接
+    #    → 旧写法在真机上静默 no-op（代码树始终是 root:root）。以前包内文件是 0644，
+    #    root:root 照样能跑，所以这个 no-op 一直没暴露；一旦包内是 0640/0750
+    #    （构建环境 umask=027 时 cp -R 的产物），运行用户读不到 package.json，
+    #    服务秒退（真机 tnas-57 实证 ERR_INVALID_PACKAGE_CONFIG）。
+    #    这里先取真实路径递归 chown，再对**代码树**补读位（不含 data/：用户数据
+    #    保持 0640，不给 NAS 上其它用户读）。
+    APP_DIR_REAL="$(readlink -f "$APP_DIR" 2>/dev/null || echo "$APP_DIR")"
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR_REAL" 2>/dev/null || true
+    for sub in standalone bin vendor init.d nginx images webui; do
+      if [ -e "$APP_DIR_REAL/$sub" ]; then chmod -R a+rX "$APP_DIR_REAL/$sub" 2>/dev/null || true; fi
+    done
+    for f in "$APP_ID.lang" webui.bz2 index.html privacy-policy.html config.ini BUILD-INFO PROVENANCE.md; do
+      if [ -e "$APP_DIR_REAL/$f" ]; then chmod a+r "$APP_DIR_REAL/$f" 2>/dev/null || true; fi
+    done
 
     # 2b. Next 图片缓存目录：standalone 里不含 .next/cache，运行时会因 mkdir ENOENT
     #     抛 unhandledRejection（真机日志实测；虽不致命但污染日志且可能影响图片优化）
@@ -152,6 +166,10 @@ case "$1" in
       pkg_log postinst "就绪（127.0.0.1:${APP_PORT}${BASE_PATH}/ 响应）"
     else
       echo "警告: ${APP_ID} 30s 内未就绪，排查: journalctl -u $APP_ID -n 50 --no-pager" >&2
+      # 把 journal 里的第一条错误原样贴出来：应用中心只会显示“安装中”，
+      # 装完又打不开时用户看不到任何线索（真机踩坑一次就得连上 SSH 才知道）。
+      REASON="$(journalctl -u "$APP_ID.service" --no-pager -n 40 2>/dev/null | grep -m1 -E 'Error|error:|EACCES|ENOENT|permission denied' || true)"
+      if [ -n "$REASON" ]; then echo "  直接原因: $REASON" >&2; fi
       systemctl --no-pager -l status $APP_ID.service 2>/dev/null | head -20 >> "$MAINT_LOG" 2>/dev/null || true
     fi
 

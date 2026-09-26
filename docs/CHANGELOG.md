@@ -9,6 +9,21 @@
 
 # Changelog
 
+## 2026-09-26 — 修「权限随构建环境 umask 进包」：-20 安装后服务秒退（真机 tnas-57 实证）
+
+| 类别 | 内容 |
+|---|---|
+| 现象 | 安装 `-20` 后卡在应用中心「安装中」，随后应用始终无法启用；`systemctl status` 显示 `failed`，journal 一行 `Error: Cannot read package config /Volume1/@apps/piagentfortos/standalone/package.json: permission denied`（`ERR_INVALID_PACKAGE_CONFIG`） |
+| 根因1 | `-20` 包内文件是 **0640 / 目录 0750、属主 root:root**（对比 `-18` 的 0644/0755）。来源：构建环境 umask=027（在 TOS 应用内自建包时 systemd 单元的 `UMask=0027` 会随会话传下来）经 `cp -R` 渗透——`cp` 不带 `-p` 时目标权限 = 源权限 & ~umask |
+| 根因2 | `postinst` 的「应用目录属主」那行是**静默 no-op**：`$APP_DIR=/usr/local/piagentfortos` 是指向数据卷的**符号链接**，而 `chown -R` 默认不跟随顶层符号链接 → 代码树一直是 root:root。以前文件是 0644，root:root 照样能跑，所以两年没暴露；一旦是 0640 就当场致命 |
+| 修复1 | `build.sh`：开头 `umask 022`；stage 末尾新增 `normalize_modes`（目录 0755；文件按是否可执行给 0755/0644） |
+| 修复2 | `makedeb.py`：入 tar 时归一权限（`normalize_mode()`，`--keep-modes` 可关），并把「归一了多少项」打出来——源树不干净要在构建期就看得见 |
+| 修复3 | `postinst`：改用 `readlink -f` 取真实路径递归 chown（仅代码树，`data/` 保持 0640 不给 NAS 其它用户读），并在启动前对代码树补读位，作为旧坏包的兜底 |
+| 修复4 | `postinst` 就绪检查失败时，直接把 journal 里第一条 `Error` 原样打出来（应用中心只显示「安装中」，用户此前拿不到任何线索） |
+| 防回归 | `build.sh` verify 新增两条断言：`包内文件对其它用户可读`、`包内目录可被其它用户遍历` |
+| 验证 | 真机 tnas-57：`chmod -R a+rX` 后服务立即 `active`（Next `Ready`）、`/piagentfortos/` 经 nginx 返回 200；本机 `makedeb.py` 单元实测 0640→0644、0750/0750→0755 |
+| 版本 | 0.8.8.9-18 → **0.8.8.9-21**（应用代码不变） |
+
 ## 2026-09-26 — 打包链修三个真缺陷（本地构建体积翻倍 / public 双拷 / 溯源恒为 unknown）
 
 | 类别 | 内容 |

@@ -28,6 +28,21 @@ SCRIPT_MODE = 0o755
 FILE_MODE = 0o644
 
 
+def normalize_mode(mode: int) -> int:
+    """把源树权限归一为 deb 内的“最低可读”权限（坑 50）。
+
+    构建机的 umask 会经 `cp -R`（目标权限 = 源权限 & ~umask）渗进包内：在 TOS
+    应用内自建包时系统的 UMask=0027 会把整棵树变成 0640/0750，安装后运行用户
+    读不到自己的 package.json，服务秒退（真机 tnas-57 实证）。
+
+    规则：可执行与否是语义（保留可执行位 → 0755），可读性是底线（其它用户必须可读
+    → 0644）。deb 里没有“别人不可读”的正当理由；确需保留原始权限时用 --keep-modes。
+    """
+    if mode & 0o111:
+        return 0o755
+    return 0o644
+
+
 def load_vars(path: pathlib.Path) -> dict[str, str]:
     values: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -62,12 +77,19 @@ def add_bytes(tar: tarfile.TarFile, name: str, data: bytes, mode: int) -> None:
     tar.addfile(info, io.BytesIO(data))
 
 
-def add_tree(tar: tarfile.TarFile, root: pathlib.Path) -> None:
-    """把目录树加入 data 包：路径带 ./ 前缀、属主 root:root、mtime 归零。"""
+def add_tree(tar: tarfile.TarFile, root: pathlib.Path, keep_modes: bool = False) -> None:
+    """把目录树加入 data 包：路径带 ./ 前缀、属主 root:root、mtime 归零、权限归一。"""
+    loosened = 0
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root)
         arcname = f"./{rel.as_posix()}"
         stat = path.lstat()
+        mode = stat.st_mode & 0o7777
+        if not keep_modes:
+            wanted = normalize_mode(mode)
+            if wanted != mode:
+                mode = wanted
+                loosened += 1
         if path.is_symlink():
             info = tarfile.TarInfo(name=arcname)
             info.type = tarfile.SYMTYPE
@@ -80,7 +102,7 @@ def add_tree(tar: tarfile.TarFile, root: pathlib.Path) -> None:
         if path.is_dir():
             info = tarfile.TarInfo(name=arcname.rstrip("/") + "/")
             info.type = tarfile.DIRTYPE
-            info.mode = stat.st_mode & 0o7777
+            info.mode = mode
             info.uid = info.gid = 0
             info.uname = info.gname = "root"
             info.mtime = 0
@@ -88,12 +110,17 @@ def add_tree(tar: tarfile.TarFile, root: pathlib.Path) -> None:
             continue
         info = tarfile.TarInfo(name=arcname)
         info.size = stat.st_size
-        info.mode = stat.st_mode & 0o7777
+        info.mode = mode
         info.uid = info.gid = 0
         info.uname = info.gname = "root"
         info.mtime = 0
         with path.open("rb") as handle:
             tar.addfile(info, handle)
+    if loosened:
+        print(
+            f"   ⚠️ 已归一 {loosened} 项的权限（源树里有 0640/0750 之类的非全局可读权限，"
+            f"构建环境的 umask 或源树权限有问题，见坑 50）"
+        )
 
 
 def md5_of(path: pathlib.Path) -> str:
@@ -116,6 +143,11 @@ def main() -> None:
     parser.add_argument("--maintainer", required=True)
     parser.add_argument("--control-template", required=True)
     parser.add_argument("--vars", required=True, help="key=value 文件（供模板替换）")
+    parser.add_argument(
+        "--keep-modes",
+        action="store_true",
+        help="保留源树权限（默认归一为 0755/0644，见坑 50）",
+    )
     args = parser.parse_args()
 
     pkgroot = pathlib.Path(args.pkgroot).resolve()
@@ -171,7 +203,7 @@ def main() -> None:
             add_bytes(tar, name, body, mode)
 
     with tarfile.open(work / "data.tar.xz", "w:xz", format=tarfile.GNU_FORMAT) as tar:
-        add_tree(tar, pkgroot)
+        add_tree(tar, pkgroot, keep_modes=args.keep_modes)
 
     if out.exists():
         out.unlink()
