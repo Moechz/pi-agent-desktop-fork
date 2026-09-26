@@ -25,6 +25,12 @@ const MINIMAP_WIDTH = 30;
 const TOOLTIP_HEIGHT = 92; // 三行：用户一行 + 助手两行
 const TOOLTIP_WIDTH = 260;
 
+// 刻度条的两根结构性竖线（左分隔线 / 中间标尺导轨）按用户要求**视觉隐形**：
+// 保留元素与尺寸，只把颜色改成 transparent —— 观感上“这两根线不存在”，
+// 但布局、刻度对齐、命中区都保持原样（想恢复只改这两个常量即可）。
+const RAIL_LINE = "transparent"; // 中轴线（刻度挂靠的标尺导轨）原为 var(--border)
+const EDGE_LINE = "transparent"; // 左分隔线原为 var(--divider)
+
 function getMessagePreview(msg: AgentMessage | Partial<AgentMessage>): string {
   if (msg.role === "user") {
     const content = msg.content;
@@ -275,7 +281,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
         position: "relative",
         cursor: "default",
         userSelect: "none",
-        borderLeft: "1px solid var(--divider)",
+        borderLeft: `1px solid ${EDGE_LINE}`,
         background: "var(--bg-elevated)",
         overflow: "visible",
       }}
@@ -296,7 +302,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
         }}
       />
 
-      {/* 中轴线：刻度挂在它上面，像一把纵向标尺 */}
+      {/* 中轴线：刻度挂在它上面，像一把纵向标尺（颜色按用户要求设为 invisible） */}
       <div
         style={{
           position: "absolute",
@@ -304,7 +310,7 @@ export function ChatMinimap({ messages, streamingMessage, scrollContainer, messa
           top: 0,
           bottom: 0,
           width: 1,
-          background: "var(--border)",
+          background: RAIL_LINE,
           transform: "translateX(-50%)",
           zIndex: 0,
         }}
