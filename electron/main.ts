@@ -29,6 +29,8 @@ import {
   wrapUtilityServerProcess,
 } from "./server-process";
 
+const SERVER_STACK_SIZE_ARG = "--stack-size=16384"; // 16MB：深树序列化（超长会话）不爆栈
+
 // ---------------------------------------------------------------------------
 // Single Instance Lock
 // ---------------------------------------------------------------------------
@@ -151,7 +153,7 @@ function startNextServer(port: number): ServerProcess {
   if (isDev) {
     // Dev: use 'node' (not process.execPath which is electron.exe) to start next dev
     const nextBin = require.resolve("next/dist/bin/next", { paths: [app.getAppPath()] });
-    const proc = spawn("node", [nextBin, "dev", "-p", String(port)], {
+    const proc = spawn("node", [SERVER_STACK_SIZE_ARG, nextBin, "dev", "-p", String(port)], {
       cwd: app.getAppPath(),
       env: {
         ...pickApiKeys(process.env),
@@ -185,6 +187,8 @@ function startNextServer(port: number): ServerProcess {
           env: serverEnv,
           stdio: "pipe",
           serviceName: "Pi Agent Next Server",
+          // 深树（超长会话 parentId 链）在 JSON.stringify 时按层递归，默认栈会 RangeError 500
+          execArgv: [SERVER_STACK_SIZE_ARG],
         });
         return wrapUtilityServerProcess(utility, (process) => {
           const pid = process.pid;
@@ -196,7 +200,7 @@ function startNextServer(port: number): ServerProcess {
         });
       })()
     : wrapChildServerProcess(
-        spawn(process.execPath, [serverScript], {
+        spawn(process.execPath, [SERVER_STACK_SIZE_ARG, serverScript], {
           cwd: standaloneDir,
           env: {
             ...serverEnv,
