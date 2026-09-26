@@ -9,6 +9,23 @@
 
 # Changelog
 
+## 2026-09-26 — 打包链修三个真缺陷（本地构建体积翻倍 / public 双拷 / 溯源恒为 unknown）
+
+| 类别 | 内容 |
+|---|---|
+| 现象1 | 本地出包体积异常：120MB → **268MB**，安装后 437MB → **853MB** |
+| 根因1 | `lib/bundled-tools.ts` 的动态 fs 访问触发 Next「整项目追踪」，把 `tos/build`——上一次 `build.sh` 留下的完整 stage（可达 400MB+）——扫进了 `standalone` |
+| 修复1 | `next.config.ts` 的 `outputFileTracingExcludes` 补 `tos/build/**/*` 与 `tos/dist/**/*`（原有 `release/**`、`dist/**` 等保持不变） |
+| 现象2 | deb 里出现 `standalone/public/public/`，静态资源白多一份（实测 +18MB，`pi.gif` 16MB 存了两份） |
+| 根因2 | Next 16 的 standalone **自带 `public/`**，而 `build.sh` 又 `cp -R $APP_ROOT/public .../standalone/public`，目标是已存在目录 → 被拷成了子目录 |
+| 修复2 | 改为按内容合并：`cp -R "$APP_ROOT/public/." "$APP_DIR/standalone/public/"`（`public/` 是 Next 自带的，`.next/static` 仍必须自己拷——它也确认没被嵌套） |
+| 现象3 | 本地出包的 `BUILD-INFO` 里 `SRC_COMMIT=unknown`，溯源形同虚设 |
+| 根因3 | `build.sh` 的 `git -C "$REPO_DIR" rev-parse HEAD` 撞上 git 的 `dubious ownership`（仓库属主与执行账号不同，NAS 上必现；CI runner 是干净用户所以不踩） |
+| 修复3 | 加 `-c safe.directory="$REPO_DIR"`，不依赖全局 git 配置 |
+| 防回归 | `build.sh` verify 阶段新增两条断言：`standalone 无 public/public 嵌套`、`standalone 未挟带构建临时区 tos/build` |
+| 验证 | 见提交说明：先实跱“污染后再构建”验证修复 1 真生效（非纸面推断） |
+| 版本 | 0.8.8.9-19 → **0.8.8.9-20**（纯打包链维护，应用代码不变） |
+
 ## 2026-09-26 — 降级思考球定版（慢转 + 反向焦散 + 暖色外发光）+ 思考球实验室
 
 | 类别 | 内容 |

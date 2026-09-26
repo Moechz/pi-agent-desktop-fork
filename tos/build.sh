@@ -141,7 +141,10 @@ say "0/4 准备"
 chmod -R u+w "$WORK" 2>/dev/null || true
 rm -rf "$WORK" "$DIST"
 mkdir -p "$WORK" "$DIST" "$BIN_DIR" "$VENDOR_BIN_DIR" "$APP_DIR/images/icons" "$APP_DIR/init.d" "$APP_DIR/nginx"
-SRC_COMMIT="$(git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+# 仓库属主与本进程账号常常不同（NAS 上仓库由 app 用户建、安装由 root 跑），
+# 不加 safe.directory 会直接「dubious ownership」失败 → SRC_COMMIT 永远是 unknown，
+# 每个本地包的溯源就都成了空话（CI 的 runner 是干净用户，所以只在本地踩）。
+SRC_COMMIT="$(git -C "$REPO_DIR" -c safe.directory="$REPO_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 BUILD_TIME="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo "  appid=$APP_ID version=$VERSION arch=$TARGET_ARCH commit=${SRC_COMMIT:0:12}"
 
@@ -191,8 +194,12 @@ if [ ! -d "$APP_ROOT/.next/static" ]; then
 fi
 mkdir -p "$APP_DIR/standalone/.next"
 cp -R "$APP_ROOT/.next/static" "$APP_DIR/standalone/.next/static"
+# Next 16 的 standalone 自带 public/（但**不含** .next/static，那个必须自己拷）。
+# 必须按「合并内容」拷：`cp -R src/public dst/public` 在 dst 已存在时会拷成 public/public，
+# 白多一份静态资源（实测 +18MB，pi.gif 16MB 存了两份）。
 if [ -d "$APP_ROOT/public" ]; then
-  cp -R "$APP_ROOT/public" "$APP_DIR/standalone/public"
+  mkdir -p "$APP_DIR/standalone/public"
+  cp -R "$APP_ROOT/public/." "$APP_DIR/standalone/public/"
 else
   echo "⚠️ 未找到 $APP_ROOT/public（图标等静态文件可能缺失）" >&2
 fi
@@ -386,6 +393,12 @@ assert "standalone 含 .next/static（前端 JS）" test -d "$APP_DIR/standalone
 n=$(find "$APP_DIR/standalone/.next/static" -name '*.js' 2>/dev/null | wc -l | tr -d ' ')
 assert_ok "静态资源含 JS（$n 个）" "$([ "$n" -gt 3 ] && echo 1 || echo 0)"
 assert "standalone 含 public（图标等）" test -d "$APP_DIR/standalone/public"
+# Next 自带 public/，再 cp -R 一次会拷成 public/public（白多一份静态资源，实测 +18MB）
+assert_ok "standalone 无 public/public 嵌套" \
+  "$([ -d "$APP_DIR/standalone/public/public" ] && echo 0 || echo 1)"
+# 构建残留（tos/build）被整项目追踪扫进来会让 deb 凭空胖一倍，必须为 0 字节级
+assert_ok "standalone 未挟带构建临时区 tos/build" \
+  "$([ -d "$APP_DIR/standalone/tos/build" ] && echo 0 || echo 1)"
 
 assert "应用本体含 server.js" test -f "$APP_DIR/standalone/server.js"
 assert "应用本体含 .next" test -d "$APP_DIR/standalone/.next"

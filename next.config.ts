@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
     '*': [
       'release/**/*',
       '.git/**/*',
+      // 打包临时区与产物：Next 的「整项目追踪」（见 lib/bundled-tools.ts 的动态 fs 访问）
+      // 会把 tos/build —— 上一次 build.sh 留下的完整 stage，可达 400MB+ —— 扫进
+      // standalone，deb 凭空胖一倍（实测 120MB → 268MB，安装后 437MB → 853MB）。
+      'tos/build/**/*',
+      'tos/dist/**/*',
       // 随包搜索工具由 extraResources 落到 resources/bin；不要被追踪进 standalone（避免重复 + universal 合并冲突）
       'vendor/**/*',
       'dist/**/*',
