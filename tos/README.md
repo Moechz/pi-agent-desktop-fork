@@ -124,10 +124,52 @@ dpkg -r piagentfortos && dpkg --purge piagentfortos   # 数据保留 → 彻底�
 1. 改内容 → 需要重新打包时把 `config.env` 的 `PKG_RELEASE` +1（**勿零填充**）
 2. 版本三处一致由 `build.sh` 断言保证：`config.ini` / `DEBIAN/control` / `.lang`
 3. 推 tag `tos-v<版本>`（例如 `tos-v0.8.8.6-1`）→ CI 出双架构 deb 并发布 Release
-4. 商店提交：上传 `<appid>_<版本>_<架构>.deb` + `.sha256`，类目 `Utilities`
-   —— 架构用 **Debian 名**（`amd64` / `arm64`），即 `piagentfortos_0.8.8.9-27_amd64.deb` 这种形式。
-   本口径为仓库所有者裁定；跨项目指南「上架 Release 资产」节主张「不带版本 + 用 config.ini 的
-   `x86_64`」，两者相反，**以本行为准**（该节顶部已加定版说明与回退路径）。
+4. 商店提交：走官方 **Agent API**（不必上网页后台），见下节。
+
+## 商店提交（官方 Agent API，2026-09-27 首次跑通）
+
+凭据与逐端速查：`~/Documents/projects/TOS-DEVELOPER-API.md`（**本地文件，勿入仓库**）。
+官方文档：https://github.com/terramaster-tos/tos-app-pkg-tools/tree/main/Developer/agent-api
+
+```bash
+export TDP_BASE_URL="https://api-developer.terra-master.com"
+export TDP_API_TOKEN=...   # 只放环境变量：不作用命令行参数（会进 history/ps/日志）、不回声
+
+# 1) 拿应用实体 UUID（路径里的 {app_id} 是 UUID，不是业务 id）
+curl -sS -H "Authorization: Bearer $TDP_API_TOKEN" "$TDP_BASE_URL/v1/apps?kind=all" | jq .
+# 2) 提交（两阶段：这一步只建任务，**不创建版本**）
+curl -sS -X POST -H "Authorization: Bearer $TDP_API_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tag":"<版本>","browser_download_url":"<Release 资产 URL>"}' \
+  "$TDP_BASE_URL/v1/apps/<APP_UUID>/versions"
+# 3) 轮询 all_status（0 等 / 1 查 / 2 过 / 3 败；建议 2 秒一次）
+curl -sS -H "Authorization: Bearer $TDP_API_TOKEN" "$TDP_BASE_URL/v1/apps/<APP_UUID>/versions/tasks/<TASK_ID>"
+# 4) all_status=2 → 先读 result 核对，再 confirm（confirm 才真正创建版本并进审核）
+curl -sS -H "Authorization: Bearer $TDP_API_TOKEN" "$TDP_BASE_URL/v1/apps/<APP_UUID>/versions/tasks/<TASK_ID>/result"
+curl -sS -X POST -H "Authorization: Bearer $TDP_API_TOKEN" "$TDP_BASE_URL/v1/apps/<APP_UUID>/versions/tasks/<TASK_ID>/confirm"
+```
+
+要点（都是踩过才知道的）：
+
+- 同一个 `app_id` 要**按平台各注册一条**（`x86_64` / `aarch64` 是两条独立记录，各有自己的 UUID）。
+- `browser_download_url` 由**平台自己**去拉——NAS 到 GitHub 连不上也不影响提交；
+  可用 `GET /v1/apps/{UUID}/releases` 复核平台看到的资产列表。
+- 解析阶段那 10 项（必需文件 / config.ini 格式与 id / application_type / platform /
+  `.lang` / **图标合规**…）是一道**免费预检**；确认前必须看 `result`。
+- 一次只能跑一个 Version Creation Task（并发会 429 `310801`）。
+- **平台不校验包文件名**：校验全在包内（config.ini 的 id/platform/type、必需文件、`.lang`、图标）。
+  所以第 4 条那个命名口径仅供人看，不是硬规则（已实测：带版本 + `amd64` 的文件名 10/10 全过）。
+- `platform` 字段：`x86_64` / `aarch64`（**不是** `amd64`/`arm64`，也不是 `ARM64`）。
+  arm64 包写错会被 `platform_mismatch` 拦下（指南坑 56，已修 + 已加断言）。
+
+### 提交记录
+
+| 平台 | 版本 | 状态 | 备注 |
+|---|---|---|---|
+| x86_64 | `0.8.8.9-27` | 审核中（2026-09-27） | 10/10 校验全过 |
+| aarch64 | `0.8.8.9-28` | 审核中（2026-09-27） | -27 因 `platform_mismatch` 作废，以 -28 重提 |
+
+> 两个平台版本号暂不一致是**刻意选择**：x86_64 的 -27 本身完全正确，不为「对齐版本号」
+> 而自我撤回重提；下次发版（-29）自然收敛。
 
 ## 真机验收记录
 
