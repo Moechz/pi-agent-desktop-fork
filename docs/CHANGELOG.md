@@ -9,6 +9,18 @@
 
 # Changelog
 
+## 2026-09-27 — 修「升级后界面还是旧的」根因：文档不再长期缓存（真机 tnas-57 实证）
+
+| 类别 | 内容 |
+|---|---|
+| 现象 | TOS 应用升级到 0.8.8.9-25（含输入法回车修复）后，服务端产物确认是新代码（chunk 里能搜到 `onCompositionStart`/`onCompositionEnd` 与宽限逻辑、HTML 引用的 chunk 全在磁盘），但用户浏览器里行为照旧；用户原话「dev 里验证通过了，真机上这个版本又不行了」 |
+| 根因 | Next 对预渲染页面默认下发 `Cache-Control: s-maxage=31536000`（+ `x-nextjs-cache: HIT`、`x-nextjs-prerender: 1`），浏览器长期留着旧 HTML（引用旧 chunk 名）；旧 chunk 又带 `immutable, max-age=31536000` → 一直跑升级前的 JS。旧 chunk 文件虽已被 dpkg 删掉，浏览器无需回源 |
+| 修复 | `next.config.ts` 新增 `headers()`：文档/接口 → `no-cache, must-revalidate`（可 304，成本极低）；`/_next/static/*` → `public, max-age=31536000, immutable`。**顺序要紧**：Next 后者覆盖前者，兜底必须在前、hashed 在后（实测反了 immutable 会被盖掉） |
+| 验证 | 本地按 TOS 形态（`TOS_BASE_PATH=/piagentfortos`）起 standalone 实测三种响应头均正确：文档 `no-cache, must-revalidate` / chunk `immutable` / API `no-cache, must-revalidate` |
+| 防回归 | `package.test.ts` 新增断言（含顺序断言）；nginx 反代 conf 加注释「缓存头由应用下发，不要重复 add_header」 |
+| 指南 | 新增坑 62（含一条命令定位 + 一线救急：强制刷新） |
+| 版本 | 0.8.8.9-25 → **0.8.8.9-26** |
+
 ## 2026-09-26 — 修「半成品本体进包」：-21 所有 /api/* 500，界面「无法加载会话」（真机 tnas-57 实证）
 
 | 类别 | 内容 |
