@@ -125,6 +125,9 @@ dpkg -r piagentfortos && dpkg --purge piagentfortos   # 数据保留 → 彻底�
 2. 版本三处一致由 `build.sh` 断言保证：`config.ini` / `DEBIAN/control` / `.lang`
 3. 推 tag `tos-v<版本>`（例如 `tos-v0.8.8.6-1`）→ CI 出双架构 deb 并发布 Release
 4. 商店提交：上传 `<appid>_<版本>_<架构>.deb` + `.sha256`，类目 `Utilities`
+   —— 架构用 **Debian 名**（`amd64` / `arm64`），即 `piagentfortos_0.8.8.9-27_amd64.deb` 这种形式。
+   本口径为仓库所有者裁定；跨项目指南「上架 Release 资产」节主张「不带版本 + 用 config.ini 的
+   `x86_64`」，两者相反，**以本行为准**（该节顶部已加定版说明与回退路径）。
 
 ## 真机验收记录
 
