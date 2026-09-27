@@ -2,6 +2,7 @@ import { en, zhCN, type TranslationKey } from "../dictionaries.ts";
 import { jaJP } from "./ja-JP.ts";
 import { koKR } from "./ko-KR.ts";
 import { zhHK } from "./zh-HK.ts";
+import { thTH } from "./th-TH.ts";
 import { viVN } from "./vi-VN.ts";
 import { idID } from "./id-ID.ts";
 import { huHU } from "./hu-HU.ts";
@@ -49,6 +50,7 @@ export const DICTIONARIES = {
   "hu-HU": huHU,
   "id-ID": idID,
   "vi-VN": viVN,
+  "th-TH": thTH,
 } as const satisfies Record<string, Record<TranslationKey, string>>;
 
 export type Locale = keyof typeof DICTIONARIES;
@@ -83,6 +85,7 @@ export const LOCALE_ENDONYMS: Record<Locale, string> = {
   "hu-HU": "Magyar",
   "id-ID": "Bahasa Indonesia",
   "vi-VN": "Tiếng Việt",
+  "th-TH": "ไทย",
 };
 
 export type { TranslationKey };
