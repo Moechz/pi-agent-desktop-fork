@@ -70,7 +70,11 @@ case "$TARGET_ARCH" in
 esac
 case "$TARGET_ARCH" in
   amd64) PLATFORM_NAME="x86_64" ;;
-  arm64) PLATFORM_NAME="ARM64" ;;
+  # 坑 56：config.ini 的 platform 只认 x86_64 / aarch64（平台侧口径），
+  # 不是 dpkg 的 amd64/arm64，也不是 "ARM64"。写错会被自动校验驳回：
+  #   Platform mismatch: the platform bound architecture is aarch64,
+  #   but the package resolves to ARM64.
+  arm64) PLATFORM_NAME="aarch64" ;;
 esac
 
 NODE_SHA256_VAR="NODE_SHA256_$(echo "$TARGET_ARCH" | tr 'a-z' 'A-Z')"
@@ -401,11 +405,12 @@ assert "单元 User=$APP_USER" grep -q "^User=$APP_USER" "$UNIT"
 assert "单元仅回环监听" grep -q "HOSTNAME=127.0.0.1" "$UNIT"
 assert "单元端口与 config.env 一致" grep -q "PORT=$APP_PORT" "$UNIT"
 
-# 2) config.ini：合法 JSON + open_path + 无 type + publisher 正确 + 版本一致
-python3 - "$APP_DIR/config.ini" "$VERSION" <<'PY' || fail=1
+# 2) config.ini：合法 JSON + open_path + 无 type + publisher 正确 + 版本/平台一致
+python3 - "$APP_DIR/config.ini" "$VERSION" "$PLATFORM_NAME" <<'PY' || fail=1
 import json, sys
 cfg = json.load(open(sys.argv[1], encoding="utf-8"))
 version = sys.argv[2]
+platform = sys.argv[3]
 checks = [
     (cfg.get("id") == "piagentfortos", "config.ini id=piagentfortos"),
     (cfg.get("open_path") is True, "config.ini open_path=true（新标签页）"),
@@ -413,6 +418,10 @@ checks = [
     (cfg.get("path") == "/piagentfortos/", "config.ini path=/piagentfortos/"),
     (cfg.get("publisher") == "Moechz", "config.ini publisher=Moechz（坑 49）"),
     (cfg.get("version") == version, f"config.ini version={version}"),
+    # 坑 56：平台拿「工单绑定的架构」与「config.ini.platform」比对；
+    # arm64 包必须写 aarch64（不是 ARM64/arm64），否则平台报 Platform mismatch
+    (cfg.get("platform") == platform, f"config.ini platform={platform}（坑 56，必须是 x86_64/aarch64）"),
+    (cfg.get("platform") in ("x86_64", "aarch64"), "config.ini platform 属于平台允许值"),
     (cfg.get("recommend") is False and cfg.get("beta") is False, "recommend/beta=false（V11）"),
     (cfg.get("user") == "piagentfortos", "config.ini user 与运行用户一致"),
 ]

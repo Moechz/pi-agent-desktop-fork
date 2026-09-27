@@ -9,6 +9,19 @@
 
 # Changelog
 
+## 2026-09-27 — 修 config.ini 的 platform 随架构生成（arm64 被平台 Platform mismatch 拦下）
+
+| 类别 | 内容 |
+|---|---|
+| 发现方式 | 用官方 **Agent API** 首次真提交：amd64 包 10 项校验全过（含 `Icon Compliance`），但 arm64 包被 `platform_mismatch` 拦下 |
+| 驳回原文 | `Platform mismatch: the platform bound architecture is aarch64, but the package resolves to ARM64. / Please select a package for the aarch64 architecture, or change the platform field in config.ini to aarch64.` |
+| 根因 | `tos/build.sh:73` 写的是 `arm64) PLATFORM_NAME="ARM64"` —— 平台侧只认 `x86_64` / `aarch64`，既不是 dpkg 的 `amd64`/`arm64`，也不是 `ARM64`。**这是独立于 deb control `Architecture` 的第三条架构口径**（指南坑 56） |
+| 为何一直没暴露 | 之前的 verify 阶段没有任何断言检查 config.ini 的 `platform` 字段，而本地/CI 都只构建 amd64 → 错值一路绿灯到平台 |
+| 修复 | ① `PLATFORM_NAME` arm64 → **`aarch64`**；② verify 新增两条断言：`config.ini platform == 目标架构映射值` 与 `platform 属于 {x86_64,aarch64}` |
+| 验证 | 断言对四种输入实测：`x86_64` ✓ / `aarch64` ✓ / `ARM64` ✗ / `arm64` ✗（正确拦截） |
+| 副作用 | -27 的 arm64 包已发布到 Release 但**不可用**，需以 -28 重发；amd64 的 -27 已提交审核（正确、无需重发，若要保持两平台版本一致则需撤回后重提） |
+| 版本 | 0.8.8.9-27 → **0.8.8.9-28** |
+
 ## 2026-09-27 — 图标改为真正的矢量 SVG（原为「PNG 内嵌 SVG」，不符商店 clean SVG 要求）
 
 | 类别 | 内容 |
