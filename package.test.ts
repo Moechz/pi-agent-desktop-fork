@@ -89,6 +89,22 @@ test("test scripts cover middleware and scope platform-specific desktop subsets"
   assert.doesNotMatch(macosScript, /middleware\.test\.ts/);
 });
 
+test("next.config keeps documents revalidated but hashed assets immutable", () => {
+  const config = readFileSync(new URL("./next.config.ts", import.meta.url), "utf8");
+  const block = config.slice(config.indexOf("async headers()"), config.indexOf("export default"));
+  assert.ok(block.includes("async headers()"), "headers() block expected");
+  // 文档必须每次回源校验：否则升级后浏览器用旧 HTML + 旧 chunk，新功能“装上却看不见”
+  assert.ok(block.includes('"no-cache, must-revalidate"'), "documents must not be cached long-term");
+  // 带内容哈希的产物继续长期 immutable
+  assert.ok(block.includes('"public, max-age=31536000, immutable"'), "hashed assets stay immutable");
+  assert.ok(block.includes('source: "/_next/static/:path*"'), "hashed asset rule expected");
+  // 顺序也重要：兜底规则必须在前面，hashed 规则必须在后面（Next 后者覆盖前者）
+  assert.ok(
+    block.indexOf('source: "/:path*"') < block.indexOf('source: "/_next/static/:path*"'),
+    "catch-all rule must come before the hashed-asset rule",
+  );
+});
+
 test("next.config tracing excludes test files from the standalone output", () => {
   const config = readFileSync(new URL("./next.config.ts", import.meta.url), "utf8");
   const block = config.slice(

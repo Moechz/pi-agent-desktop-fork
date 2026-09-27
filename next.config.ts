@@ -47,6 +47,37 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_PI_VERSION: piVersion,
   },
+  /**
+   * 缓存策略 —— 升级后“界面还是旧的”就出在这里（真机 tnas-57 实证）。
+   *
+   * 现象：TOS 应用从 0.8.8.9-24 升到 -25（含输入法回车修复），服务端产物已确认是新代码
+   * （chunk 里能看到 onCompositionStart/onCompositionEnd），但用户浏览器里行为照旧。
+   * 原因：Next 对预渲染页面默认下发 `Cache-Control: s-maxage=31536000`（+ `x-nextjs-cache: HIT`），
+   * 浏览器把旧 HTML（引用旧 chunk 名）长期留着；旧 chunk 又被标成 `immutable` 一年，
+   * 于是一直跑升级前的 JS。
+   *
+   * 规则：
+   * - 文档/接口：`no-cache, must-revalidate` —— 允许条件请求（304，成本极低），但每次回源校验；
+   * - 带内容哈希的构建产物（/_next/static/*）：保持 immutable 长期缓存（文件名变了自然会重取）。
+   */
+  async headers() {
+    return [
+      // 注意顺序：Next 对同一响应按数组顺序应用，**后面的规则覆盖前面的**，
+      // 所以「兜底不缓存」必须在前、「hashed 资源 immutable」必须在后（真机实测反了会失效）。
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, must-revalidate" },
+        ],
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
