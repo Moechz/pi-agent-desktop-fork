@@ -1,4 +1,5 @@
 import { en, zhCN, type TranslationKey } from "../dictionaries.ts";
+import { zhHK } from "./zh-HK.ts";
 
 /**
  * 全部语言字典注册表 —— 多语支持的**唯一入口**。
@@ -15,6 +16,7 @@ import { en, zhCN, type TranslationKey } from "../dictionaries.ts";
 export const DICTIONARIES = {
   en,
   "zh-CN": zhCN,
+  "zh-HK": zhHK,
 } as const satisfies Record<string, Record<TranslationKey, string>>;
 
 export type Locale = keyof typeof DICTIONARIES;
@@ -32,6 +34,7 @@ export const SUPPORTED_LOCALES = Object.keys(DICTIONARIES) as Locale[];
 export const LOCALE_ENDONYMS: Record<Locale, string> = {
   en: "English",
   "zh-CN": "简体中文",
+  "zh-HK": "繁體中文",
 };
 
 export type { TranslationKey };

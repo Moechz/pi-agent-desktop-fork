@@ -28,6 +28,7 @@ export const LOCALE_STORAGE_KEY = "pi-locale";
  * 未命中的语言返回 null，由调用方回落到系统默认/英文（即该语种暂未本地化）。
  */
 const LOCALE_ALIASES: ReadonlyArray<readonly [RegExp, Locale]> = [
+  [/^zh-(hk|tw|mo|hant)/i, "zh-HK"],
   [/^zh-(hans|cn|sg|my)/i, "zh-CN"],
   [/^zh/i, "zh-CN"],
   [/^en/i, "en"],
