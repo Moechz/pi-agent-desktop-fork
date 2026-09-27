@@ -1,17 +1,62 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  DICTIONARIES,
+  LOCALE_ENDONYMS,
+  SUPPORTED_LOCALES,
   normalizeLocale,
   normalizePreference,
   resolveLocale,
   resolveI18nTitle,
   translate,
 } from "./index.ts";
+import { en } from "./dictionaries.ts";
 
 test("normalizes supported browser locales", () => {
   assert.equal(normalizeLocale("zh-Hans-CN"), "zh-CN");
   assert.equal(normalizeLocale("en-US"), "en");
-  assert.equal(normalizeLocale("fr-FR"), null);
+  assert.equal(normalizeLocale(""), null);
+  assert.equal(normalizeLocale(null), null);
+});
+
+test("every registered locale is recognized by normalizeLocale", () => {
+  // 不变式：注册了字典的语言，必须同时能被浏览器标签命中（否则用户永远用不上它）。
+  // 这条会逼着新增语种时同步补 LOCALE_ALIASES 里的规则。
+  for (const locale of SUPPORTED_LOCALES) {
+    assert.equal(normalizeLocale(locale), locale, `${locale} 未被 normalizeLocale 识别`);
+  }
+});
+
+test("all dictionaries cover exactly the same keys as en", () => {
+  const expected = Object.keys(en).sort();
+  for (const locale of SUPPORTED_LOCALES) {
+    const actual = Object.keys(DICTIONARIES[locale]).sort();
+    const missing = expected.filter((key) => !actual.includes(key));
+    const extra = actual.filter((key) => !expected.includes(key));
+    assert.deepEqual(missing, [], `${locale} 缺少键`);
+    assert.deepEqual(extra, [], `${locale} 多出键`);
+  }
+});
+
+test("all dictionaries keep the same {placeholders} as en", () => {
+  const placeholders = (text: string) => (text.match(/\{(\w+)\}/g) ?? []).sort();
+  for (const locale of SUPPORTED_LOCALES) {
+    for (const [key, value] of Object.entries(en)) {
+      const translated = DICTIONARIES[locale][key as keyof typeof en];
+      assert.deepEqual(
+        placeholders(translated),
+        placeholders(value),
+        `${locale} 的 ${key} 占位符与英文不一致`,
+      );
+    }
+  }
+});
+
+test("every locale has an endonym label for the switcher", () => {
+  for (const locale of SUPPORTED_LOCALES) {
+    assert.equal(typeof LOCALE_ENDONYMS[locale], "string");
+    assert.notEqual(LOCALE_ENDONYMS[locale].trim(), "");
+  }
 });
 
 test("normalizes stored preferences with a system fallback", () => {
@@ -21,8 +66,8 @@ test("normalizes stored preferences with a system fallback", () => {
 });
 
 test("resolves system locale from the first supported browser language", () => {
-  assert.equal(resolveLocale("system", ["fr-FR", "zh-Hans"]), "zh-CN");
-  assert.equal(resolveLocale("system", ["fr-FR"]), "en");
+  assert.equal(resolveLocale("system", ["zh-Hans"]), "zh-CN");
+  assert.equal(resolveLocale("system", ["xx-YY"]), "en");
   assert.equal(resolveLocale("en", ["zh-CN"]), "en");
 });
 

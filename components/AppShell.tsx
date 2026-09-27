@@ -23,6 +23,7 @@ import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
 import { useFileTabs } from "@/hooks/useFileTabs";
 import { StatsBar } from "./StatsBar";
 import { useI18n } from "./I18nProvider";
+import { LOCALE_ENDONYMS, SUPPORTED_LOCALES, type LocalePreference } from "@/lib/i18n";
 
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
@@ -686,13 +687,18 @@ export function AppShell() {
                           显式接管外观后三端一致，并与设计系统的圆角/边框/焦点色统一。 */}
                       <select
                         value={localePreference}
-                        onChange={(event) => setLocalePreference(event.target.value as "system" | "en" | "zh-CN")}
+                        onChange={(event) => setLocalePreference(event.target.value as LocalePreference)}
                         aria-label={t("language.label")}
                         className="w-full min-w-0 appearance-none truncate rounded-control border border-border bg-bg-panel py-1 pl-2 pr-7 text-[12px] text-text outline-none transition-colors hover:bg-bg-elevated focus:border-focus-ring"
                       >
                         <option value="system">{t("language.system")}</option>
-                        <option value="en">{t("language.english")}</option>
-                        <option value="zh-CN">{t("language.chineseSimplified")}</option>
+                        {/* 语言名一律用该语言自己的写法（endonym），不随界面语言变化 ——
+                            与 macOS/浏览器一致；新增语种只需在 lib/i18n/locales 注册，这里自动出现。 */}
+                        {SUPPORTED_LOCALES.map((locale) => (
+                          <option key={locale} value={locale}>
+                            {LOCALE_ENDONYMS[locale]}
+                          </option>
+                        ))}
                       </select>
                       <svg
                         aria-hidden="true"

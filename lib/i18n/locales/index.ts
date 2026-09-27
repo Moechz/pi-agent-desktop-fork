@@ -1,0 +1,37 @@
+import { en, zhCN, type TranslationKey } from "../dictionaries.ts";
+
+/**
+ * 全部语言字典注册表 —— 多语支持的**唯一入口**。
+ *
+ * 键是 BCP-47 风格的语言标签，与 TOS 应用包 `<appid>.lang` 的段名一一对应
+ * （zh-CN ↔ zh-cn、zh-HK ↔ zh-hk、ja-JP ↔ ja-jp …），方便两端对照排查。
+ *
+ * 新增一个语种 = 三条改动（都受类型检查约束，漏一个编不过）：
+ *   1. 在 `lib/i18n/locales/<tag>.ts` 新增字典（`Record<TranslationKey, string>` 强制键齐全）
+ *   2. 在此文件的 DICTIONARIES 注册
+ *   3. 在 LOCALE_ENDONYMS 填该语言**自身的写法**（endonym，不随界面语言变化）
+ * 另外 `lib/i18n/index.test.ts` 会自动校验：键集合与 en 完全一致、占位符 {x} 一致。
+ */
+export const DICTIONARIES = {
+  en,
+  "zh-CN": zhCN,
+} as const satisfies Record<string, Record<TranslationKey, string>>;
+
+export type Locale = keyof typeof DICTIONARIES;
+
+/** 任何情况下都存在的兜底语言（所有语种缺失键时回落到它） */
+export const DEFAULT_FALLBACK_LOCALE: Locale = "en";
+
+/** 界面语言列表（切换器用它渲染；顺序即展示顺序） */
+export const SUPPORTED_LOCALES = Object.keys(DICTIONARIES) as Locale[];
+
+/**
+ * 语言切换器里的显示名：用该语言自己的写法（endonym），
+ * 这样任何界面语言下用户都能认出自己的语言（与 macOS / 浏览器一致的做法）。
+ */
+export const LOCALE_ENDONYMS: Record<Locale, string> = {
+  en: "English",
+  "zh-CN": "简体中文",
+};
+
+export type { TranslationKey };
