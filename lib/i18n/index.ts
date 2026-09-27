@@ -31,6 +31,7 @@ const LOCALE_ALIASES: ReadonlyArray<readonly [RegExp, Locale]> = [
   [/^zh-(hk|tw|mo|hant)/i, "zh-HK"],
   [/^zh-(hans|cn|sg|my)/i, "zh-CN"],
   [/^zh/i, "zh-CN"],
+  [/^ja/i, "ja-JP"],
   [/^en/i, "en"],
 ];
 
