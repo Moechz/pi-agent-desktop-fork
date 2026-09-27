@@ -4,6 +4,7 @@ import { withBasePath } from "../lib/base-path.ts";
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { SkillSearchResult } from "@/app/api/skills/search/route";
 import { useI18n } from "./I18nProvider";
+import { useImeGuard } from "../hooks/use-ime-guard";
 
 interface Skill {
   name: string;
@@ -190,6 +191,7 @@ function AddSkillPanel({
   onInstalled: () => void;
 }) {
   const { t } = useI18n();
+  const { isImeKey, compositionHandlers } = useImeGuard();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SkillSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -284,8 +286,9 @@ function AddSkillPanel({
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            {...compositionHandlers}
             onKeyDown={(e) => {
-              if (e.key === "Enter") search(query);
+              if (e.key === "Enter" && !isImeKey(e)) search(query);
             }}
             placeholder={t("skills.searchPlaceholder")}
             style={{

@@ -5,8 +5,10 @@ import { useState, useEffect, useCallback } from "react";
 import type { ApiKeyProvider } from "./types";
 import { Field, SecretTextInput, SectionTitle } from "./FormControls";
 import { useI18n } from "../I18nProvider";
+import { useImeGuard } from "../../hooks/use-ime-guard";
 
 export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRefresh: () => void }) {
+  const { isImeKey, compositionHandlers } = useImeGuard();
   const { t } = useI18n();
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
@@ -89,7 +91,8 @@ export function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider
           <SecretTextInput
             value={apiKey}
             onChange={setApiKey}
-            onKeyDown={(e) => { if (e.key === "Enter" && apiKey.trim()) handleSave(); }}
+            {...compositionHandlers}
+            onKeyDown={(e) => { if (e.key === "Enter" && !isImeKey(e) && apiKey.trim()) handleSave(); }}
             placeholder={provider.configured ? t("provider.replaceApiKey") : "sk-…"}
             style={{ flex: 1 }}
             autoComplete="off"

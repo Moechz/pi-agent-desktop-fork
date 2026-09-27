@@ -6,6 +6,7 @@ import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react
 import type { SessionInfo } from "@/lib/types";
 import { type SessionTreeNode } from "./helpers";
 import { useI18n } from "../I18nProvider";
+import { useImeGuard } from "../../hooks/use-ime-guard";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
 
 // P15：紧凑相对时间——now(<1min) / Nm / Nh / Nd（补丁版同款）
@@ -135,6 +136,8 @@ function SessionItem({
   isRunning = false,
 }: SessionItemProps) {
   const { t } = useI18n();
+  // 重命名可能输入中文：组合中的回车只上屏，不提交
+  const { isImeKey, compositionHandlers } = useImeGuard();
   const [hovered, setHovered] = useState(false);
   const [rowFocused, setRowFocused] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -310,8 +313,10 @@ function SessionItem({
           value={renameValue}
           onChange={(e) => setRenameValue(e.target.value)}
           onBlur={commitRename}
+          {...compositionHandlers}
           onKeyDown={(e) => {
-            if (e.key === "Enter") commitRename();
+            // 输入法组合中的回车是“确认候选词”，不能当作提交（Safari 先 compositionend 再 keydown）
+            if (e.key === "Enter" && !isImeKey(e)) commitRename();
             if (e.key === "Escape") setRenaming(false);
           }}
           autoFocus

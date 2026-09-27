@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModalSurface } from "./ModalSurface";
 import { useI18n } from "./I18nProvider";
+import { useImeGuard } from "../hooks/use-ime-guard";
 import {
   setDirectoryPickerHandler,
   type DirectoryPickerRequest,
@@ -18,6 +19,8 @@ const DEFAULT_START_PATH = "/Volume1";
  * 桌面版不显示：Electron 原生弹窗优先级更高（见 pickDirectoryFromHost）。
  */
 export function DirectoryPickerHost() {
+  // 中文路径/文件夹名很常见：组合中的回车只应上屏，不应触发导航/创建
+  const { isImeKey, compositionHandlers } = useImeGuard();
   const { t } = useI18n();
   const [request, setRequest] = useState<DirectoryPickerRequest | null>(null);
   const resolverRef = useRef<DirectoryPickerResolver | null>(null);
@@ -157,8 +160,9 @@ export function DirectoryPickerHost() {
         <input
           value={pathDraft}
           onChange={(event) => setPathDraft(event.target.value)}
+          {...compositionHandlers}
           onKeyDown={(event) => {
-            if (event.key === "Enter") navigate(pathDraft);
+            if (event.key === "Enter" && !isImeKey(event)) navigate(pathDraft);
           }}
           placeholder={t("tos.pathPlaceholder")}
           spellCheck={false}
@@ -225,8 +229,9 @@ export function DirectoryPickerHost() {
           <input
             value={newFolderName}
             onChange={(event) => setNewFolderName(event.target.value)}
+            {...compositionHandlers}
             onKeyDown={(event) => {
-              if (event.key === "Enter") void createFolder();
+              if (event.key === "Enter" && !isImeKey(event)) void createFolder();
             }}
             placeholder={t("tos.newFolderName")}
             spellCheck={false}

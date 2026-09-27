@@ -11,7 +11,8 @@ import { AttachmentPreview } from "./chat-input/AttachmentPreview";
 import { ModelSelector } from "./chat-input/ModelSelector";
 import { PresetSelector } from "./chat-input/PresetSelector";
 import { AgentModeSelector } from "./AgentModeSelector";
-import { isImeComposing, resolveComposerSubmitAction } from "./chat-input/submit-action";
+import { resolveComposerSubmitAction } from "./chat-input/submit-action";
+import { useImeGuard } from "../hooks/use-ime-guard";
 import { QueuedMessageList } from "./chat-input/QueuedMessageList";
 import { getThinkingLevelsForModel } from "./chat-input/thinking-levels";
 import type { AgentMode } from "@/lib/approval-policy";
@@ -91,10 +92,9 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const textareaResizeFrameRef = useRef(0);
-  // 输入法状态：仅靠 nativeEvent.isComposing 在 Safari 上会漏（它先 compositionend 再 keydown），
-  // 所以自己记录组合状态 + 结束时刻，回车提交前用 isImeComposing() 四重判定。
-  const imeComposingRef = useRef(false);
-  const imeCompositionEndedAtRef = useRef(0);
+  // 输入法保护：Safari 会先 compositionend 再 keydown，只看 nativeEvent.isComposing
+  // 会把“确认候选词”的回车当成发送（真机反馈）。
+  const { isImeKey, compositionHandlers } = useImeGuard();
   const thinkingDropdownRef = useRef<HTMLDivElement>(null);
   const secondaryControlsRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -297,13 +297,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
         const action = resolveComposerSubmitAction({
           altKey: e.altKey,
           shiftKey: e.shiftKey,
-          isComposing: isImeComposing({
-            composing: imeComposingRef.current,
-            nativeIsComposing: e.nativeEvent.isComposing,
-            keyCode: e.keyCode,
-            lastCompositionEndAt: imeCompositionEndedAtRef.current,
-            now: performance.now(),
-          }),
+          isComposing: isImeKey(e),
           isStreaming,
           slashMenuOpen,
           canSteer: Boolean(onSteer),
@@ -351,7 +345,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
       }
 
     },
-    [slashMenuOpen, slashItems, slashActiveIndex, selectSlashItem, value, isStreaming, onSteer, onFollowUp, sendQueued, handleSend]
+    [slashMenuOpen, slashItems, slashActiveIndex, selectSlashItem, value, isStreaming, onSteer, onFollowUp, sendQueued, handleSend, isImeKey]
   );
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -761,13 +755,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               setSlashDismissedValue(null);
             }}
             onKeyDown={handleKeyDown}
-            onCompositionStart={() => {
-              imeComposingRef.current = true;
-            }}
-            onCompositionEnd={() => {
-              imeComposingRef.current = false;
-              imeCompositionEndedAtRef.current = performance.now();
-            }}
+            {...compositionHandlers}
             onPaste={handlePaste}
             onSelect={(e) => setCaretIndex(e.currentTarget.selectionStart ?? e.currentTarget.value.length)}
             onFocus={(e) => {
