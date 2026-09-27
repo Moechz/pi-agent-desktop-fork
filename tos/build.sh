@@ -438,14 +438,38 @@ print(("  ✓ " if ok else "  ❌ ") + f"语言文件（{len(langs)} 语、六�
 sys.exit(0 if ok else 1)
 PY
 
-# 4) 图标：viewBox + 元素/锚点 ≤ 50
+# 4) 图标：clean SVG —— 元素 ≤ 50 + 体积 ≤ 50 KB + 禁内嵌位图/滤镜/use/编辑器冗余
+# 商店驳回原文（指南坑 52）：“a clean SVG, no larger than 50 KB, with no more than 50 nodes …”
+# ⚠️ “nodes” 的实测口径 = SVG **元素个数**（DOM 节点），**不是** path 的锚点数：
+#    kavita 图标 160 条路径指令 / 7 个元素 → 过审；vaultwarden 62 个元素 → 被拒。
+#    本仓库图标为「描摹原图轮廓」所得（单条 path、约 105 锚点），所以不对锚点设 50 上限，
+#    只留一个病态值兜底。真正要闸的是「内嵌位图 / 编辑器垃圾」——
+#    旧图标正是「PNG 内嵌 SVG」：只有 2 个元素，节点数全场最少，却完全不合规。
 python3 - "$APP_DIR/images/icons/$APP_ID.svg" <<'PY' || fail=1
 import re, sys
-s = open(sys.argv[1], encoding="utf-8").read()
+path = sys.argv[1]
+s = open(path, encoding="utf-8").read()
+size = len(s.encode())
 tags = len(re.findall(r"<[a-zA-Z]", s))
-anchors = sum(len(re.findall(r"[-0-9.]+[, ]+[-0-9.]+", d)) or 1 for d in re.findall(r'\sd="([^"]+)"', s))
-ok = ("viewBox=" in s) and (tags + anchors <= 50)
-print(("  ✓ " if ok else "  ❌ ") + f"图标（viewBox 存在，元素 {tags} + 锚点 {anchors} = {tags+anchors} ≤ 50）")
+# 注意 re.S：路径的 d 属性会折行，不带 S 会一条都抽不到（锚点恒为 0，门禁形同虚设）
+anchors = sum(len(re.findall(r"[-0-9.]+[, ]+[-0-9.]+", d)) or 1 for d in re.findall(r'\sd="([^"]+)"', s, re.S))
+banned = [t for t in ("<image", "<filter", "<use", "<foreignObject",
+                      "metadata", "sodipodi", "namedview", "inkscape:") if t in s]
+checks = [
+    ("viewBox 存在", "viewBox=" in s),
+    ("元素 ≤ 50", tags <= 50),
+    ("体积 ≤ 50 KB", size <= 50 * 1024),
+    ("无内嵌位图/滤镜/use/编辑器冗余", not banned),
+    ("锚点数未失控（兜底 ≤ 600）", anchors <= 600),
+]
+ok = all(v for _, v in checks)
+detail = f"元素 {tags}，锚点 {anchors}，{size/1024:.1f} KB"
+if banned:
+    detail += "；违禁构造: " + ", ".join(banned)
+print(("  ✓ " if ok else "  ❌ ") + f"图标（{detail}）")
+for name, passed in checks:
+    if not passed:
+        print(f"      ✗ {name}")
 sys.exit(0 if ok else 1)
 PY
 
