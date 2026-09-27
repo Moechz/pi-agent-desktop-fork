@@ -1,8 +1,6 @@
 import {
   DEFAULT_FALLBACK_LOCALE,
   DICTIONARIES,
-  LOCALE_ENDONYMS,
-  SUPPORTED_LOCALES,
   type Locale,
   type TranslationKey,
 } from "./locales/index.ts";
@@ -34,6 +32,7 @@ const LOCALE_ALIASES: ReadonlyArray<readonly [RegExp, Locale]> = [
   [/^ja/i, "ja-JP"],
   [/^ko/i, "ko-KR"],
   [/^fr/i, "fr-FR"],
+  [/^de/i, "de-DE"],
   [/^en/i, "en"],
 ];
 
