@@ -411,7 +411,7 @@ export const svSE: Record<TranslationKey, string> = {
   "approval.deny": "Neka",
   "approval.allow": "Tillåt",
   "approval.confirmToolTitle": "Tillåta detta verktyg?",
-  "chat.turnInterrupted": "Omröstningen avbröts: {message} (oftast ett verktygsanrop som tog slut på tid eller stoppades, inte ett fel i modelltjänsten; du kan fortsätta konversationen)",
+  "chat.turnInterrupted": "Omgången avbröts: {message} (oftast ett verktygsanrop som tog slut på tid eller stoppades, inte ett fel i modelltjänsten; du kan fortsätta konversationen)",
   "chat.modelRequestFailed": "Modellbegäran misslyckades: {message}",
   "modelsConfig.compatibleOpenAI": "OpenAI-kompatibel",
   "modelsConfig.compatibleAnthropic": "Anthropic-kompatibel",
