@@ -33,6 +33,7 @@ const LOCALE_ALIASES: ReadonlyArray<readonly [RegExp, Locale]> = [
   [/^ko/i, "ko-KR"],
   [/^fr/i, "fr-FR"],
   [/^de/i, "de-DE"],
+  [/^es/i, "es-ES"],
   [/^en/i, "en"],
 ];
 
