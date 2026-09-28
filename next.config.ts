@@ -61,9 +61,16 @@ const nextConfig: NextConfig = {
    * - 带内容哈希的构建产物（/_next/static/*）：保持 immutable 长期缓存（文件名变了自然会重取）。
    */
   async headers() {
+    // dev 下不能给 hashed 资源发 immutable：否则浏览器把 dev chunk 缓存一年，
+    // 改代码后刷新拿到的仍是旧 bundle（2026-09-28 实测：改完 UI 刷新看不到，误判为“没重载”）。
+    // 生产才用 immutable —— 那时文件名带内容哈希，天然 cache busting。
+    const staticAssetCacheControl =
+      process.env.NODE_ENV === "production"
+        ? "public, max-age=31536000, immutable"
+        : "no-store, must-revalidate";
     return [
       // 注意顺序：Next 对同一响应按数组顺序应用，**后面的规则覆盖前面的**，
-      // 所以「兜底不缓存」必须在前、「hashed 资源 immutable」必须在后（真机实测反了会失效）。
+      // 所以「兜底不缓存」必须在前、「hashed 资源」规则必须在后（真机实测反了会失效）。
       {
         source: "/:path*",
         headers: [
@@ -73,7 +80,7 @@ const nextConfig: NextConfig = {
       {
         source: "/_next/static/:path*",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          { key: "Cache-Control", value: staticAssetCacheControl },
         ],
       },
     ];

@@ -4,8 +4,10 @@
 
 ## 🆕 2026-09-28：「已添加目录」可移除（P17 弹窗补 UI）
 
-- 用户反馈输入框上方「已添加目录」▾ 弹窗里的目录删不掉 → 每行加 × 移除钮 + 隐藏表 `__piDirsHidden`
-- 逻辑抽为 `lib/added-dirs.ts`（纯函数、8 例单测）；复用 `common.remove` 键，21 语无需改
+- 用户反馈目录「加了删不掉」→ 首版做弹窗 hover × **被否**（太隐蔽），改版为**侧栏目录组头「…」→「移除」**（隐藏表 `__piDirsHidden`；不删会话）
+- 恢复：侧栏「历史目录列表」点该目录即恢复（只认用户点击，避免启动时自动撤销）
+- 逻辑在 `lib/added-dirs.ts`（纯函数、8 例单测）+ `pi:dirs-visibility` 事件做跨面板同步；复用 `common.remove` 键，21 语无需改
+- 顺带：`/_next/static` 的 immutable 改为仅生产生效（dev 会缓存旧 chunk，坑见 CHANGELOG 同日条目）
 - 详见 `docs/CHANGELOG.md` 同日条目；版本已 bump 至 `0.8.8-11`（尚未打 tag 发版）
 
 

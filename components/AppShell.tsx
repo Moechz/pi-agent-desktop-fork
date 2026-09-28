@@ -214,6 +214,9 @@ export function AppShell() {
   const handleCwdChange = useCallback((cwd: string | null) => {
     setActiveCwd(cwd);
     setExplorerRefreshKey((k) => k + 1);
+    // 注意：这里**不能**做「解除目录隐藏」——应用启动时恢复上次目录也会走到这里，
+    // 会把用户刚移除的目录又拉回来（实测踩到）。解除隐藏只放在用户点击处：
+    // 侧栏「历史目录列表」行 / 自定义路径，以及输入框目录弹窗的选中。
   }, []);
 
   const handleSelectSession = useCallback(

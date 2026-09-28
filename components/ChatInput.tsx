@@ -27,7 +27,6 @@ import {
   readStringList,
   safeLocalStorage,
   persistRemembered,
-  persistForgotten,
 } from "@/lib/added-dirs";
 
 interface Props {
@@ -417,12 +416,9 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
     };
   }, [piOpen, currentCwd]);
 
-  // 当前正在使用的目录视为「正在用」：无论从哪里（侧栏／自定义路径／历史会话）切到它，
-  // 都自动回到列表 —— 等价于解除此前的移除标记，避免「移除后再切回，却在列表里找不到它」
-  useEffect(() => {
-    if (!currentCwd) return;
-    persistRemembered(safeLocalStorage(), currentCwd);
-  }, [currentCwd]);
+  // 注意：不要在这里因为 currentCwd = 某目录就自动解除隐藏 —— 否则「移除」后一刷新就被撤销
+  // （打开会话时 currentCwd 就是那个目录）。解除隐藏只发生在**用户明确选择**时：
+  // 输入框弹窗选中（piSelect）或侧栏选目录/历史（AppShell.handleCwdChange）。
 
   const piSelect = useCallback(
     (cwd: string) => {
@@ -434,11 +430,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
     [onNewSessionCwdChange],
   );
 
-  // 移除一个已添加目录：从本地记录删掉，并标记为不再显示（不动磁盘目录、不影响已有会话）
-  const piRemove = useCallback((cwd: string) => {
-    persistForgotten(safeLocalStorage(), cwd);
-    setPiDirs((prev) => prev.filter((c) => c !== cwd));
-  }, []);
+  // 移除入口已统一放到侧栏目录组头的 … 菜单（用户反馈：弹窗里的悬浮 × 太隐蔽）——
+  // 故此组件只负责读取 __piDirsHidden 过滤显示，不再提供移除控件。
 
   const piUseDefault = useCallback(async () => {
     try {
@@ -537,48 +530,25 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                   {piDirs.map((cwd) => {
                     const active = cwd === currentCwd;
                     return (
-                      <div
+                      <button
                         key={cwd}
-                        className="w-full flex items-center gap-1 hover:bg-bg-hover transition-colors"
-                        style={{ borderRadius: 6 }}
+                        onClick={() => piSelect(cwd)}
+                        title={cwd}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent"
+                        style={{ borderRadius: 6, fontSize: 13, color: active ? "var(--accent)" : "var(--text)" }}
                       >
-                        <button
-                          onClick={() => piSelect(cwd)}
-                          title={cwd}
-                          className="flex-1 min-w-0 flex items-center gap-2 px-3 py-1.5 text-left cursor-pointer border-none bg-transparent"
-                          style={{ borderRadius: 6, fontSize: 13, color: active ? "var(--accent)" : "var(--text)" }}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+                        </svg>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {cwd.split("/").filter(Boolean).slice(-2).join("/")}
+                        </span>
+                        {active && (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <polyline points="20 6 9 17 4 12" />
                           </svg>
-                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {cwd.split("/").filter(Boolean).slice(-2).join("/")}
-                          </span>
-                          {active && (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                        {/* 移除钮：当前正在使用的目录不提供移除（避免「已移除却仍是当前目录」的困惑） */}
-                        {!active && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              piRemove(cwd);
-                            }}
-                            title={t("common.remove")}
-                            aria-label={t("common.remove")}
-                            className="shrink-0 flex items-center justify-center cursor-pointer border-none bg-transparent hover:text-text"
-                            style={{ width: 22, height: 22, marginRight: 6, borderRadius: 4, color: "var(--text-muted)", padding: 0 }}
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M18 6 6 18M6 6l12 12" />
-                            </svg>
-                          </button>
                         )}
-                      </div>
+                      </button>
                     );
                   })}
                   <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />

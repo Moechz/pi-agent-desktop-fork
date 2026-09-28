@@ -89,14 +89,20 @@ test("test scripts cover middleware and scope platform-specific desktop subsets"
   assert.doesNotMatch(macosScript, /middleware\.test\.ts/);
 });
 
-test("next.config keeps documents revalidated but hashed assets immutable", () => {
+test("next.config keeps documents revalidated but hashed assets immutable (prod) / no-store (dev)", () => {
   const config = readFileSync(new URL("./next.config.ts", import.meta.url), "utf8");
   const block = config.slice(config.indexOf("async headers()"), config.indexOf("export default"));
   assert.ok(block.includes("async headers()"), "headers() block expected");
   // 文档必须每次回源校验：否则升级后浏览器用旧 HTML + 旧 chunk，新功能“装上却看不见”
   assert.ok(block.includes('"no-cache, must-revalidate"'), "documents must not be cached long-term");
-  // 带内容哈希的产物继续长期 immutable
-  assert.ok(block.includes('"public, max-age=31536000, immutable"'), "hashed assets stay immutable");
+  // 带内容哈希的产物在生产环境继续长期 immutable
+  assert.ok(block.includes('"public, max-age=31536000, immutable"'), "hashed assets stay immutable in production");
+  // dev 必须禁用缓存：否则浏览器把 dev chunk 当 immutable 缓存，改完刷新仍拿旧 bundle
+  assert.ok(block.includes('"no-store, must-revalidate"'), "dev must bypass the cache for dev chunks");
+  assert.ok(
+    /process\.env\.NODE_ENV\s*===\s*"production"/.test(block),
+    "immutable must be gated on production",
+  );
   assert.ok(block.includes('source: "/_next/static/:path*"'), "hashed asset rule expected");
   // 顺序也重要：兜底规则必须在前面，hashed 规则必须在后面（Next 后者覆盖前者）
   assert.ok(

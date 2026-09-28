@@ -117,6 +117,7 @@ export function persistRemembered(storage: StorageLike | null | undefined, cwd: 
   );
   writeStringList(storage, ADDED_DIRS_KEY, next.stored);
   writeStringList(storage, HIDDEN_DIRS_KEY, next.hidden);
+  notifyDirsVisibilityChanged();
 }
 
 /** 一次性落盘「移除」结果 */
@@ -128,4 +129,31 @@ export function persistForgotten(storage: StorageLike | null | undefined, cwd: s
   );
   writeStringList(storage, ADDED_DIRS_KEY, next.stored);
   writeStringList(storage, HIDDEN_DIRS_KEY, next.hidden);
+  notifyDirsVisibilityChanged();
+}
+
+/**
+ * 目录可见性变更通知（同一窗口内的多面板同步）。
+ *
+ * 场景：侧栏目录组头「… → 移除」、输入框弹窗选中某目录（解除移除）、侧栏历史目录选中……
+ * 任一处的写入都要让其它面板立即刷新 —— 否则会出现
+ * 「从历史目录恢复后，侧栏分组不重渲染」（2026-09-28 E2E 实测）。
+ * 这里用自定义事件而不是把隐藏表提升到 AppShell state：改动面小、无 prop 钻透。
+ */
+export const DIRS_VISIBILITY_EVENT = "pi:dirs-visibility";
+
+export function notifyDirsVisibilityChanged(): void {
+  try {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event(DIRS_VISIBILITY_EVENT));
+  } catch {
+    /* SSR / 禁用环境：忽略 */
+  }
+}
+
+/** 订阅可见性变更，返回取消订阅函数（SSR 安全） */
+export function onDirsVisibilityChanged(handler: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(DIRS_VISIBILITY_EVENT, handler);
+  return () => window.removeEventListener(DIRS_VISIBILITY_EVENT, handler);
 }

@@ -9,6 +9,7 @@ import type { SessionInfo } from "@/lib/types";
 import { getRecentCwds, shortenCwd, pickDirectoryFromHost } from "./helpers";
 import { useI18n } from "../I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
+import { persistRemembered, safeLocalStorage } from "@/lib/added-dirs";
 
 interface SidebarHeaderProps {
   selectedCwd: string | null;
@@ -55,7 +56,8 @@ export function SidebarHeader({
     try {
       const selectedPath = await pickDirectoryFromHost();
       const { nextCwd, shouldClose } = resolveCustomPathSelection(selectedCwd, selectedPath);
-      if (nextCwd !== selectedCwd) {
+      if (nextCwd && nextCwd !== selectedCwd) {
+        persistRemembered(safeLocalStorage(), nextCwd); // 显式选目录：解除可能的「已移除」
         onCwdChange?.(nextCwd);
       }
       if (shouldClose) {
@@ -76,6 +78,7 @@ export function SidebarHeader({
       if (data.cwd) {
         setCwdPickerError(null);
         if (data.cwd !== selectedCwd) {
+          persistRemembered(safeLocalStorage(), data.cwd); // 显式选目录：解除可能的「已移除」
           onCwdChange?.(data.cwd);
         }
         setDropdownOpen(false);
@@ -260,6 +263,9 @@ export function SidebarHeader({
               <button
                 key={cwd}
                 onClick={() => {
+                  // 用户主动选目录 = 恢复入口：若此前在侧栏被「移除」（隐藏），这里解除隐藏
+                  // （不放在 AppShell.handleCwdChange：启动时恢复上次目录也会走那里，会误撤销）
+                  persistRemembered(safeLocalStorage(), cwd);
                   if (cwd !== selectedCwd) {
                     onCwdChange?.(cwd);
                   }

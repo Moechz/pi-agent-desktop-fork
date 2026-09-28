@@ -1,7 +1,8 @@
 "use client";
 import { withBasePath } from "../lib/base-path.ts";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import type { SessionInfo } from "@/lib/types";
 import { FileExplorer } from "./FileExplorer";
 import { SidebarHeader } from "./session-sidebar/SidebarHeader";
@@ -9,6 +10,14 @@ import { SessionTreeItem } from "./session-sidebar/SessionTree";
 import { buildSessionTree, getRecentCwds } from "./session-sidebar/helpers";
 import { useI18n } from "./I18nProvider";
 import { apiJson } from "./apiJson";
+import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
+import {
+  HIDDEN_DIRS_KEY,
+  readStringList,
+  safeLocalStorage,
+  persistForgotten,
+  onDirsVisibilityChanged,
+} from "@/lib/added-dirs";
 
 // 组折叠状态的本地存储键（与 __piDirs 同一约定）
 const COLLAPSED_STORE_KEY = "__piCollapsedGroups";
@@ -176,6 +185,50 @@ export function SessionSidebar({
       return {};
     }
   });
+
+  // 2026-09-28：目录「移除」——组头 … 菜单里移除后，该目录不再出现在侧栏分组里（不删会话）。
+  // 存于 __piDirsHidden（与输入框「已添加目录」共用同一逻辑源）；重新选中该目录即自动恢复。
+  const [hiddenCwds, setHiddenCwds] = useState<string[]>(() =>
+    readStringList(safeLocalStorage(), HIDDEN_DIRS_KEY),
+  );
+  const [dirMenu, setDirMenu] = useState<{ cwd: string; x: number; y: number } | null>(null);
+  const [dirMenuStyle, setDirMenuStyle] = useState<{ top: number; left: number } | null>(null);
+  const dirMenuRef = useRef<HTMLDivElement>(null);
+  useDismissOnOutsideClick([dirMenuRef], !!dirMenu, () => setDirMenu(null));
+  useEffect(() => {
+    setHiddenCwds(readStringList(safeLocalStorage(), HIDDEN_DIRS_KEY));
+    // 任一面板（侧栏 … 菜单 / 输入框弹窗 / 历史目录）改变可见性时，本侧栏立即同步
+    return onDirsVisibilityChanged(() =>
+      setHiddenCwds(readStringList(safeLocalStorage(), HIDDEN_DIRS_KEY)),
+    );
+  }, [selectedCwd, allSessions.length]);
+  useEffect(() => {
+    if (!dirMenu) return;
+    const close = () => setDirMenu(null);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [dirMenu]);
+  // 菜单用 portal 渲染到 body 并按视口夹取（侧栏有 overflow，行内 absolute 会被裁）
+  useLayoutEffect(() => {
+    if (!dirMenu) {
+      setDirMenuStyle(null);
+      return;
+    }
+    const el = dirMenuRef.current;
+    const height = el?.offsetHeight ?? 0;
+    const width = el?.offsetWidth ?? 200;
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const pad = 8;
+    setDirMenuStyle({
+      top: Math.max(pad, Math.min(dirMenu.y, vh - height - pad)),
+      left: Math.max(pad, Math.min(dirMenu.x, vw - width - pad)),
+    });
+  }, [dirMenu]);
+  const hideDirectory = useCallback((cwd: string) => {
+    persistForgotten(safeLocalStorage(), cwd);
+    setHiddenCwds(readStringList(safeLocalStorage(), HIDDEN_DIRS_KEY));
+  }, []);
   useEffect(() => {
     try {
       // 只存“收起”的目录，避免无效键堆积
@@ -270,21 +323,25 @@ export function SessionSidebar({
             {t("sidebar.noSessions")}
           </div>
         )}
-        {groups.map((g) => {
+        {groups
+          .filter((g) => !hiddenCwds.includes(g.cwd))
+          .map((g) => {
           const groupTree = buildSessionTree(g.sessions);
           const collapsed = !!collapsedGroups[g.cwd];
           const lastSegs = g.cwd.split("/").filter(Boolean).slice(-2).join("/");
           return (
             <div key={g.cwd}>
               {/* P3-2 组头：文件夹图标（收起=闭合/展开=打开）+ 目录末两段（uppercase）
-                  + 运行中计数胶囊「N ▶」（run>0 才显示）；点图标切折叠，点正文选为当前项目 */}
+                  + 运行中计数胶囊「N ▶」（run>0 才显示）；点图标切折叠，点正文选为当前项目。
+                  2026-09-28：行尾加 … 菜单（移除该目录，不再出现在侧栏） */}
+              <div className="flex items-center" style={{ paddingRight: 6 }}>
               <button
                 onClick={() => onCwdChange?.(g.cwd)}
                 title={g.cwd}
-                className={`flex w-full items-center gap-1.5 border-none bg-transparent text-left cursor-pointer transition-colors duration-150 hover:bg-bg-hover ${
+                className={`flex flex-1 min-w-0 items-center gap-1.5 border-none bg-transparent text-left cursor-pointer transition-colors duration-150 hover:bg-bg-hover ${
                   selectedCwd === g.cwd ? "text-accent" : "text-text-muted hover:text-text"
                 }`}
-                style={{ padding: "8px 12px 4px" }}
+                style={{ padding: "8px 0 4px 12px" }}
               >
                 <span
                   role="button"
@@ -332,6 +389,26 @@ export function SessionSidebar({
                   ) : null;
                 })()}
               </button>
+              {/* 组头 … 菜单触发钮（常显低不透明度，hover 变实）：不隐藏就发现不了，按用户反馈不用 hover-only */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const r = e.currentTarget.getBoundingClientRect();
+                  setDirMenu({ cwd: g.cwd, x: r.left - 170, y: r.bottom + 4 });
+                }}
+                title={t("common.moreActions")}
+                aria-label={t("common.moreActions")}
+                className="shrink-0 flex items-center justify-center w-6 h-6 p-0 bg-transparent hover:bg-chrome-button-hover border border-transparent hover:border-border rounded-control text-text-dim hover:text-text cursor-pointer transition-[background-color,border-color,color,opacity] duration-150"
+                style={{ opacity: dirMenu?.cwd === g.cwd ? 1 : 0.55 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="12" r="1.7" />
+                  <circle cx="12" cy="12" r="1.7" />
+                  <circle cx="19" cy="12" r="1.7" />
+                </svg>
+              </button>
+              </div>
               {!collapsed && (
                 <div style={{ paddingLeft: 0 }}>
                   {groupTree.map((node) => (
@@ -470,6 +547,64 @@ export function SessionSidebar({
           )}
         </div>
       )}
+
+      {/* 目录组头 … 菜单（portal）：目前只有一项「移除」= 从侧栏隐藏该目录（不删会话） */}
+      {dirMenu &&
+        dirMenuStyle &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={dirMenuRef}
+            className="t-dropdown is-open"
+            data-origin="top-left"
+            style={{
+              position: "fixed",
+              top: dirMenuStyle.top,
+              left: dirMenuStyle.left,
+              zIndex: 300,
+              minWidth: 200,
+              maxWidth: 320,
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-panel)",
+              boxShadow: "var(--shadow-popover)",
+              padding: 4,
+            }}
+          >
+            <div
+              title={dirMenu.cwd}
+              style={{
+                padding: "5px 8px 6px",
+                fontSize: 12,
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-dim)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {dirMenu.cwd.split("/").filter(Boolean).slice(-2).join("/")}
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                hideDirectory(dirMenu.cwd);
+                setDirMenu(null);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent text-text"
+              style={{ borderRadius: 6, fontSize: 13 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted shrink-0">
+                <path d="M3 6h18" />
+                <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              </svg>
+              {t("common.remove")}
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
