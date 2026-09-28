@@ -9,7 +9,7 @@ import type { SessionInfo } from "@/lib/types";
 import { getRecentCwds, shortenCwd, pickDirectoryFromHost } from "./helpers";
 import { useI18n } from "../I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
-import { persistRemembered, safeLocalStorage } from "@/lib/added-dirs";
+import { persistRemembered, safeLocalStorage, HIDDEN_DIRS_KEY, readStringList, onDirsVisibilityChanged, isDirVisible } from "@/lib/added-dirs";
 
 interface SidebarHeaderProps {
   selectedCwd: string | null;
@@ -49,6 +49,19 @@ export function SidebarHeader({
         console.error("Failed to load home dir:", err);
       });
   }, []);
+
+  // 2026-09-28：已被「移除」的目录也**不再出现在历史目录列表**里（用户反馈：移除了为啥还留在历史里）——
+  // 恢复靠重新添加（「新建目录」folder-plus / 「自定义路径…」/ 输入框弹窗选中），而不是从历史里找回。
+  const [hiddenCwds, setHiddenCwds] = useState<string[]>(() =>
+    readStringList(safeLocalStorage(), HIDDEN_DIRS_KEY),
+  );
+  useEffect(
+    () =>
+      onDirsVisibilityChanged(() =>
+        setHiddenCwds(readStringList(safeLocalStorage(), HIDDEN_DIRS_KEY)),
+      ),
+    [],
+  );
 
   const handleCustomPath = useCallback(async () => {
     setCustomPathOpen(true);
@@ -104,7 +117,7 @@ export function SidebarHeader({
     onNewSession?.(tempId, selectedCwd);
   }, [selectedCwd, onNewSession]);
 
-  const recentCwds = getRecentCwds(allSessions);
+  const recentCwds = getRecentCwds(allSessions).filter((cwd) => isDirVisible(hiddenCwds, cwd));
 
   return (
     <div className="p-2.5 pb-[10px] border-b border-divider shrink-0" style={{ paddingTop: 21 }}>

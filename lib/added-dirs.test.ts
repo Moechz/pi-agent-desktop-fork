@@ -10,6 +10,7 @@ import {
   mergeAddedDirs,
   rememberAddedDir,
   forgetAddedDir,
+  isDirVisible,
   persistRemembered,
   persistForgotten,
   type StorageLike,
@@ -135,6 +136,12 @@ test("典型用户流程：移除后列表不再显示（即便它来自会话�
   });
   assert.deepEqual(restored, ["/proj/keep", "/proj/unwanted"]);
   assert.deepEqual(readStringList(s, HIDDEN_DIRS_KEY), []);
+});
+
+test("isDirVisible：侧栏分组/历史列表/输入框弹窗共用同一判据", () => {
+  assert.equal(isDirVisible([], "/a"), true);
+  assert.equal(isDirVisible(["/a"], "/a"), false);
+  assert.equal(isDirVisible(["/a"], "/b"), true);
 });
 
 test("持久化对 null 存储（SSR/隐私模式）不抛错", () => {

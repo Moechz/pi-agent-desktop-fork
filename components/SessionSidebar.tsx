@@ -17,6 +17,7 @@ import {
   safeLocalStorage,
   persistForgotten,
   onDirsVisibilityChanged,
+  isDirVisible,
 } from "@/lib/added-dirs";
 
 // 组折叠状态的本地存储键（与 __piDirs 同一约定）
@@ -324,7 +325,7 @@ export function SessionSidebar({
           </div>
         )}
         {groups
-          .filter((g) => !hiddenCwds.includes(g.cwd))
+          .filter((g) => isDirVisible(hiddenCwds, g.cwd))
           .map((g) => {
           const groupTree = buildSessionTree(g.sessions);
           const collapsed = !!collapsedGroups[g.cwd];

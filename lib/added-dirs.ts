@@ -108,6 +108,11 @@ export function forgetAddedDir(
   return { stored: stored.filter((s) => s !== cwd), hidden: nextHidden };
 }
 
+/** 某目录是否应显示（未被移除）——侧栏分组、历史目录列表、输入框弹窗共用同一判据 */
+export function isDirVisible(hidden: string[], cwd: string): boolean {
+  return !hidden.includes(cwd);
+}
+
 /** 一次性落盘「记住」结果 */
 export function persistRemembered(storage: StorageLike | null | undefined, cwd: string): void {
   const next = rememberAddedDir(
