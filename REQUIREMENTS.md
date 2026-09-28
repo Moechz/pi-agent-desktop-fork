@@ -1,6 +1,6 @@
 # 需求文档：P1–P21 补丁 → 源码移植清单
 
-> 每条的权威行为描述在旧仓库 `~/Documents/projects/pi-agent-UI-change-memo/PATCHES.md`（含截图式细节与踩坑记录）。
+> 每条的权威行为描述在旧仓库 `~/Documents/projects/pi-agent-desktop-archive/PATCHES.md`（含截图式细节与踩坑记录）。
 > 本文是源码移植的作战地图：**行为 → 源码落点（初步定位，移植时核实）→ 验收标准**。
 > 落点标注 ❓ 的需先定位再动手。
 

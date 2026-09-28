@@ -22,7 +22,7 @@ AGENTS.md → HANDOFF.md → REQUIREMENTS.md → docs/TASK_STATE.md
 - Next.js 16（App Router，standalone 输出）+ React + TypeScript + Tailwind；Electron 壳打包（electron-builder）。
 - **Agent 核心是独立 npm 依赖**：`@earendil-works/{pi-agent-core,pi-ai,pi-client,pi-coding-agent,pi-protocol,pi-telemetry,pi-tui}`，当前锁 0.84.3。升核心≠合并上游 UI。
 - 渲染进程加载内嵌 Next 服务器（dev 端口 30141）。
-- 历史定制原为对编译 chunk 的补丁（旧仓库 `~/Documents/projects/pi-agent-UI-change-memo`，P1–P21 编号沿用）。
+- 历史定制原为对编译 chunk 的补丁（旧仓库 `~/Documents/projects/pi-agent-desktop-archive`，P1–P21 编号沿用）。
 
 ## 4. 目录布局与禁止触碰路径
 - `app/` 页面与 API 路由；`components/` UI 组件（移植主战场）；`hooks/`、`lib/` 逻辑；`electron/` 主进程；`scripts/` 构建辅助。
@@ -104,7 +104,7 @@ npx electron-builder --mac   # 出 DMG（详见 electron-builder.yml；appId 保
 - 移植完成前**不得升级** `@earendil-works/*` 依赖版本（D-003）。
 - 不得改动 appId/productName（D-004，切换日数据无缝）。
 - 端口 30141 为 dev 固定端口，勿占用。
-- 每次打包的 DMG 归档到 `~/Documents/projects/pi-agent-UI-change-memo/backup/installer/`（沿用旧习惯，回滚用）。
+- 每次打包的 DMG 归档到 `~/Documents/projects/pi-agent-desktop-archive/backup/installer/`（沿用旧习惯，回滚用）。
 
 ## 10. 已定决策要点索引
 见 `docs/DESIGN_DECISIONS.md`：D-001 分叉点 / D-002 不换栈 / D-003 升级模式 B / D-004 保 appId /

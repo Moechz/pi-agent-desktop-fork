@@ -3,7 +3,7 @@
 状态：**进行中**（2026-09-20 立项）
 
 ## 决策（迁移目标与完成判据）
-目标：把 21 项编译产物补丁（旧仓库 `~/Documents/projects/pi-agent-UI-change-memo`，P1–P21）
+目标：把 21 项编译产物补丁（旧仓库 `~/Documents/projects/pi-agent-desktop-archive`，P1–P21）
 全部移植为源码修改，自建 DMG 替代官方包日常使用。
 **完成判据**：REQUIREMENTS.md A+B 批全过验收 + `switch-v1` tag + 覆盖安装后稳定 7 天 + 旧补丁体系退役。
 
