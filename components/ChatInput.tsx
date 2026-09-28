@@ -415,7 +415,14 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
     return () => {
       alive = false;
     };
-  }, [piOpen]);
+  }, [piOpen, currentCwd]);
+
+  // 当前正在使用的目录视为「正在用」：无论从哪里（侧栏／自定义路径／历史会话）切到它，
+  // 都自动回到列表 —— 等价于解除此前的移除标记，避免「移除后再切回，却在列表里找不到它」
+  useEffect(() => {
+    if (!currentCwd) return;
+    persistRemembered(safeLocalStorage(), currentCwd);
+  }, [currentCwd]);
 
   const piSelect = useCallback(
     (cwd: string) => {
