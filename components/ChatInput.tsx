@@ -20,6 +20,15 @@ import type { FollowUpQueueSnapshot } from "@/lib/follow-up-queue";
 import { useI18n } from "./I18nProvider";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
 import { pickDirectoryFromHost } from "./session-sidebar/helpers";
+import {
+  ADDED_DIRS_KEY,
+  HIDDEN_DIRS_KEY,
+  mergeAddedDirs,
+  readStringList,
+  safeLocalStorage,
+  persistRemembered,
+  persistForgotten,
+} from "@/lib/added-dirs";
 
 interface Props {
   onSend: (message: string, images?: AttachedImage[]) => void;
@@ -374,7 +383,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
   const piRef = useRef<HTMLDivElement>(null);
   useDismissOnOutsideClick(piRef, piOpen, () => setPiOpen(false));
 
-  // 打开时拉取：会话目录（按最近活动去重降序）∪ localStorage __piDirs，cap 50
+  // 打开时拉取：会话目录（按最近活动去重降序）∪ localStorage __piDirs，cap 50（已移除项按 __piDirsHidden 过滤）
   useEffect(() => {
     if (!piOpen) return;
     let alive = true;
@@ -390,13 +399,15 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
         const sessionDirs = Array.from(byCwd.entries())
           .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
           .map(([cwd]) => cwd);
-        let stored: string[] = [];
-        try {
-          stored = JSON.parse(localStorage.getItem("__piDirs") ?? "[]");
-        } catch {}
-        const merged = [...stored];
-        for (const c of sessionDirs) if (!merged.includes(c)) merged.push(c);
-        if (alive) setPiDirs(merged.slice(0, 50));
+        if (!alive) return;
+        const storage = safeLocalStorage();
+        setPiDirs(
+          mergeAddedDirs({
+            stored: readStringList(storage, ADDED_DIRS_KEY),
+            sessionDirs,
+            hidden: readStringList(storage, HIDDEN_DIRS_KEY),
+          }),
+        );
       } catch {
         /* 拉取失败留空列表 */
       }
@@ -410,16 +421,17 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
     (cwd: string) => {
       onNewSessionCwdChange?.(cwd);
       setPiOpen(false);
-      try {
-        const cur: string[] = JSON.parse(localStorage.getItem("__piDirs") ?? "[]");
-        if (cwd && !cur.includes(cwd)) {
-          cur.push(cwd);
-          localStorage.setItem("__piDirs", JSON.stringify(cur.slice(-50)));
-        }
-      } catch {}
+      // 选中即记住（并解除此前的「已移除」标记）
+      persistRemembered(safeLocalStorage(), cwd);
     },
     [onNewSessionCwdChange],
   );
+
+  // 移除一个已添加目录：从本地记录删掉，并标记为不再显示（不动磁盘目录、不影响已有会话）
+  const piRemove = useCallback((cwd: string) => {
+    persistForgotten(safeLocalStorage(), cwd);
+    setPiDirs((prev) => prev.filter((c) => c !== cwd));
+  }, []);
 
   const piUseDefault = useCallback(async () => {
     try {
@@ -518,25 +530,48 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                   {piDirs.map((cwd) => {
                     const active = cwd === currentCwd;
                     return (
-                      <button
+                      <div
                         key={cwd}
-                        onClick={() => piSelect(cwd)}
-                        title={cwd}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover text-left cursor-pointer transition-colors border-none bg-transparent"
-                        style={{ borderRadius: 6, fontSize: 13, color: active ? "var(--accent)" : "var(--text)" }}
+                        className="w-full flex items-center gap-1 hover:bg-bg-hover transition-colors"
+                        style={{ borderRadius: 6 }}
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-                        </svg>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {cwd.split("/").filter(Boolean).slice(-2).join("/")}
-                        </span>
-                        {active && (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <polyline points="20 6 9 17 4 12" />
+                        <button
+                          onClick={() => piSelect(cwd)}
+                          title={cwd}
+                          className="flex-1 min-w-0 flex items-center gap-2 px-3 py-1.5 text-left cursor-pointer border-none bg-transparent"
+                          style={{ borderRadius: 6, fontSize: 13, color: active ? "var(--accent)" : "var(--text)" }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
                           </svg>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {cwd.split("/").filter(Boolean).slice(-2).join("/")}
+                          </span>
+                          {active && (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </button>
+                        {/* 移除钮：当前正在使用的目录不提供移除（避免「已移除却仍是当前目录」的困惑） */}
+                        {!active && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              piRemove(cwd);
+                            }}
+                            title={t("common.remove")}
+                            aria-label={t("common.remove")}
+                            className="shrink-0 flex items-center justify-center cursor-pointer border-none bg-transparent hover:text-text"
+                            style={{ width: 22, height: 22, marginRight: 6, borderRadius: 4, color: "var(--text-muted)", padding: 0 }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 6 6 18M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                   <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />

@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-28 — 「已添加目录」支持移除（UI 缺失功能补齐）
+
+| 类别 | 内容 |
+|---|---|
+| 来源 | 用户反馈：客户端里添加的目录（输入框上方「已添加目录」▾ 弹窗）**没有办法移除** |
+| 现状 | 该列表 = `localStorage.__piDirs`（选中即记住，cap 50）∪ 会话目录（`/api/sessions` 按最近活动去重降序）；弹窗里只有选择、「使用默认目录」、「选择其他目录…」，**没有移除入口** → 手动添加过的目录永久滞留（P17 原始设计也没有移除） |
+| 修复 | ① 每行新增 **× 移除钮**（复用现成 i18n 键 `common.remove` → **零 i18n 改动**，21 语自动生效）；② 新增隐藏表 `localStorage.__piDirsHidden`：移除时从 `__piDirs` 删掉并记入隐藏表，因此即使该目录同时来自会话目录也**不再显示**；③ 重新选中同一目录会自动解除隐藏；④ 当前正在使用的目录不显示移除钮（避免「移除了却仍是当前目录」的困惑） |
+| 实现 | 逻辑抽成纯模块 `lib/added-dirs.ts`（storage 经 `StorageLike` 注入，便于单测）：`mergeAddedDirs` / `rememberAddedDir` / `forgetAddedDir` / `persistRemembered` / `persistForgotten`；ChatInput 弹窗行结构由「整行 button」改为「行内容 button + 独立 × button」（原来无法嵌套按钮） |
+| 测试 | 新增 `lib/added-dirs.test.ts` **8 例**（含「移除后即便有会话目录也不显示、重新选中恢复」的完整流程）；全套 `npm test` **713 tests / 710 pass / 0 fail**（3 skipped）；`npx tsc --noEmit` 通过 |
+| 边界说明 | 隐藏只影响该列表显示，**不动磁盘目录、也不影响已有会话**；要让某目录彻底从历史里消失，删除对应会话即可（侧栏 CWD 下拉本就只从会话派生） |
+
 ## 2026-09-27 — 修 config.ini 的 platform 随架构生成（arm64 被平台 Platform mismatch 拦下）
 
 | 类别 | 内容 |
