@@ -603,6 +603,18 @@ export function SessionSidebar({
               </svg>
               {t("common.remove")}
             </button>
+            {/* 解释性文案（用户反馈担心丢记录）：移除只隐藏列表项，会话文件原封不动 */}
+            <div style={{ borderTop: "1px solid var(--divider)", margin: "4px 0" }} />
+            <div
+              style={{
+                padding: "2px 8px 6px",
+                fontSize: 11.5,
+                lineHeight: 1.45,
+                color: "var(--text-dim)",
+              }}
+            >
+              {t("sidebar.removeDirectoryNote")}
+            </div>
           </div>,
           document.body,
         )}

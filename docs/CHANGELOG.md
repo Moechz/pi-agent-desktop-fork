@@ -20,6 +20,7 @@
 | 移除范围 | 侧栏**分组**、侧栏**历史目录列表**、输入框「已添加目录」三处同时不再显示（用户反馈：已移除的目录为啥还留在历史记录里）——判据统一为 `lib/added-dirs.ts` 的 `isDirVisible()` |
 | 恢复路径 | **重新添加**：侧栏 folder-plus「新建目录」/ 历史下拉底部「自定义路径…」/ 输入框「选择其他目录…」→ 选中即解除隐藏（用户建议：想恢复重新添加就行，不必从历史里找回） |
 | 解除隐藏只认用户点击 | 曾把解除隐藏放在 `AppShell.handleCwdChange`，结果启动时恢复上次目录也走到那里，一刷新就把刚移除的目录拉回来（E2E 实测踩到，已改为只在点击回调里调用 `persistRemembered`） |
+| 解释文案 | 「移除」菜单项下方加一行灰色小字 **「仅从列表隐藏，聊天记录保留」**（11.5px `--text-dim`）——用户问「重新添加后聊天记录还在吗」，直接答在 UI 里；新增 1 个 i18n 键 `sidebar.removeDirectoryNote`，已同步 **en + zh + 19 语种**（i18n 门禁 9/9 通过） |
 | 跨面板同步 | 新增自定义事件 `pi:dirs-visibility`（`notifyDirsVisibilityChanged`/`onDirsVisibilityChanged`），写入隐藏表后广播 → 侧栏立即重渲染（否则「从历史目录恢复后侧栏分组不出现」，E2E 实测踩到） |
 | 实现 | 逻辑抽成纯模块 `lib/added-dirs.ts`（storage 经 `StorageLike` 注入，便于单测）：`mergeAddedDirs` / `rememberAddedDir` / `forgetAddedDir` / `persistRemembered` / `persistForgotten` / `notifyDirsVisibilityChanged` / `onDirsVisibilityChanged`；移除入口落在 `SessionSidebar` 组头（portal 菜单，按视口夹取，避免被侧栏 overflow 裁掉） |
 | 测试 | 新增 `lib/added-dirs.test.ts` **9 例**（含「移除后即便有会话目录也不显示、重新选中恢复」的完整流程）；全套 `npm test` **713 tests / 710 pass / 0 fail**（3 skipped）；`npx tsc --noEmit` 通过 |
