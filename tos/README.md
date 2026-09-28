@@ -125,6 +125,9 @@ dpkg -r piagentfortos && dpkg --purge piagentfortos   # 数据保留 → 彻底�
 2. 版本三处一致由 `build.sh` 断言保证：`config.ini` / `DEBIAN/control` / `.lang`
 3. 推 tag `tos-v<版本>`（例如 `tos-v0.8.8.6-1`）→ CI 出双架构 deb 并发布 Release
 4. 商店提交：走官方 **Agent API**（不必上网页后台），见下节。
+5. ⚠ **本目录常在本仓库的另一份 clone（NAS 侧）里被改**：提交/打 tag 前先
+   `git pull --rebase`，被拒就 rebase 后重推；**永不 force**。两条版本线与分工见
+   仓库根 `AGENTS.md` **§8b**（桌面端 `v0.8.8-N` ↔ TOS `tos-v0.8.8.9-M`）。
 
 ## 商店提交（官方 Agent API，2026-09-27 首次跑通）
 

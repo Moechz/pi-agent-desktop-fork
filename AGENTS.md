@@ -26,6 +26,7 @@ AGENTS.md → HANDOFF.md → REQUIREMENTS.md → docs/TASK_STATE.md
 
 ## 4. 目录布局与禁止触碰路径
 - `app/` 页面与 API 路由；`components/` UI 组件（移植主战场）；`hooks/`、`lib/` 逻辑；`electron/` 主进程；`scripts/` 构建辅助。
+- `tos/` **TOS 应用中心 deb 封装**（打包链 + 资产 + 商店提交，详见 `tos/README.md`）。
 - **禁止触碰**：`node_modules/`、`.next/`（构建产物）、`electron/dist/`、`~/.pi/`（agent 运行时数据）、
   `~/Library/Application Support/@chasen-liao/pi-agent-desktop/`（正式应用用户数据）、任何凭据文件。
 
@@ -64,6 +65,40 @@ npx electron-builder --mac   # 出 DMG（详见 electron-builder.yml；appId 保
 - 工作分支 `custom/main`（当前）；`main` 跟随上游不直接提交；`upstream` remote 指上游仓库。
 - 里程碑打 tag：`baseline-v0.8.8`、`port-css`、`port-logic`、`switch-v1` …
 - 不 push 到 upstream；自有远端建立后 push `custom/main` 与 tags。
+
+## 8b. 两处工作副本 + 两条版本线（★ 一个仓库、两份 clone；并行会话必读）
+
+**只有一个仓库**：`Moechz/pi-agent-desktop-fork`（分支 `custom/main`）——
+桌面端与 TOS 封装都在其中（TOS 相关在 `tos/` 子目录）。不是两个仓库。
+
+但**同时存在两份 clone**，且可能各有会话在改（2026-09-28 实测撞过一次推送被拒）：
+
+| 工作副本 | 路径 | 主要职责 | 远端可用性 |
+|---|---|---|---|
+| macOS 侧 | `~/Documents/projects/pi-agent-desktop-fork` | 桌面端（Electron/Next、`app/`、`components/`、`lib/`）、桌面发版 | SSH `git@github.com` 可用，**可 push** |
+| NAS 侧 | `/Volume1/projects/pi-agent-desktop-fork`（Mac 上即 `/Volumes/projects/pi-agent-desktop-fork`，SMB） | TOS 封装与商店提交（`tos/`、`tos-v*`） | **无 GitHub 密钥**（`Permission denied (publickey)`），`origin` 已改为 **https**；需要 push 时去 macOS 侧 |
+
+**两条版本线 = 同仓库里的两个字段，编号空间互不干扰**：
+
+| 线 | 版本字段 | 格式 | tag（触发 CI） | 产物 |
+|---|---|---|---|---|
+| 桌面端 | `package.json` → `version` | `0.8.8-N` | `v0.8.8-N` | DMG / ZIP / EXE / deb（`desktop-packages.yml`） |
+| TOS 包 | `tos/config.env` → `PKG_RELEASE`/`VERSION` | `0.8.8.9-M` | `tos-v0.8.8.9-M` | deb 双架构（`tos-packages.yml`）+ 商店 Agent API 提交 |
+
+**同步规则（避免“推送被拒 / 版本撞号”）**：
+
+1. **开工先拉**：`git pull --rebase origin custom/main`（NAS 侧直接 `git pull --rebase`，origin 已是 https）。
+2. **收工即推**；被拒 = 另一处推过 → `git pull --rebase` 后再推（按上两个 commit 的既有做法）。
+3. **永不 `--force`**：会抹掉另一处（可能是另一个会话）的提交。
+4. **bump 版本号前必须已是最新**：两条线各自 +1，落笔前先 pull。
+5. **分工**：
+   - 桌面端改动（`app/`、`components/`、`electron/`、桌面 tag）→ **macOS 侧**；
+   - TOS 封装 / 商店提交（`tos/`、`tos-v*`、真机构建）→ **NAS 侧**。
+   - **公共代码**（`lib/`、`components/`、`public/` 等两边都用）**一次只由一侧改**，
+     改完推送、另一侧 `pull --rebase` 后再动。（例：21 语 UI、输入法回车、缓存策略都在 macOS 侧改完，
+     NAS 侧拉取后才构建 TOS 包。）
+6. **避免两边同时改同一文件**：`package.json`、`tos/config.env`、`docs/CHANGELOG.md`、`tos/README.md`
+   是最容易撞的四个。
 
 ## 9. 硬性技术约束
 - 移植完成前**不得升级** `@earendil-works/*` 依赖版本（D-003）。
