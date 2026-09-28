@@ -50,3 +50,19 @@
 **Consequences:**
 - 补丁期需要 no-cache 是因为「改内容不改文件名」；fork 每次 `next build` 生成新内容哈希文件名，缓存 busting 天然生效， immutable 反而是最优策略（每次发版零回源开销）。
 - 若将来又出现「改了没生效」，检查的是构建/安装链路而非缓存头。
+
+> **⚠️ 2026-09-28 勘误（真机 tnas-57 实证，指南坑 62）——本决策的前提只对“资源”成立，对“文档”不成立：**
+> - **现象**：TOS 网页应用升级到 `0.8.8.9-25`（含输入法回车修复）后，服务端产物已确认是新代码
+>   （chunk 里有新标记、HTML 引用的 chunk 全在磁盘），但用户浏览器里行为照旧——「改了没生效」。
+> - **根因就在缓存头**：Next 对**预渲染页面**（文件名不带哈希的那份 HTML）默认下发
+>   `Cache-Control: s-maxage=31536000`（+ `x-nextjs-cache: HIT`），浏览器长期留着**旧 HTML**，
+>   而旧 HTML 引用的是**旧 chunk 名**；旧 chunk 又带 `immutable`——于是浏览器完全无需回源，
+>   一直跑升级前的 JS（旧 chunk 文件已被 dpkg 删掉也不影响）。
+>   → 哈希文件名只能给**带哈希的资源**做 busting；**文档本身**必须靠缓存头。
+> - **决策修订**：**P19 的思路在 TOS（浏览器）部署下是必需的**。已以现代形式落地：
+>   `next.config.ts` 新增 `headers()` —— 文档/接口 `no-cache, must-revalidate`，
+>   `/_next/static/:path*` 保持 `public, max-age=31536000, immutable`（**顺序：兜底在前、hashed 在后**，
+>   否则后者会被盖住，实测过）；`package.test.ts` 加断言防回退；指南新增坑 62。
+> - **遗留教训**：「fork 架构下自然消失」类结论必须分对象验证（文档 vs 资源 vs API），
+>   否则会把「构建/安装链路」当成怀疑方向而绕过真正的缓存头。旧仓库 `Moechz/pi-agent-desktop`
+>   的 `b05d72f8`（P19：server.js 注入 setHeader）是同源历史实现，可直接对照。
