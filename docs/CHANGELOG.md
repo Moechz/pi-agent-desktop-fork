@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-29 — TOS 0.8.8.9-31：修复升级后落地页不刷新（webui/ 那份漏同步）
+
+| 类别 | 内容 |
+|---|---|
+| 发现方式 | -30 装到真机 tnas-57 后逐项验证：**代理自适应生效 ✓**（带 `Host: nas:8282` → 403，即已按新端口打通 TOS），但**落地页仍是相对链接** ✗ |
+| 根因 | 包内 `/usr/local/piagentfortos/index.html` 已是绝对路由 ✓，但浏览器实际取的是 `/usr/www/<appid>/webui/index.html`（软链 → `/Volume1/@apps/<appid>/webui/`），而 postinst 只同步了 `@apps/<appid>/index.html` **漏了 `webui/` 那份** → 那份还是首装（9-24）时的旧文件 |
+| 修复 | `tos/assets/postinst`：`@apps/<appid>/{index.html,webui/index.html}` **两处都同步**（webui 目录不存在则创建），并保持可读 |
+| 附带 | `lib/tos-proxy.ts`：选中的 API 地址与默认值不同时打一条一次性 info 日志（`[tos-proxy] 使用 TOS API 地址 …`），真机排查"改过端口"时日志里能直接看到实际地址 |
+| 验证方式 | 三处真机自测：① 带 `Host: nas:8282` 请求 `/piagentfortos/api/tos/fs/list` → **403**（≠502，说明自适应生效）② 反例 Host 指旧端口 → 走缓存/回落 ③ 装 -31 后 `webui/index.html` 应是绝对路由 |
+| 备注 | 坑 64 补一句：**升级类改动若涉及落地页，务必确认平台那份 `@apps/<appid>/webui/` 也被刷新** |
+
 ## 2026-09-29 — TOS 包 0.8.8.9-30：端口自适应 + 落地页绝对路由 + 坑 63/64
 
 | 类别 | 内容 |

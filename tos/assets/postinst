@@ -69,9 +69,21 @@ case "$1" in
       ( cd "$APP_DIR" && tar -xjf webui.bz2 2>/dev/null || true )
     fi
     # 3b. 平台目录（@apps）存在时同步落地页，与其它应用形态保持一致
+    #     注意要**两处都同步**：
+    #       - $base/$APP_ID/index.html        （平台登记用）
+    #       - $base/$APP_ID/webui/index.html  （★ /usr/www/<appid> 软链指向它，浏览器实际取的就是这份）
+    #     只同步前者时，升级后浏览器仍拿到首装时的旧落地页（坑 64 真机实测：0.8.8.9-30 里
+    #     包内 index.html 已是绝对路由，但 /Volume1/@apps/piagentfortos/webui/index.html
+    #     还是 9-24 的旧文件，页面上仍是 ./piagentfortos/ 的相对链接）。
     for base in /Volume1/@apps /Volume2/@apps; do
       if [ -d "$base/$APP_ID" ] && [ -f "$APP_DIR/index.html" ]; then
         install -m 0644 -o "$APP_USER" -g "$APP_USER" "$APP_DIR/index.html" "$base/$APP_ID/index.html" 2>/dev/null || true
+        mkdir -p "$base/$APP_ID/webui" 2>/dev/null || true
+        if [ -d "$base/$APP_ID/webui" ]; then
+          install -m 0644 -o "$APP_USER" -g "$APP_USER" "$APP_DIR/index.html" "$base/$APP_ID/webui/index.html" 2>/dev/null || true
+          # webui 里若有独立图标等静态资源，保持可读（与 webui.bz2 解压结果一致）
+          chmod -R a+rX "$base/$APP_ID/webui" 2>/dev/null || true
+        fi
       fi
     done
 

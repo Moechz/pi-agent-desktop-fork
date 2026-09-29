@@ -196,6 +196,9 @@ export function tosUnreachableHint(attempts: string[]): string {
   ].join(" ");
 }
 
+/** 已记录过的成功地址（避免同一条 info 日志刷屏） */
+const loggedBases = new Set<string>();
+
 /** 失败日志（带实测 URL；同一地址 5 分钟内只报一次，避免刷屏） */
 const loggedFailures = new Map<string, number>();
 function logFailureOnce(key: string, message: string): void {
@@ -263,7 +266,14 @@ export async function forwardToTosApi(options: {
         continue;
       }
       cachedBase = { base, at: Date.now() };
-      persistBase(options.env ?? process.env, base);
+      const env = options.env ?? process.env;
+      persistBase(env, base);
+      // 首次用到非默认地址时记一条（排查"改了端口"这类问题时，日志里能直接看到实际地址）
+      const fallback = tosApiBase(env);
+      if (base !== fallback && !loggedBases.has(base)) {
+        loggedBases.add(base);
+        console.log(`[tos-proxy] 使用 TOS API 地址 ${base}（默认 ${fallback} 未命中：可能已改过 TOS 网页端口）`);
+      }
       return { status: response.status, body, base };
     } catch (error) {
       logFailureOnce(
