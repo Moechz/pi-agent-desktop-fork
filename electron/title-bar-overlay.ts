@@ -1,3 +1,42 @@
+/** Windows 窗口按钮（最小化/最大化/关闭）覆盖层高度：与页面顶栏等高，视觉上并入顶栏 */
+export const TITLE_BAR_OVERLAY_HEIGHT = 36;
+
+/**
+ * Windows 原生窗口按钮覆盖层（Window Controls Overlay）配色 —— 跟随主题，
+ * 与 `--material-toolbar`（亮 `rgba(250,251,253,.78)` / 暗 `rgba(12,15,20,.8)`）尽量贴合
+ * （覆盖层只能是纯色，做不到半透明 blur）。
+ */
+export function titleBarOverlayOptions(isDark: boolean): {
+  color: string;
+  symbolColor: string;
+  height: number;
+} {
+  return {
+    color: isDark ? "#0c1118" : "#ffffff",
+    symbolColor: isDark ? "#d9deea" : "#364152",
+    height: TITLE_BAR_OVERLAY_HEIGHT,
+  };
+}
+
+/**
+ * 创建窗口时的 title bar 相关选项。
+ *
+ * - **macOS**：`titleBarStyle: "hidden"`，红绿灯直接悬浮在内容之上（P22，不需 overlay）；
+ * - **Windows**：同样 `hidden`，但 Windows 没有红绿灯 —— 必须开 `titleBarOverlay`，
+ *   否则窗口既没有原生标题栏、也没有自绘按钮 → **最小化/最大化/关闭全缺失**
+ *   （2026-09-29 用户反馈）。页面顶栏已用 `.w-titlebar { width: env(titlebar-area-width) }`
+ *   预留了那块宽度，开启后按钮就落在内容右上角。
+ * - **Linux**：标题栏由窗口管理器提供，保持 `hidden` 语义即可（不额外开 overlay）。
+ */
+export function titleBarWindowOptions(
+  platform: string,
+  isDark: boolean,
+): { titleBarStyle: "hidden"; titleBarOverlay?: { color: string; symbolColor: string; height: number } } {
+  const base = { titleBarStyle: "hidden" as const };
+  if (platform !== "win32") return base;
+  return { ...base, titleBarOverlay: titleBarOverlayOptions(isDark) };
+}
+
 export interface TitleBarOverlayTarget {
   setTitleBarOverlay?: (options: {
     color: string;
@@ -30,8 +69,8 @@ export function applyTitleBarOverlayTheme(
 
   try {
     target.setTitleBarOverlay({
-      color: isDark ? "#0c1118" : "#ffffff",
-      symbolColor: isDark ? "#d9deea" : "#364152",
+      color: titleBarOverlayOptions(isDark).color,
+      symbolColor: titleBarOverlayOptions(isDark).symbolColor,
     });
     return true;
   } catch {

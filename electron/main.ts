@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell, utilityProcess } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell, utilityProcess, nativeTheme } from "electron";
 import type { UpdateInfo } from "electron-updater";
 import path from "path";
 import { appendFileSync, mkdirSync } from "fs";
@@ -22,7 +22,7 @@ import {
 } from "./update-install-gate";
 import { buildElectronCspHeader } from "./csp";
 import { getAppIconPath } from "./app-icon";
-import { applyTitleBarOverlayTheme } from "./title-bar-overlay";
+import { applyTitleBarOverlayTheme, titleBarWindowOptions } from "./title-bar-overlay";
 import {
   ServerProcess,
   wrapChildServerProcess,
@@ -313,9 +313,11 @@ function createWindow() {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    titleBarStyle: "hidden",
-    // P22: 移除 titleBarOverlay（原生深色遮盖条）——macOS 红绿灯直接悬浮于内容之上，
-    // 侧栏标题行可与红绿灯同排并行（灯靠左、标题居中），消除顶部 36px 强制留白
+    // P22: macOS 不需要 titleBarOverlay（红绿灯直接悬浮于内容之上，灯靠左、标题居中）。
+    // 2026-09-29 修 Windows：Windows 没有红绿灯，P22 关掉 overlay 后最小化/最大化/关闭
+    // 三个按钮全部缺失 → 这里按平台给选项，仅在 win32 重新启用原生窗口按钮覆盖层（WCO）；
+    // 页面顶栏的 .w-titlebar 已按 env(titlebar-area-width) 预留宽度，按钮会落在内容右上角。
+    ...titleBarWindowOptions(process.platform, nativeTheme.shouldUseDarkColors),
     title: "Pi Agent Desktop",
     icon: nativeImage.createFromPath(getAppIconPath(app.getAppPath())),
     show: false,

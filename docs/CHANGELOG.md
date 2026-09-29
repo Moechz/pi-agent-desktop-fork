@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-29 — 修复 Windows 客户端缺少窗口按钮（0.8.8-12）
+
+| 类别 | 内容 |
+|---|---|
+| 反馈 | Windows 版页面右上角**没有最小化/最大化/关闭按钮**，只能 Alt+F4 |
+| 根因 | 窗口用 `titleBarStyle: "hidden"`（macOS 靠悬浮红绿灯），而 P22 把 `titleBarOverlay` 也关了；Windows 没有红绿灯 → 三个按钮全缺 |
+| 修复 | 新增 `titleBarWindowOptions(platform, isDark)`：**仅 `win32` 启用 `titleBarOverlay`**（原生按钮回到内容右上角）；配色随主题（窗口创建用系统主题打底，之后由既有 `set-theme` 校正）；高度 36px 与顶栏等高；页面顶栏两端早有 `.w-titlebar { width: env(titlebar-area-width) }` 留位，按钮不会遮挡标签栏/文件面板按钮 |
+| 不变 | macOS（悬浮红绿灯）、Linux（WM 自带）选项不变 |
+| 测试 | `electron/title-bar-overlay.test.ts` +2 例（win32 有 overlay 且 36px；darwin/linux 无）；electron 与根 tsc 均通过 |
+| 发布 | tag `v0.8.8-12`（仅桌面端；TOS 包是网页应用，无窗口按钮问题，不发新包） |
+
 ## 2026-09-28 — 发布 0.8.8-11（桌面端）+ 0.8.8.9-29（TOS 包）
 
 | 类别 | 内容 |
