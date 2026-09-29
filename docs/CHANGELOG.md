@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-29 — TOS 0.8.8.9-32：nginx location 升为 `^~`（修「应用永远打不开」，坑 65）
+
+| 类别 | 内容 |
+|---|---|
+| 现象 | 用户反馈：改端口后 `http://<nas>:8282/piagentfortos/` **一直打不开**，刷新无效。访问日志显示 `GET /piagentfortos/ → 200 912 bytes`（= 落地页），且**没有任何 `/_next/static/*` 请求** ⇒ 其实从没进应用 |
+| 根因 | TOS「应用访问控制」为应用生成了 `location ~ ^/piagentfortos/(.*) { auth_request …; try_files $uri $uri/ =404; }`（**正则**、无 proxy_pass）；nginx 顺序「`=` → `^~` → 正则 → 普通前缀」⇒ **正则赢**，包里的普通前缀反代永不被选中：未登录 302 桌面、已登录 `try_files` 命中 `/usr/www/piagentfortos/` 的落地页 → 200 落地页 |
+| 修复 | `tos/assets/nginx/piagentfortos.conf`：`location /piagentfortos/` → **`location ^~ /piagentfortos/`**（`^~` 优先级高于正则，且以后平台再生成访问控制文件也不会被挡）；`tos/build.sh` 加门禁断言必须存在 `^~ /<appid>/` |
+| 安全姿态 | 加 `^~` 后本应用**不再要求 TOS 登录**（用户确认「暂时不要求登录」）；团队其余 7 个应用本就是裸前缀反代、同样不要求登录。若将来要求登录保护，平台模板与本反代无法共存（指南坑 65 有说明） |
+| 应急（已验证） | 挪开平台那份 `AppAccessControl-<appid>.conf` + `nginx -s reload` 即可立刻恢复（可逆）——用户已实测有效 |
+| 指南 | 新增**坑 65**（含定位命令、`^~` 修法、代价与前提、应急步骤） |
+
 ## 2026-09-29 — TOS 0.8.8.9-31：修复升级后落地页不刷新（webui/ 那份漏同步）
 
 | 类别 | 内容 |

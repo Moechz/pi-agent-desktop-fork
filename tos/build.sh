@@ -374,6 +374,16 @@ if [ -f "$APP_DIR/index.html" ]; then
   echo "  ✓ index.html 入口为绝对路由 /$APP_ID/（坑 64 门禁）"
 fi
 
+# 坑 65：nginx 片段的应用 location 必须是 `^~` 前缀（优先级高于平台「应用访问控制」的正则），
+# 否则请求会被平台的 try_files 截走，应用永远打不开（2026-09-29 piagentfortos 真机实证）。
+if [ -f "$APP_DIR/nginx/$APP_ID.conf" ]; then
+  if ! grep -qE "^location \^~ /$APP_ID/" "$APP_DIR/nginx/$APP_ID.conf"; then
+    echo "❌ nginx 片段缺少 '^~' 前缀 location（坑 65：会被平台访问控制正则截走）" >&2
+    exit 1
+  fi
+  echo "  ✓ nginx 片段用 ^~ 前缀定位（坑 65 门禁）"
+fi
+
 # webui.bz2（tar.bz2，解压得到可打开的 index.html —— 官方结构要求）
 tar -cjf "$APP_DIR/webui.bz2" -C "$APP_DIR" index.html
 
