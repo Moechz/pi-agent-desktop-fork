@@ -1,14 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  parseCsrfToken,
-  parseTosSession,
-  tosCreateFolder,
-  tosErrorKey,
-  tosFolderInfo,
-  tosListDirectory,
-  TosApiError,
-} from "./tos-api.ts";
+import { parseCsrfToken, parseTosSession, tosCreateFolder, tosErrorKey, tosFolderInfo, tosListDirectory, TosApiError, probeTosAvailabilityDetail } from "./tos-api.ts";
 
 const COOKIES = "userName=admin; TMSESSNAME=abc123; X-Csrf-Token=xyz789; other=1";
 
@@ -123,4 +115,26 @@ test("非 JSON 响应与未知错误码不崩", async () => {
       return true;
     },
   );
+});
+
+test("probeTosAvailabilityDetail：502 时把服务端的可操作提示带出来（而不是误报会话缺失）", async () => {
+  const hint = "无法连接 TOS 文件管理 API（已尝试：http://127.0.0.1:8282）";
+  const failing = (async () =>
+    new Response(JSON.stringify({ error: hint }), { status: 502 })) as unknown as typeof fetch;
+  const detail = await probeTosAvailabilityDetail(failing);
+  assert.equal(detail.ok, false);
+  assert.equal(detail.hint, hint);
+
+  const ok = (async () => new Response("{}", { status: 200 })) as unknown as typeof fetch;
+  assert.deepEqual(await probeTosAvailabilityDetail(ok), { ok: true });
+
+  const denied = (async () => new Response("{}", { status: 403 })) as unknown as typeof fetch;
+  const deniedDetail = await probeTosAvailabilityDetail(denied);
+  assert.equal(deniedDetail.ok, false);
+  assert.equal(deniedDetail.hint, undefined, "403（未登录）不带提示 → 上层用 tos.sessionMissing");
+
+  const boom = (async () => {
+    throw new Error("network down");
+  }) as unknown as typeof fetch;
+  assert.deepEqual(await probeTosAvailabilityDetail(boom), { ok: false });
 });

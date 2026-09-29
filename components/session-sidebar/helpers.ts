@@ -1,6 +1,6 @@
 import { withBasePath } from "../../lib/base-path.ts";
 import { isDirectoryPickerAvailable, requestDirectoryPick } from "../../lib/directory-picker.ts";
-import { probeTosAvailability } from "../../lib/tos-api.ts";
+import { probeTosAvailabilityDetail } from "../../lib/tos-api.ts";
 import type { SessionInfo } from "@/lib/types";
 import { normalizeLocale, translate, type Locale } from "@/lib/i18n";
 
@@ -61,12 +61,14 @@ export async function pickDirectoryFromHost(): Promise<string | null> {
   // TOS（浏览器）环境：用 TOS 官方文件管理 API 的应用内目录选择器
   // 可用性经服务端代理探测（TOS 会话 Cookie 多为 HttpOnly，前端读不到）。
   if (isDirectoryPickerAvailable()) {
-    if (await probeTosAvailability()) {
+    const probe = await probeTosAvailabilityDetail();
+    if (probe.ok) {
       return requestDirectoryPick();
     }
-    // 浏览器里但没有可用的 TOS 会话：给出明确指引，而不是回落到"仅 Windows"的报错
+    // 服务端能给出更具体的原因（如"TOS API 不可达：网页端口变了"）时优先展示它；
+    // 否则按最常见的"没有可用的 TOS 会话"提示，而不是回落到"仅 Windows"的报错。
     const locale = normalizeLocale(document.documentElement.lang) ?? "en";
-    throw new Error(translate(locale, "tos.sessionMissing"));
+    throw new Error(probe.hint ?? translate(locale, "tos.sessionMissing"));
   }
 
   const res = await fetch(withBasePath("/api/select-directory"), { method: "POST" });

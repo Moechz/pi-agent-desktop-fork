@@ -9,6 +9,18 @@
 
 # Changelog
 
+## 2026-09-29 — TOS 包 0.8.8.9-30：端口自适应 + 落地页绝对路由 + 坑 63/64
+
+| 类别 | 内容 |
+|---|---|
+| 触发 | 用户把 TOS HTTP 端口 8181 → 8282 后：① `pi agent for tos` 入口 404（`/piagentfortos/piagentfortos/`）② 目录选择失败 |
+| 查清 | ① 入口 404 是**平台级**问题：改端口后平台重建 nginx 时所有应用的入口反代都丢了（同刻 metube/alist/navidrome/sftpgo/audiobookshelf 全 404，kavita 只剩认证跳转，beszelmonitor 只剩落地页）→ 指南坑 63；② 目录选择失败是应用侧**写死 8181**（`lib/tos-proxy.ts`）→ 本版自适应 |
+| 修复 1 | `lib/tos-proxy.ts`：候选地址自适应 —— 显式 `TOS_API_BASE` → 从入站 Host/scheme **推导回环端口** → 上次成功地址（落盘 `data/tos-api-base`）→ 8181 → 80；首个"像 TOS"的响应（JSON 带 code/code_num 或 401/403）胜出并缓存 10 分钟；全部失败 **写日志（含实测 URL）+ 回 502 带可操作提示** |
+| 修复 2 | 落地页 `tos/assets/index.html`：按钮/隐私政策链接由相对 `./piagentfortos/` 改**绝对路由** `/piagentfortos/`（对齐 Beszel）—— 原来在 `/piagentfortos/` 下会解析成 `/piagentfortos/piagentfortos/` → 那条 404；`tos/build.sh` 加**打包期门禁**（出现自指相对链接即失败） |
+| 修复 3 | `probeTosAvailabilityDetail()`：就绪探测遇到 502 时把服务端提示带出来，UI 直接显示原因（不再误报"TOS 会话缺失"） |
+| 测试 | `lib/tos-proxy.test.ts` 10 例（候选顺序/端口解析/像不像 TOS/跳过非 TOS 端口/缓存命中/提示文案）+ `lib/tos-api.test.ts` 补 1 例 |
+| 平台侧 | 改端口后入口失效需重启平台或应用中心「停用→启用」重建（平台行为，非包缺陷）→ 指南坑 63/64 |
+
 ## 2026-09-29 — 修复 Windows 客户端缺少窗口按钮（0.8.8-12）
 
 | 类别 | 内容 |

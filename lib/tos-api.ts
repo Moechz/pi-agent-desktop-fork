@@ -70,15 +70,30 @@ function currentCookieString(): string {
  * 探测一次 /api/tos/fs/list?path=/ ：200 → 可用；403/4xx → 会话缺失或未授权。
  */
 export async function probeTosAvailability(fetchImpl: typeof fetch = fetch): Promise<boolean> {
+  return (await probeTosAvailabilityDetail(fetchImpl)).ok;
+}
+
+/**
+ * 带原因的就绪探测：502（TOS API 不可达，通常是网页端口变了）时把服务端给的
+ * **可操作提示** 带出来，供 UI 直接展示 —— 否则只会显示误导性的"TOS 会话缺失"。
+ */
+export async function probeTosAvailabilityDetail(
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: boolean; hint?: string }> {
   try {
     const response = await fetchImpl(withBasePath(`${PROXY_ROOT}/list?path=%2F`), {
       method: "GET",
       credentials: "same-origin",
       cache: "no-store",
     });
-    return response.ok;
+    if (response.ok) return { ok: true };
+    if (response.status === 502) {
+      const parsed = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (parsed?.error) return { ok: false, hint: parsed.error };
+    }
+    return { ok: false };
   } catch {
-    return false;
+    return { ok: false };
   }
 }
 

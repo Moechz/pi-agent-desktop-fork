@@ -359,6 +359,21 @@ for f in "$APP_DIR/$APP_ID.lang" "$APP_DIR/$APP_ID.env.example" "$APP_DIR/privac
   [ -f "$f" ] && normalize_text "$f"
 done
 
+# 坑 64：落地页（open_path/新标签页）的按钮与隐私政策链接必须是**绝对路由** /<appid>/…
+# 写成相对路径（./<appid>/）时，页面本身就在 /<appid>/ 下 → 解析成 /<appid>/<appid>/ → 404，
+# 用户会误判为"应用路径配错了"（2026-09-29 piagentfortos 真机反馈）。
+if [ -f "$APP_DIR/index.html" ]; then
+  if grep -qE "href=\"\./$APP_ID" "$APP_DIR/index.html"; then
+    echo "❌ index.html 里出现自指相对链接 href=\"./$APP_ID…\"（应改绝对路由 /$APP_ID/…）" >&2
+    exit 1
+  fi
+  if ! grep -q "href=\"/$APP_ID/\"" "$APP_DIR/index.html"; then
+    echo "❌ index.html 缺少绝对路由入口 href=\"/$APP_ID/\"" >&2
+    exit 1
+  fi
+  echo "  ✓ index.html 入口为绝对路由 /$APP_ID/（坑 64 门禁）"
+fi
+
 # webui.bz2（tar.bz2，解压得到可打开的 index.html —— 官方结构要求）
 tar -cjf "$APP_DIR/webui.bz2" -C "$APP_DIR" index.html
 

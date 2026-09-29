@@ -4,7 +4,12 @@ import {
   buildForwardHeaders,
   csrfTokenFromCookie,
   forwardToTosApi,
+  looksLikeTosResponse,
+  portFromHostHeader,
+  resetTosProxyCache,
   tosApiBase,
+  tosApiBaseCandidates,
+  tosUnreachableHint,
 } from "./tos-proxy.ts";
 
 test("csrfTokenFromCookie：从 Cookie 串取令牌（大小写不敏感、支持 URL 编码）", () => {
@@ -71,5 +76,98 @@ test("forwardToTosApi：TOS 不可达时返回 502 而不是抛错", async () =>
     fetchImpl,
   });
   assert.equal(result.status, 502);
-  assert.match(result.body, /TOS API unreachable/);
+  assert.match(result.body, /无法连接 TOS 文件管理 API/);
+  assert.ok(result.attempts && result.attempts.length >= 1, "应报告尝试过的地址");
+});
+
+test("portFromHostHeader：普通主机、IPv6、无端口", () => {
+  assert.equal(portFromHostHeader("nas:8282"), "8282");
+  assert.equal(portFromHostHeader("192.168.124.57:8181"), "8181");
+  assert.equal(portFromHostHeader("[fe80::1]:6443"), "6443");
+  assert.equal(portFromHostHeader("nas"), null);
+  assert.equal(portFromHostHeader("[fe80::1]"), null);
+  assert.equal(portFromHostHeader(null), null);
+});
+
+test("tosApiBaseCandidates：显式配置 → 从请求端口推导 → 默认 8181/80（主机恒为回环）", () => {
+  resetTosProxyCache();
+  const headers = new Headers({ host: "192.168.124.57:8282" });
+
+  // 无配置：推导优先于默认值
+  assert.deepEqual(tosApiBaseCandidates({ headers }, {}), [
+    "http://127.0.0.1:8282",
+    "http://127.0.0.1:8181",
+    "http://127.0.0.1:80",
+  ]);
+
+  // 显式配置排第一
+  assert.deepEqual(
+    tosApiBaseCandidates({ headers }, { TOS_API_BASE: "http://nas:9999/" }),
+    ["http://nas:9999", "http://127.0.0.1:8282", "http://127.0.0.1:8181", "http://127.0.0.1:80"],
+  );
+
+  // HTTPS 入口：先试同端口的 https，再试 http
+  assert.deepEqual(
+    tosApiBaseCandidates({ headers: new Headers({ host: "nas:6443", "x-forwarded-proto": "https" }) }, {}),
+    ["https://127.0.0.1:6443", "http://127.0.0.1:6443", "http://127.0.0.1:8181", "http://127.0.0.1:80"],
+  );
+
+  // 没有 Host 头（本机 curl / 内部调用）：只剩默认回落
+  assert.deepEqual(tosApiBaseCandidates(null, {}), ["http://127.0.0.1:8181", "http://127.0.0.1:80"]);
+});
+
+test("looksLikeTosResponse：只认 TOS 风格的响应，避免把别的服务当成功", () => {
+  assert.equal(looksLikeTosResponse(200, JSON.stringify({ code: true, code_num: 0 })), true);
+  assert.equal(looksLikeTosResponse(403, "<html>forbidden</html>"), true, "未登录：TOS 会回 403/401");
+  assert.equal(looksLikeTosResponse(401, ""), true);
+  assert.equal(looksLikeTosResponse(200, "<!DOCTYPE html><title>Nginx Proxy Manager</title>"), false);
+  assert.equal(looksLikeTosResponse(404, "<html>404 Not Found</html>"), false);
+});
+
+test("forwardToTosApi：候选逐个尝试，跳过“不像 TOS”的端口，命中后缓存", async () => {
+  resetTosProxyCache();
+  const headers = new Headers({ host: "nas:8282", cookie: "TMSESSNAME=s" });
+  const calls: string[] = [];
+  const fetchImpl = (async (url: string) => {
+    calls.push(url);
+    if (url.startsWith("http://127.0.0.1:8282")) {
+      // 该端口活着但不是 TOS（典型：NPM 的 HTML 404）
+      return new Response("<!DOCTYPE html><title>Nginx Proxy Manager</title>", { status: 404 });
+    }
+    return new Response(JSON.stringify({ code: true, code_num: 0, data: { data: [] } }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+  const first = await forwardToTosApi({
+    action: "/list",
+    method: "GET",
+    query: { path: "/" },
+    inboundHeaders: headers,
+    fetchImpl,
+    timeoutMs: 200,
+    env: {},
+  });
+  assert.equal(first.status, 200);
+  assert.equal(first.base, "http://127.0.0.1:8181");
+  assert.equal(calls.length, 2, "应先试 8282（不像 TOS）再试 8181");
+
+  // 第二次：缓存命中，直接打 8181
+  const second = await forwardToTosApi({
+    action: "/list",
+    method: "GET",
+    query: { path: "/" },
+    inboundHeaders: headers,
+    fetchImpl,
+    timeoutMs: 200,
+    env: {},
+  });
+  assert.equal(second.base, "http://127.0.0.1:8181");
+  assert.equal(calls.length, 3, "第二次不应再试 8282");
+  resetTosProxyCache();
+});
+
+test("tosUnreachableHint：提示里带出实际尝试过的地址与恢复步骤", () => {
+  const hint = tosUnreachableHint(["http://127.0.0.1:8282", "http://127.0.0.1:8181"]);
+  assert.match(hint, /127\.0\.0\.1:8282/);
+  assert.match(hint, /TOS_API_BASE/);
+  assert.match(hint, /停用→启用/);
 });
