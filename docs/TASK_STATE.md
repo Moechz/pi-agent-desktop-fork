@@ -1,6 +1,21 @@
 # Task state
 
-快照日期：2026-09-28 ｜ 当前版本：`package.json 0.8.8-11`（桌面端） / `tos 0.8.8.9-28`（TOS 包）｜ 分支：`custom/main`
+快照日期：2026-10-01 ｜ 当前版本：`package.json 0.8.8-13`（桌面端） / `tos 0.8.8.9-37`（TOS 包）｜ 分支：`custom/main`
+
+## 🆕 2026-10-01：首次多人协作（PR #1 合并）+ CI 触发分支修复
+
+- 仓库新增协作者 **`billyye2026`**（write 权限）；协作规则已写入 `AGENTS.md` **§8c**：
+  外部改动一律 **PR → `custom/main`**、合并前 CI 必须全绿、**版本号 bump 由维护者独占**、发版入口唯一
+- **PR #1 已合并**（squash `2f70827`，作者身份保留）—— 修 3 个**只在 Windows 复现**的测试失败：
+  `desktop-packages-workflow.test.mjs` 读取时 CRLF→LF 归一化；`client-basepath` / `secure-context-apis`
+  收集路径归一化为正斜杠；并把这三个文件补进 `test:windows` 清单。**纯测试改动，未碰产品代码与版本号**
+- **CI 触发分支修复（本次最重要的基础设施修复）**：`ci.yml` 之前只监听 `main`，而本仓库**所有开发都在 `custom/main`**
+  → 这套 CI（linux `lint·typecheck·test` / windows test / macOS test + next build）**事实上从未在开发分支上跑过**。
+  改成 `[main, custom/main]` 后**首次运行并全绿**（run `36746562741`）
+- 顺带补强：该测试的 `section()` 缺 fail-fast —— 正则匹配不到时（Windows CRLF）断言会退化成「在空串上断言」、
+  **静默假通过**（PR #1 正是这么漏的）；已加 `assert.ok(text.length > 0)`。实测 macOS 上 `section("win")`
+  本来是正常的（110 字符、不含 `identity:`），PR 正文里「macOS 也假通过」的说法不准确
+- 两侧工作副本（macOS / NAS）均已同步到 `2f70827`；NAS 侧 GitHub 直连超时 → 走 59K bundle 增量
 
 ## 🆕 2026-09-28：「已添加目录」可移除（P17 弹窗补 UI）
 
