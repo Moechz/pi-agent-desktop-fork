@@ -145,7 +145,11 @@ export function tosApiBaseCandidates(
  * 且仅用于本应用服务端代理这一条固定路径 `/fileManage/*`。
  */
 export interface LoopbackHttpsRequest {
-  (url: string, init: { method: string; headers: Record<string, string>; body?: string }, timeoutMs: number): Promise<{ status: number; body: string }>;
+  (
+    url: string,
+    init: { method: string; headers: Record<string, string>; body?: string },
+    timeoutMs: number,
+  ): Promise<{ status: number; body: string; location?: string }>;
 }
 
 export const loopbackHttpsRequest: LoopbackHttpsRequest = (url, init, timeoutMs) =>
@@ -161,7 +165,10 @@ export const loopbackHttpsRequest: LoopbackHttpsRequest = (url, init, timeoutMs)
       (res) => {
         const chunks: Buffer[] = [];
         res.on("data", (chunk: Buffer) => chunks.push(chunk));
-        res.on("end", () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf8") }));
+        const location = Array.isArray(res.headers.location) ? res.headers.location[0] : res.headers.location;
+        res.on("end", () =>
+          resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf8"), location }),
+        );
       },
     );
     req.on("timeout", () => req.destroy(new Error(`timeout after ${timeoutMs}ms`)));
@@ -173,6 +180,27 @@ export const loopbackHttpsRequest: LoopbackHttpsRequest = (url, init, timeoutMs)
 /** 该候选是不是"回环 HTTPS"（需要用放宽证书的实现来发） */
 export function isLoopbackHttpsUrl(url: string): boolean {
   return /^https:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(url);
+}
+
+/**
+ * 从重定向的 `Location` 里学出"回环地址"。
+ *
+ * 为什么需要：TOS 开了「强制 HTTP → HTTPS」后，HTTP 端口只会回 **301**，真正的 API 在
+ * HTTPS 端口上（可能是 6443/5449 等任意值）。若只靠入站 Host 头推导端口，一旦 Host 被
+ * 前置代理改写或缺失，就找不到真实端口 → 全部候选失败。
+ * 这里把 Location 的 **scheme + 端口 + 路径** 保留、**主机强制改写为 127.0.0.1**（只走回环，
+ * 不放宽非回环地址的证书校验），从而自愈。
+ */
+export function loopbackUrlFromLocation(location: string | null | undefined, base: string): string | null {
+  if (!location) return null;
+  try {
+    const target = new URL(location, base);
+    if (target.protocol !== "https:" && target.protocol !== "http:") return null;
+    const port = target.port || (target.protocol === "https:" ? "443" : "80");
+    return `${target.protocol}//127.0.0.1:${port}${target.pathname}${target.search}`;
+  } catch {
+    return null;
+  }
 }
 
 /** 响应是否"像 TOS"（避免把别的服务/端口当成功：如 NPM 的 HTML 404） */
@@ -310,6 +338,45 @@ export async function forwardToTosApi(options: {
           });
       const body = await response.text();
       if (!looksLikeTosResponse(response.status, body)) {
+        // 301/302/307/308：多半是「强制 HTTP → HTTPS」的重定向 → 从 Location 学出真实端口
+        const location = "headers" in response && response.headers
+          ? response.headers.get("location")
+          : (response as { location?: string }).location;
+        if ([301, 302, 303, 307, 308].includes(response.status) && location) {
+          const follow = loopbackUrlFromLocation(location, url);
+          if (follow) {
+            const followBase = follow.slice(0, follow.indexOf(TOS_API_PATH_PREFIX));
+            if (!attempts.includes(followBase)) attempts.push(followBase);
+            try {
+              const impl = options.httpsImpl ?? loopbackHttpsRequest;
+              const r = isLoopbackHttpsUrl(follow)
+                ? await impl(follow, { method: options.method, headers, body: options.body }, timeoutMs)
+                : await (async () => {
+                    const resp = await fetchImpl(follow, {
+                      method: options.method,
+                      headers,
+                      body: options.body,
+                      cache: "no-store",
+                      signal: AbortSignal.timeout(timeoutMs),
+                    });
+                    return { status: resp.status, body: await resp.text(), location: resp.headers.get("location") ?? undefined };
+                  })();
+              if (looksLikeTosResponse(r.status, r.body)) {
+                cachedBase = { base: followBase, at: Date.now() };
+                const env = options.env ?? process.env;
+                persistBase(env, followBase);
+                console.log(`[tos-proxy] 经重定向自愈：使用 TOS API 地址 ${followBase}（源自 Location）`);
+                return { status: r.status, body: r.body, base: followBase };
+              }
+              logFailureOnce(`follow:${followBase}`, `${followBase}（重定向目标）响应不像 TOS（HTTP ${r.status}）`);
+            } catch (error) {
+              logFailureOnce(
+                `followerr:${followBase}`,
+                `${followBase}（重定向目标）不可达：${error instanceof Error ? error.message : String(error)}`,
+              );
+            }
+          }
+        }
         // 那个端口上活着但不是 TOS（如 NPM 的 HTML 404）→ 换下一个候选
         logFailureOnce(
           `implausible:${base}`,

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildForwardHeaders,
   isLoopbackHttpsUrl,
+  loopbackUrlFromLocation,
   csrfTokenFromCookie,
   forwardToTosApi,
   looksLikeTosResponse,
@@ -238,5 +239,57 @@ test("forwardToTosApi：回环 HTTPS 也失败时继续尝试后续候选（最�
   });
   assert.equal(result.status, 502);
   assert.match(result.body, /已尝试：https:\/\/127\.0\.0\.1:5449/);
+  resetTosProxyCache();
+});
+
+test("loopbackUrlFromLocation：保留 scheme/端口/路径，主机强制改写为 127.0.0.1", () => {
+  assert.equal(
+    loopbackUrlFromLocation("https://192.168.124.57:6443/fileManage/list?path=%2F", "http://127.0.0.1:8181/x"),
+    "https://127.0.0.1:6443/fileManage/list?path=%2F",
+  );
+  assert.equal(loopbackUrlFromLocation("https://nas.example.com/fileManage/list", "http://x/"), "https://127.0.0.1:443/fileManage/list");
+  assert.equal(loopbackUrlFromLocation("http://10.0.0.1:8080/fileManage/list", "http://x/"), "http://127.0.0.1:8080/fileManage/list");
+  assert.equal(loopbackUrlFromLocation(null, "http://x/"), null);
+  assert.equal(loopbackUrlFromLocation("ftp://nas/x", "http://x/"), null);
+  // 相对 Location（HTTP 允许）按 base 解析，同样是合法行为
+  assert.equal(loopbackUrlFromLocation("/fileManage/list", "https://nas:6443/a/b"), "https://127.0.0.1:6443/fileManage/list");
+});
+
+test("forwardToTosApi：强制 HTTP→HTTPS 时，从 301 的 Location 学出 HTTPS 端口并自愈（不依赖 Host 头）", async () => {
+  resetTosProxyCache();
+  // 模拟：Host 头没有端口信息（被前置代理改写），HTTP 端口只回 301 到真实 HTTPS 端口 6443
+  const headers = new Headers({ host: "nas", cookie: "TMSESSNAME=s" });
+  const httpsCalls: string[] = [];
+  const fetchImpl = (async (url: string) => {
+    if (url.startsWith("http://127.0.0.1:8181")) {
+      return new Response("<html>301 Moved Permanently</html>", {
+        status: 301,
+        headers: { location: "https://192.168.124.57:6443/fileManage/list?path=%2F" },
+      });
+    }
+    throw new Error("connect ECONNREFUSED");
+  }) as unknown as typeof fetch;
+  const httpsImpl = (async (url: string) => {
+    httpsCalls.push(url);
+    if (url.startsWith("https://127.0.0.1:6443")) {
+      return { status: 403, body: JSON.stringify({ code: false, code_num: 24 }), location: undefined };
+    }
+    throw new Error("self-signed certificate in certificate chain");
+  }) as never;
+
+  const result = await forwardToTosApi({
+    action: "/list",
+    method: "GET",
+    query: { path: "/" },
+    inboundHeaders: headers,
+    fetchImpl,
+    httpsImpl: httpsImpl as never,
+    timeoutMs: 200,
+    env: {},
+  });
+
+  assert.equal(result.status, 403, "应通过重定向自愈拿到 TOS 的正常回应（不是 502）");
+  assert.equal(result.base, "https://127.0.0.1:6443");
+  assert.ok(httpsCalls.some((u) => u.startsWith("https://127.0.0.1:6443")), "必须按 Location 学出的端口试回环 HTTPS");
   resetTosProxyCache();
 });
