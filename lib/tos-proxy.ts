@@ -11,6 +11,7 @@
  * 目标地址（2026-09-29 起自适应，见 `tosApiBaseCandidates`）：
  *   - 以前写死 `http://127.0.0.1:8181` → 用户一改 TOS 网页端口（如 8181 → 8282）
  *     目录选择就全失败（真机反馈："改端口后获取 TOS 目录失败"）；
+ *   - 回环 HTTPS（自签证书）用 node:https 放宽校验；301 重定向则从 Location 学出端口自愈；
  *   - 现在按优先级尝试：显式 `TOS_API_BASE` → 从入站请求的 Host/scheme 推导回环地址
  *     （浏览器就是从那个端口进来的，端口必然正确）→ 上次成功过的地址 → 8181 → 80；
  *     首个返回"像 TOS"的响应者胜出并缓存（10 分钟），全部失败则写日志 + 回 502。
@@ -334,6 +335,10 @@ export async function forwardToTosApi(options: {
             headers,
             body: options.body,
             cache: "no-store",
+            // ★ 不自动跟随：TOS 开「强制 HTTPS」时 HTTP 端口回 301，若自动跟随会落到自签
+            // HTTPS 上直接抛错（fetch failed），我们就读不到 Location、无法自愈。
+            // manual 拿到的仍是**真实**响应（status 301 + location，非 opaque）。
+            redirect: "manual",
             signal: AbortSignal.timeout(timeoutMs),
           });
       const body = await response.text();
@@ -357,6 +362,7 @@ export async function forwardToTosApi(options: {
                       headers,
                       body: options.body,
                       cache: "no-store",
+                      redirect: "manual",
                       signal: AbortSignal.timeout(timeoutMs),
                     });
                     return { status: resp.status, body: await resp.text(), location: resp.headers.get("location") ?? undefined };

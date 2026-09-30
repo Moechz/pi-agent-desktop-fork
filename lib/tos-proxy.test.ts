@@ -293,3 +293,23 @@ test("forwardToTosApi：强制 HTTP→HTTPS 时，从 301 的 Location 学出 HT
   assert.ok(httpsCalls.some((u) => u.startsWith("https://127.0.0.1:6443")), "必须按 Location 学出的端口试回环 HTTPS");
   resetTosProxyCache();
 });
+
+test("forwardToTosApi：请求必须带 redirect:\"manual\"（否则 301 会被自动跟随、读不到 Location）", async () => {
+  resetTosProxyCache();
+  const seen: RequestInit[] = [];
+  const fetchImpl = (async (_url: string, init: RequestInit) => {
+    seen.push(init);
+    return new Response(JSON.stringify({ code: true, code_num: 0 }), { status: 200 });
+  }) as unknown as typeof fetch;
+  await forwardToTosApi({
+    action: "/list",
+    method: "GET",
+    query: { path: "/" },
+    inboundHeaders: new Headers(),
+    fetchImpl,
+    timeoutMs: 200,
+    env: {},
+  });
+  assert.equal(seen[0]?.redirect, "manual");
+  resetTosProxyCache();
+});
