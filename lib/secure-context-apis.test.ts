@@ -54,7 +54,10 @@ function collect(dir: string, out: string[] = []): string[] {
     if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
     const full = join(dir, entry.name);
     if (entry.isDirectory()) collect(full, out);
-    else if (/\.(ts|tsx)$/.test(entry.name) && !entry.name.includes(".test.")) out.push(full);
+    // 对外统一成正斜杠：Windows 的 join() 产出反斜杠，而 ALLOWLIST 的键是正斜杠，
+    // 不归一化会让白名单在 Windows 上永远命中不了，合法文件被误报为违规。
+    else if (/\.(ts|tsx)$/.test(entry.name) && !entry.name.includes(".test."))
+      out.push(full.replace(/\\/g, "/"));
   }
   return out;
 }
