@@ -220,8 +220,11 @@ export async function GET(
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      // 与 chat SSE 同款：给中间代理看的两个头（no-transform 防压缩缓冲；X-Accel-Buffering 让
+      // nginx 家族关闭该响应的 proxy_buffering）——TNAS.online relay 等中转场景需要。
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }

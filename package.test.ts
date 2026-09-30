@@ -160,3 +160,17 @@ test("packaged smoke test targets Windows and architecture-suffixed macOS output
     /child\.once\("error"/
   );
 });
+
+test("流式路由必须带 no-transform 与 X-Accel-Buffering（中转/relay 场景：防被缓冲）", () => {
+  const routes = [
+    "app/api/agent/[id]/events/route.ts",
+    "app/api/auth/login/[provider]/route.ts",
+    "app/api/files/[...path]/route.ts",
+  ];
+  for (const rel of routes) {
+    const src = readFileSync(new URL(`./${rel}`, import.meta.url), "utf8");
+    assert.ok(src.includes("text/event-stream"), `${rel} 应是流式路由`);
+    assert.ok(src.includes("no-transform"), `${rel} 的 Cache-Control 需要 no-transform`);
+    assert.ok(src.includes("X-Accel-Buffering"), `${rel} 需要 X-Accel-Buffering: no`);
+  }
+});

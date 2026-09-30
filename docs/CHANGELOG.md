@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-30 — TOS 0.8.8.9-36：流式响应补齐「防中转缓冲」头 + 心跳收紧到 15s
+
+| 类别 | 内容 |
+|---|---|
+| 反馈 | 启用 **TNAS.online 远程访问**后，经 relay 打开 TOS 网页 → 打开 Pi Agent for TOS → 输入的会话**收不到模型回复**（同一台机器走 LAN 正常） |
+| 分析 | 聊天 = POST 发送 + `GET /api/agent/<id>/events` 的 **SSE 长连接**接收。模型服务端照常跑，坏的是事件回流。两类原因：① 中间层**缓冲/空闲超时**（relay 常见）② 应用 **Origin 校验 403**（relay 改写 Host → Origin ≠ Host，需 `PI_ALLOWED_ORIGINS`）。**判定法：刷新页面——回复出现 ⇒ 第 ① 类；仍没有 ⇒ 第 ② 类**；DevTools 看 `/api/agent/...` 是 403 还是 200-pending |
+| 修复 | 三条流式路由（聊天 SSE / OAuth 登录流 / 文件流）统一补 `Cache-Control: no-cache, **no-transform**` + **`X-Accel-Buffering: no`**（本应用 nginx 片段有 `proxy_buffering off`，但中转/relay 不受我们控制，只能靠响应头）；聊天 SSE 心跳 **30s → 15s**（relay 空闲超时常见 30-60s） |
+| 门禁 | `package.test.ts` 新增断言：三条流式路由必须同时含 `no-transform` 与 `X-Accel-Buffering` |
+| 文档 | 打包指南新增**坑 67**（判定法 / 修复 / 轮询兜底的取舍 / 推荐改用 VPN 或自有域名反代） |
+| 局限 | 若 relay 本身不支持流式，补响应头也无济于事 → 只能做轮询兜底，或改用 VPN / 自有反代 |
+
 ## 2026-09-30 — TOS 0.8.8.9-35：修 -34 的自愈没生效（fetch 自动跟随 301 吞掉了 Location）
 
 | 类别 | 内容 |

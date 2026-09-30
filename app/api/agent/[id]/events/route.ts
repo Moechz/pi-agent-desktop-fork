@@ -97,7 +97,8 @@ export async function GET(
         encode(event);
       });
 
-      // Heartbeat every 30s to prevent server/proxy timeout (Next.js default ~120-150s).
+      // Heartbeat every 15s：既避开 Next.js 默认 ~120-150s 超时，也避开中转/relay 常见的
+      // 30-60s 空闲超时（TNAS.online relay 场景）。注释行的 "30s" 保留在下方英文说明里以便对照。
       // keepAlive() is called only after a successful enqueue so that when the client
       // silently disappears, the idle timer eventually fires and destroys the wrapper.
       heartbeat = setInterval(() => {
@@ -116,7 +117,7 @@ export async function GET(
           // eventually destroy the wrapper (no orphan).
           cleanup();
         }
-      }, 30_000);
+      }, 15_000);
 
       // Detect client disconnect via abort signal
       req.signal?.addEventListener("abort", cleanup);
@@ -130,8 +131,14 @@ export async function GET(
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      // 会话回复走 SSE（长连接流式）。**这两个头是给"中间代理"看的**（本应用 nginx 片段里
+      // 已有 proxy_buffering off，但中转/relay/第三方反代不归我们管）：
+      //   - no-transform：禁止中间层压缩/改写响应（压缩会引入缓冲 → 事件被憋住不吐）
+      //   - X-Accel-Buffering: no：nginx 家族看到它会对该响应关闭 proxy_buffering
+      // 与 app/api/files/[...path]/route.ts 既有写法保持一致；TNAS.online relay 场景实测需要。
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
