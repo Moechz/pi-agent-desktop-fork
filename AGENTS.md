@@ -34,7 +34,13 @@ AGENTS.md → HANDOFF.md → REQUIREMENTS.md → docs/TASK_STATE.md
 - TypeScript，注释与文档用中文；不重命名上游导出符号（降低将来 cherry-pick 冲突面）。
 - 每移植一个 P 编号 = 一个 commit，消息格式 `P-XX: 简述（源码落点文件）`。
 - 用户可见行为变更必须同步更新 `docs/CHANGELOG.md` 与 `docs/TASK_STATE.md`（同一提交）。
-- 网络访问需代理：`export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890`。
+- 网络访问（2026-10-01 实测修正，**别再无脑 export 代理**）：
+  - **GitHub API / `git push` / `git fetch`：直连即可**（实测 `api.github.com` 直连 0.46s / 200；SSH 推送正常）。
+  - **GitHub Release 大资产下载：直连常被限速**（实测 `objects.githubusercontent.com` 仅 **~48 KB/s**，181MB 要 ~1 小时）
+    → 需要下大件时**临时**走代理：`export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890`（通常几 MB/s），下完 `unset`。
+  - ⚠️ **TerraMaster 开发者 API（`api-developer.terra-master.com`）必须直连**：走上面的代理会被
+    `Connection reset` / SSL EOF（实测直连 200、走代理 000）。调 API 时用 `env -u https_proxy -u http_proxy …`。
+  - 代理**不是必须的**；它今天还出现过反复 `Recv failure: Connection reset by peer`（不稳定）→ 能直连就直连。
 - ⚠ **会话环境陷阱（在 Pi Agent Desktop 内跑命令时必读）**：
   1. `NODE_ENV=production` 会被继承 → `npm ci` 静默只装 16 个包。任何 npm 命令前先 `export NODE_ENV=development`。
   2. `__NEXT_PRIVATE_STANDALONE_CONFIG` / `__NEXT_PRIVATE_ORIGIN` / `TURBOPACK` 会被继承 →
