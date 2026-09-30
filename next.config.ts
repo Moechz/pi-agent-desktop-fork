@@ -83,6 +83,22 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: staticAssetCacheControl },
         ],
       },
+      // ★ 流式（SSE）路径：必须放在**最后**——兜底规则的 `no-cache, must-revalidate` 会把路由里
+      // 设置的 `no-cache, no-transform` 覆盖掉（真机实测：routes 里写了 no-transform，响应头里却
+      // 只剩 must-revalidate）。no-transform 是给中转/relay/CDN 看的信号：别压缩、别改写响应体，
+      // 否则事件会被缓冲住（TNAS.online relay 场景，指南坑 67）。
+      {
+        source: "/api/agent/:id/events",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-transform" }],
+      },
+      {
+        source: "/api/auth/login/:provider",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-transform" }],
+      },
+      {
+        source: "/api/files/:path*",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-transform" }],
+      },
     ];
   },
 };

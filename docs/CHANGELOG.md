@@ -9,6 +9,15 @@
 
 # Changelog
 
+## 2026-09-30 — TOS 0.8.8.9-37：把 `no-transform` 从兜底规则里救回来（-36 的实测补刀）
+
+| 类别 | 内容 |
+|---|---|
+| 实测发现 | 装 -36 到 .57 后用真实会话 id 打活 SSE：`content-type: text/event-stream` ✓、`x-accel-buffering: no` ✓、心跳 `:` ✓，**但 `Cache-Control` 是 `no-cache, must-revalidate`** ✗ —— 路由里写的 `no-cache, no-transform` 被 `next.config.ts` 的**兜底规则覆盖**了（`headers()` 后者覆盖前者） |
+| 修复 | `next.config.ts` 在**最后**加三条流式路径规则（`/api/agent/:id/events`、`/api/auth/login/:provider`、`/api/files/:path*`）→ `Cache-Control: no-cache, no-transform`（最后 = 优先级最高，实测生效） |
+| 门禁 | `package.test.ts` 加断言：三条规则存在、且必须排在 `/_next/static` 规则之后 |
+| 意义 | `no-transform` 是给中转/relay/CDN 的信号（别压缩/改写响应体，否则事件被缓冲）——正是 TNAS.online relay 场景需要的（指南坑 67）；`X-Accel-Buffering` 未被覆盖，-36 已生效 |
+
 ## 2026-09-30 — TOS 0.8.8.9-36：流式响应补齐「防中转缓冲」头 + 心跳收紧到 15s
 
 | 类别 | 内容 |

@@ -104,6 +104,13 @@ test("next.config keeps documents revalidated but hashed assets immutable (prod)
     "immutable must be gated on production",
   );
   assert.ok(block.includes('source: "/_next/static/:path*"'), "hashed asset rule expected");
+  // 流式路径的 no-transform 规则必须在兜底之后（否则被 must-revalidate 覆盖，真机实测过）
+  assert.ok(block.includes('source: "/api/agent/:id/events"'), "SSE route rule expected");
+  assert.ok(block.includes('"no-cache, no-transform"'), "streaming routes need no-transform");
+  assert.ok(
+    block.indexOf('source: "/api/agent/:id/events"') > block.indexOf('source: "/_next/static/:path*"'),
+    "streaming rules must come after the fallback rules so they win",
+  );
   // 顺序也重要：兜底规则必须在前面，hashed 规则必须在后面（Next 后者覆盖前者）
   assert.ok(
     block.indexOf('source: "/:path*"') < block.indexOf('source: "/_next/static/:path*"'),
