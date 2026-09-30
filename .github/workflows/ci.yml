@@ -1,10 +1,14 @@
 name: CI
 
+# ★ 触发分支必须包含 custom/main：本仓库**所有开发都在 custom/main**（main 只跟随上游，
+# 从不提交）。2026-09-30 之前这里只写 [main] → 这套 lint/typecheck/test（含 Windows/macOS 任务）
+# **事实上从未在本仓库的开发分支上跑过**；协作者在 Windows 上手工跑全量才发现了 3 个
+# "只在 Windows 复现"的测试失败（PR #1）。勿再改回只写 main。
 on:
   pull_request:
-    branches: [main]
+    branches: [main, custom/main]
   push:
-    branches: [main]
+    branches: [main, custom/main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

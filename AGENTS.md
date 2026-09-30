@@ -100,6 +100,21 @@ npx electron-builder --mac   # 出 DMG（详见 electron-builder.yml；appId 保
 6. **避免两边同时改同一文件**：`package.json`、`tos/config.env`、`docs/CHANGELOG.md`、`tos/README.md`
    是最容易撞的四个。
 
+## 8c. 多人协作约定（2026-10-01 起仓库有协作者）
+
+- **外部改动一律走 PR → `custom/main`**，不要直接往 `custom/main` 推；合并前 **CI 必须全绿**
+  （`ci.yml`：linux lint·typecheck·test / windows test / macOS test + next build）。
+  ⚠️ `ci.yml` 的触发分支**必须包含 `custom/main`**（2026-10-01 前只写 `main`，导致这套 CI
+  从未在开发分支上跑过，Windows 专属测试失败被漏了很久 —— 见 PR #1）。
+- **版本线仍由维护者独占 bump**（协作者 PR 不应改）：
+  桌面端 `package.json` 的 `0.8.8-N`（tag `v0.8.8-N`）／TOS `tos/config.env` 的 `0.8.8.9-M`（tag `tos-v0.8.8.9-M`）。
+  若 PR 里带了版本号改动，合并时手动回退到维护者的值，避免两条线并行 +1 撞号。
+- **发版入口唯一**：打 tag 与商店提交由维护者执行（CI 由 tag 触发）。
+- **Windows 专属测试**：`npm run test:windows`（CI windows job 已自动跑）；
+  在 Windows 上跑全量 `npm test` 亦可，但要注意本仓库无 `.gitattributes`，
+  Git for Windows 默认 `core.autocrlf=true` → 检出是 CRLF（测试里读文件请归一化，见 PR #1 的做法）。
+- 合并后两边工作副本（macOS / NAS）都要 `git pull --rebase`（见 §8b）。
+
 ## 9. 硬性技术约束
 - 移植完成前**不得升级** `@earendil-works/*` 依赖版本（D-003）。
 - 不得改动 appId/productName（D-004，切换日数据无缝）。
