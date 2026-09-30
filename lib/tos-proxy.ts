@@ -23,6 +23,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { request as httpsRequest } from "node:https";
 import { dirname, join } from "node:path";
 
 export const TOS_API_PATH_PREFIX = "/fileManage";
@@ -132,6 +133,48 @@ export function tosApiBaseCandidates(
   return out;
 }
 
+/**
+ * 回环（仅 127.0.0.1）HTTPS 请求：**放宽证书校验**。
+ *
+ * 为什么必须放宽：TOS 的 HTTPS 用的是**自签证书**，而 Node/Next 的 fetch 默认校验证书 →
+ * 直接调用会 TLS 握手失败。用户反馈的正是这个组合：只改了 TOS 的 **HTTPS 端口**
+ * （如 5449）→ 推导出的 `https://127.0.0.1:5449` 因自签证书被拒 → 四个候选全灭
+ * → 应用界面报「无法连接 TOS 文件管理 API」（2026-09-29 用户反馈）。
+ *
+ * 安全边界：**只对 127.0.0.1 放宽**（连接目标是本机 TOS，不经网络、无中间人面），
+ * 且仅用于本应用服务端代理这一条固定路径 `/fileManage/*`。
+ */
+export interface LoopbackHttpsRequest {
+  (url: string, init: { method: string; headers: Record<string, string>; body?: string }, timeoutMs: number): Promise<{ status: number; body: string }>;
+}
+
+export const loopbackHttpsRequest: LoopbackHttpsRequest = (url, init, timeoutMs) =>
+  new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      url,
+      {
+        method: init.method,
+        headers: init.headers,
+        rejectUnauthorized: false, // 仅回环：TOS 自签证书
+        timeout: timeoutMs,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf8") }));
+      },
+    );
+    req.on("timeout", () => req.destroy(new Error(`timeout after ${timeoutMs}ms`)));
+    req.on("error", reject);
+    if (init.body) req.write(init.body);
+    req.end();
+  });
+
+/** 该候选是不是"回环 HTTPS"（需要用放宽证书的实现来发） */
+export function isLoopbackHttpsUrl(url: string): boolean {
+  return /^https:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(url);
+}
+
 /** 响应是否"像 TOS"（避免把别的服务/端口当成功：如 NPM 的 HTML 404） */
 export function looksLikeTosResponse(status: number, body: string): boolean {
   if (status === 401 || status === 403) return true; // 未登录/无权限：TOS 正常回应
@@ -187,7 +230,7 @@ export interface TosProxyResult {
 export function tosUnreachableHint(attempts: string[]): string {
   return [
     `无法连接 TOS 文件管理 API（已尝试：${attempts.join(" / ")}）。`,
-    "常见原因：最近改过 TOS 网页（HTTP）端口。解决办法：①在 TOS 控制面板把端口改回后重启，",
+    "常见原因：最近改过 TOS 网页（HTTP/HTTPS）端口。解决办法：①在 TOS 控制面板把端口改回后重启，",
     "或在应用中心把本应用「停用→启用」以重建入口配置；",
     "②若端口就用新的，请在 /usr/local/piagentfortos/piagentfortos.env 里加",
     "TOS_API_BASE=http://127.0.0.1:<你的TOS网页端口> 并 systemctl restart piagentfortos。",
@@ -229,6 +272,8 @@ export async function forwardToTosApi(options: {
   base?: string;
   /** 单次尝试超时（毫秒） */
   timeoutMs?: number;
+  /** 回环 HTTPS 实现（测试注入用；默认放宽证书校验的 node:https） */
+  httpsImpl?: LoopbackHttpsRequest;
   env?: Record<string, string | undefined>;
 }): Promise<TosProxyResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -249,13 +294,20 @@ export async function forwardToTosApi(options: {
     const url = `${base}${TOS_API_PATH_PREFIX}${options.action}${suffix}`;
     attempts.push(base);
     try {
-      const response = await fetchImpl(url, {
-        method: options.method,
-        headers,
-        body: options.body,
-        cache: "no-store",
-        signal: AbortSignal.timeout(timeoutMs),
-      });
+      // 回环 HTTPS 候选（TOS 自签证书）用放宽证书的实现；其余走 fetch
+      const httpsImpl = options.httpsImpl ?? loopbackHttpsRequest;
+      const response = isLoopbackHttpsUrl(url)
+        ? await (async () => {
+            const r = await httpsImpl(url, { method: options.method, headers, body: options.body }, timeoutMs);
+            return { status: r.status, text: async () => r.body };
+          })()
+        : await fetchImpl(url, {
+            method: options.method,
+            headers,
+            body: options.body,
+            cache: "no-store",
+            signal: AbortSignal.timeout(timeoutMs),
+          });
       const body = await response.text();
       if (!looksLikeTosResponse(response.status, body)) {
         // 那个端口上活着但不是 TOS（如 NPM 的 HTML 404）→ 换下一个候选

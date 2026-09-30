@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildForwardHeaders,
+  isLoopbackHttpsUrl,
   csrfTokenFromCookie,
   forwardToTosApi,
   looksLikeTosResponse,
@@ -170,4 +171,72 @@ test("tosUnreachableHint：提示里带出实际尝试过的地址与恢复步�
   assert.match(hint, /127\.0\.0\.1:8282/);
   assert.match(hint, /TOS_API_BASE/);
   assert.match(hint, /停用→启用/);
+});
+
+test("isLoopbackHttpsUrl：只把回环 HTTPS 判为需要放宽证书的候选", () => {
+  assert.equal(isLoopbackHttpsUrl("https://127.0.0.1:5449/fileManage/list"), true);
+  assert.equal(isLoopbackHttpsUrl("https://127.0.0.1/fileManage/list"), true);
+  assert.equal(isLoopbackHttpsUrl("https://localhost:5449/x"), true);
+  assert.equal(isLoopbackHttpsUrl("http://127.0.0.1:8181/fileManage/list"), false);
+  assert.equal(isLoopbackHttpsUrl("https://10.18.15.57:5449/x"), false);
+  assert.equal(isLoopbackHttpsUrl("https://nas.example.com:5449/x"), false);
+});
+
+test("forwardToTosApi：HTTPS 候选走放宽证书的回环实现（用户改 HTTPS 端口后加不了目录的那个场景）", async () => {
+  resetTosProxyCache();
+  const headers = new Headers({ host: "10.18.15.57:5449", "x-forwarded-proto": "https", cookie: "TMSESSNAME=s" });
+  const httpsCalls: string[] = [];
+  const fetchCalls: string[] = [];
+  const httpsImpl = (async (url: string) => {
+    httpsCalls.push(url);
+    if (url.startsWith("https://127.0.0.1:5449")) {
+      return { status: 403, body: JSON.stringify({ code: false, code_num: 24 }) }; // 未登录：TOS 正常回应
+    }
+    throw new Error("unreachable");
+  }) as never;
+  const fetchImpl = (async (url: string) => {
+    fetchCalls.push(url);
+    throw new Error("connect ECONNREFUSED");
+  }) as unknown as typeof fetch;
+
+  const result = await forwardToTosApi({
+    action: "/list",
+    method: "GET",
+    query: { path: "/" },
+    inboundHeaders: headers,
+    fetchImpl,
+    httpsImpl: httpsImpl as never,
+    timeoutMs: 200,
+    env: {},
+  });
+
+  assert.equal(result.status, 403, "应把回环 HTTPS 的 403 当作可达（不是 502）");
+  assert.equal(result.base, "https://127.0.0.1:5449");
+  assert.ok(httpsCalls.some((u) => u.startsWith("https://127.0.0.1:5449")), "必须尝试回环 HTTPS");
+  assert.equal(fetchCalls.length, 0, "https 候选不该走 fetch（会因自签证书失败）");
+  resetTosProxyCache();
+});
+
+test("forwardToTosApi：回环 HTTPS 也失败时继续尝试后续候选（最终 502 并给提示）", async () => {
+  resetTosProxyCache();
+  const httpsImpl = (async () => {
+    throw new Error("self-signed certificate in certificate chain");
+  }) as never;
+  const fetchImpl = (async () => {
+    throw new Error("connect ECONNREFUSED");
+  }) as unknown as typeof fetch;
+
+  const result = await forwardToTosApi({
+    action: "/list",
+    method: "GET",
+    query: { path: "/" },
+    inboundHeaders: new Headers({ host: "nas:5449", "x-forwarded-proto": "https" }),
+    fetchImpl,
+    httpsImpl: httpsImpl as never,
+    timeoutMs: 200,
+    env: {},
+  });
+  assert.equal(result.status, 502);
+  assert.match(result.body, /已尝试：https:\/\/127\.0\.0\.1:5449/);
+  resetTosProxyCache();
 });
