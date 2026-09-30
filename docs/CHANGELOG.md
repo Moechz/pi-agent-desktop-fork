@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-09-30 — 修 Windows 客户端启动即「启动失败」（0.8.8-13，同事实锤）
+
+| 类别 | 内容 |
+|---|---|
+| 现象 | Windows 0.8.8-11 打开即显示「启动失败」，错误 `Next server exited before ready: code=2147483651`；重装/换目录/清数据均无效 |
+| 根因 | 主进程给内置服务固定传 `--stack-size=16384`（16MB）。Windows/Linux 主线程栈保留仅 8MB（PE `SizeOfStackReserve`）→ V8 初始化阶段越界终止，子进程**静默退出无 stderr**，退出码 `0x80000003`（STATUS_BREAKPOINT）。macOS 走 `utilityProcess.fork` 故未能复现 |
+| 修复 | 新增 `electron/server-stack.ts`：栈大小收敛为 **10240（10MB）**、全平台统一（V8 默认 ~984KB 的 10 倍）；`main.ts` 三处调用同源 |
+| 门禁 | `electron/server-stack.test.ts`：断言 ≤ 安全上界 12288、禁止 16384、且 ≥4096（保住原防爆栈收益） |
+| CI 补强 | `scripts/smoke-standalone-server.mjs` 之前**不带 `--stack-size`**（所以 Windows CI 一路绿灯）→ 现改为从 `electron/server-stack.ts` 读同一常量、用与主进程一致的 argv 起服务并以 HTTP 200 判定就绪 |
+| 说明 | 已手工热补丁 10240 的机器直接装本版即可（安装包覆盖 app.asar）；安装包仍未代码签名（自用构建，无证书） |
+
 ## 2026-09-30 — TOS 0.8.8.9-37：把 `no-transform` 从兜底规则里救回来（-36 的实测补刀）
 
 | 类别 | 内容 |

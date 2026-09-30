@@ -29,7 +29,10 @@ import {
   wrapUtilityServerProcess,
 } from "./server-process";
 
-const SERVER_STACK_SIZE_ARG = "--stack-size=16384"; // 16MB：深树序列化（超长会话）不爆栈
+import { SERVER_STACK_SIZE_ARG, SERVER_STACK_SIZE_KB } from "./server-stack";
+
+// 栈参数：见 electron/server-stack.ts —— **不要**改回 16384，Windows/Linux 会静默秒崩
+// （退出码 0x80000003，表现为"启动失败 / Next server exited before ready"）。
 
 // ---------------------------------------------------------------------------
 // Single Instance Lock

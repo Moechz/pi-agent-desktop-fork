@@ -1,3 +1,14 @@
+> ## 修复状态（2026-09-30 更新）
+>
+> | # | 问题 | 状态 | 说明 |
+> |---|---|---|---|
+> | 1 | **Windows 启动即报「启动失败」**（`Next server exited before ready: code=2147483651`） | ✅ **0.8.8-13 已修** | 主进程固定传 `--stack-size=16384`（16MB）> Windows 主线程栈保留 8MB → 子进程 V8 初始化阶段静默越界（`0x80000003`）。改为 `10240` 并加单测/CI 冒烟门禁（`electron/server-stack.ts`）。详见 `docs/releases/v0.8.8-13.md` |
+> | 2 | **Windows Titlebar overlay 报错**（`TypeError: Titlebar overlay is not enabled`） | ✅ **已修**（`title-bar-overlay.ts` 捕异常兜底；0.8.8-12 起 Windows 直接启用原生窗口按钮覆盖层） | 见本文「问题 2」 |
+> | 3 | **NewAPI + DeepSeek 返回 422（`role: developer` 不被支持）** | ⏳ **未处理**（属 OpenAI-compatible 兼容性，需在模型请求层做 role 回退） | 见本文「问题 1」；如需可在应用侧加「developer → system」兼容开关 |
+> | 4 | **安装包未代码签名** | ⏳ 未处理 | 自用构建，未购买代码签名证书；企业终端可能需手动放行 |
+>
+> （下方为最初的问题报告原文，保留以便追溯。）
+
 # NewAPI / DeepSeek 兼容性问题及 Windows Titlebar Overlay 报错
 
 ## 问题描述

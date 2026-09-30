@@ -1,9 +1,11 @@
 import { spawn, spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const STARTUP_TIMEOUT_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
@@ -104,6 +106,24 @@ async function getJsonArray(baseUrl, endpoint, key, stderr) {
   return payload[key];
 }
 
+/**
+ * ★ 必须用与主进程**完全一致**的 argv 起服务（electron/main.ts 的 SERVER_STACK_SIZE_ARG）。
+ *
+ * 2026-09-30 同事实锤：Windows 打包版传 `--stack-size=16384` 时，子进程在 V8 初始化阶段直接
+ * 越界终止（退出码 0x80000003 STATUS_BREAKPOINT / 2147483651），**不输出任何 stderr**，
+ * 主进程只看到「Next server exited before ready」→ 界面"启动失败"。
+ * 而本冒烟测试当时**没带这个参数**，所以 Windows CI 一路绿灯、真机必崩。
+ * 现在从源码读取该常量（单一事实源），参数一改，冒烟测试立刻跟着走。
+ */
+function serverStackSizeArg() {
+  const source = readFileSync(join(projectRoot, "electron", "server-stack.ts"), "utf8");
+  const matched = source.match(/SERVER_STACK_SIZE_KB\s*=\s*(\d+)/);
+  if (!matched) {
+    throw new Error("smoke-standalone-server: 无法从 electron/server-stack.ts 读出 SERVER_STACK_SIZE_KB");
+  }
+  return `--stack-size=${matched[1]}`;
+}
+
 const sourceStandaloneDir = resolve(process.argv[2] ?? join(process.cwd(), ".next", "standalone"));
 const runtimeExecutable = resolve(process.argv[3] ?? process.execPath);
 const usesElectronRuntime = process.argv[3] !== undefined;
@@ -140,7 +160,7 @@ try {
   const port = await getFreePort();
   let stderrText = "";
   let childSpawnError = null;
-  child = spawn(runtimeExecutable, [serverScript], {
+  child = spawn(runtimeExecutable, [serverStackSizeArg(), serverScript], {
     cwd: standaloneDir,
     env: {
       ...process.env,
