@@ -9,6 +9,14 @@
 
 # Changelog
 
+## 2026-10-01 — 发布桌面端 0.8.8-14（SSE 自愈重连 + 反代/relay Origin 修复）
+
+| 类别 | 内容 |
+|---|---|
+| 内容 | ① SSE 自愈重连（不再 5 次封顶 / 不再依赖 agentRunning / `visibilitychange`+`online` 唤醒 + 服务端 `retry: 3000`）；② 反代场景 Origin 校验信任 `X-Forwarded-Host` 与 `Sec-Fetch-Site: same-origin`（修 `forbidden origin` 403）；③ 流式路由 `no-transform`/`X-Accel-Buffering`；④ 排障日志 |
+| 说明 | 与 TOS 包 -36…-40 同源改动；Windows 用户一并获得 -13 的启动修复（`--stack-size`） |
+| 发布 | tag `v0.8.8-14` → 三平台 DMG / Setup.exe / linux deb |
+
 ## 2026-10-01 — TOS 0.8.8.9-40：修「relay/反代下 forbidden origin」→ 发消息终于能通
 
 | 类别 | 内容 |
