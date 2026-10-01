@@ -119,3 +119,61 @@ test("PI_ALLOWED_ORIGINS 白名单放行自定义域名", () => {
   // 回环始终放行（桌面版/本地开发）
   assert.equal(isAllowedOrigin("http://127.0.0.1:30141"), true);
 });
+
+test("反代改写 Host 时：Origin 与 x-forwarded-host 一致 → 放行（2026-10-01 relay 实锤）", () => {
+  // 场景：浏览器在 https://cavenhome3.t3.tnas.link，relay 把 Host 改写为内网地址
+  const req = new Request("http://127.0.0.1:18141/piagentfortos/api/agent/abc", {
+    method: "POST",
+    headers: {
+      origin: "https://cavenhome3.t3.tnas.link",
+      host: "192.168.124.57:18141", // 与 Origin 不一致（旧实现因此 403 forbidden origin）
+      "x-forwarded-host": "cavenhome3.t3.tnas.link",
+    },
+  });
+  assert.equal(validateRequestOrigin(req), null, "应信任反代写入的 x-forwarded-host");
+});
+
+test("x-forwarded-host 是逗号链时取第一段", () => {
+  const req = new Request("http://127.0.0.1:18141/x", {
+    method: "POST",
+    headers: {
+      origin: "https://relay.example",
+      host: "127.0.0.1:18141",
+      "x-forwarded-host": "relay.example, inner.example",
+    },
+  });
+  assert.equal(validateRequestOrigin(req), null);
+});
+
+test("Sec-Fetch-Site: same-origin 放行；same-site / cross-site 仍拦截", () => {
+  const base = { origin: "https://relay.example", host: "127.0.0.1:18141" };
+  const sameOrigin = new Request("http://127.0.0.1:18141/x", {
+    method: "POST",
+    headers: { ...base, "sec-fetch-site": "same-origin" },
+  });
+  assert.equal(validateRequestOrigin(sameOrigin), null, "浏览器自报同源应放行");
+
+  const sameSite = new Request("http://127.0.0.1:18141/x", {
+    method: "POST",
+    headers: { ...base, "sec-fetch-site": "same-site" },
+  });
+  assert.equal(
+    validateRequestOrigin(sameSite),
+    "forbidden origin",
+    "same-site 不放行（*.tnas.link 同 site，攻击者可借同 site 子域发命令）",
+  );
+
+  const crossSite = new Request("http://127.0.0.1:18141/x", {
+    method: "POST",
+    headers: { ...base, "sec-fetch-site": "cross-site" },
+  });
+  assert.equal(validateRequestOrigin(crossSite), "forbidden origin");
+});
+
+test("既无 x-forwarded-host 也无 same-origin 信号时，跨域仍被拦", () => {
+  const req = new Request("http://127.0.0.1:18141/x", {
+    method: "POST",
+    headers: { origin: "https://evil.example", host: "127.0.0.1:18141" },
+  });
+  assert.equal(validateRequestOrigin(req), "forbidden origin");
+});

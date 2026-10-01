@@ -91,6 +91,24 @@ export function validateRequestOrigin(req: Request): string | null {
   const origin = req.headers.get("origin");
   if (origin === null) return null;
   if (isAllowedOrigin(origin)) return null;
+
+  // ① 同源：Origin 的 host:port 与 Host **或反代写入的 X-Forwarded-Host** 一致即可。
+  //    2026-10-01 TNAS.online relay 实测：relay 会把 Host 改写成内网地址，而浏览器发出的
+  //    Origin 仍是 relay 域名 → 只比 Host 必然 403「forbidden origin」（用户看到的
+  //    "Failed to send message: forbidden origin" 就是这一条）。
   if (isSameOriginRequest(origin, req.headers.get("host"))) return null;
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  if (forwardedHost) {
+    // 可能是逗号分隔链；取第一段（最接近客户端的那个）
+    const first = forwardedHost.split(",")[0]?.trim() ?? "";
+    if (first && isSameOriginRequest(origin, first)) return null;
+  }
+
+  // ② 浏览器内核自报同源（Sec-Fetch-Site: same-origin）→ 放行。
+  //    这是页面脚本无法伪造的信号；跨站请求会是 cross-site → 仍被拒。
+  //    只认 same-origin（**不含 same-site**）：TNAS.online 下的 `*.tnas.link` 属于同一 site，
+  //    若允许 same-site，攻击者页面（同 site 不同子域）就能发命令。
+  if ((req.headers.get("sec-fetch-site") ?? "").toLowerCase() === "same-origin") return null;
+
   return "forbidden origin";
 }

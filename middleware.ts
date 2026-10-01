@@ -64,10 +64,21 @@ export function middleware(request: NextRequest): NextResponse {
         request.headers.get("x-forwarded-proto"),
         rejection,
       );
-      return new NextResponse(JSON.stringify({ error: rejection }), {
-        status: 403,
-        headers: { "content-type": "application/json" },
-      });
+      // 响应体带上判定依据（都是请求方自己的头，不涉密）：以后这类问题看浏览器 Console
+      // 就能定位，而不必进 NAS 读日志（2026-10-01 relay 排障的教训）。
+      return new NextResponse(
+        JSON.stringify({
+          error: rejection,
+          origin: request.headers.get("origin"),
+          host: request.headers.get("host"),
+          "x-forwarded-host": request.headers.get("x-forwarded-host"),
+          "sec-fetch-site": request.headers.get("sec-fetch-site"),
+        }),
+        {
+          status: 403,
+          headers: { "content-type": "application/json" },
+        },
+      );
     }
     return NextResponse.next();
   }
