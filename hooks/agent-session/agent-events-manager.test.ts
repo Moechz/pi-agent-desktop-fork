@@ -130,7 +130,7 @@ describe("AgentEventsManager", () => {
     }
   });
 
-  test("does not reconnect when onerror is triggered but agent is not running", () => {
+  test("agent 未运行时也重连（旧行为是直接 disconnected → 切网络后永久失联，已改）", () => {
     mock.timers.enable({ apis: ["setTimeout"] });
     try {
       const manager = new AgentEventsManager(10);
@@ -140,15 +140,14 @@ describe("AgentEventsManager", () => {
       assert.equal(MockEventSource.instances.length, 1);
       const es1 = MockEventSource.instances[0];
 
-      // Trigger error — no reconnect timer is scheduled
       es1.onerror!();
 
       assert.equal(es1.closed, true);
-      // Advance well past the reconnect delay — nothing may fire
+      // 不再是 disconnected；而是进入 connecting 并按退避重连
+      assert.equal(manager.getStatus(), "connecting");
       mock.timers.tick(15);
 
-      assert.equal(MockEventSource.instances.length, 1); // No new EventSource instance created
-      assert.equal(manager.getStatus(), "disconnected");
+      assert.equal(MockEventSource.instances.length, 2, "应已建立新的 EventSource");
       manager.cleanup();
     } finally {
       mock.timers.reset();
@@ -212,40 +211,70 @@ describe("AgentEventsManager", () => {
     }
   });
 
-  test("stops reconnecting and transitions to failed after 5 consecutive errors", () => {
+  test("持续重连：超过上限才 failed（不再 5 次就放弃）", () => {
     mock.timers.enable({ apis: ["setTimeout"] });
     try {
       const manager = new AgentEventsManager(5); // 5ms base delay
       manager.setAgentRunning(true);
       manager.connect("session-123");
 
-      // Trigger 5 errors; each reconnect fires on the mocked clock after its
-      // exponential delay (5, 10, 20, 40, 80ms).
-      for (let i = 0; i < 5; i++) {
+      // 连续 10 次错误（旧实现在第 6 次就 failed —— 切网络场景因此彻底失联）
+      for (let i = 0; i < 10; i++) {
         const es = MockEventSource.instances[i];
         assert.ok(es);
         es.onerror!();
-        const delay = 5 * Math.pow(2, i) + 10;
-        mock.timers.tick(delay);
+        assert.notEqual(manager.getStatus(), "failed", `第 ${i + 1} 次错误不应放弃重连`);
+        mock.timers.tick(5 * Math.pow(2, i) + 10);
       }
-
-      // Now MockEventSource.instances should have 6 instances (1 original + 5 reconnects)
-      assert.equal(MockEventSource.instances.length, 6);
-
-      // The 6th error will exceed the limit of 5 reconnect attempts
-      const es6 = MockEventSource.instances[5];
-      es6.onerror!();
-
-      assert.equal(manager.getStatus(), "failed");
-      assert.equal(manager.getReconnectAttempts(), 6);
-
-      // Advance well past any would-be delay to verify no more connections
-      mock.timers.tick(100);
-      assert.equal(MockEventSource.instances.length, 6); // Still 6
-
+      assert.equal(MockEventSource.instances.length, 11); // 1 原始 + 10 次重连
+      assert.equal(manager.getReconnectAttempts(), 10);
       manager.cleanup();
     } finally {
       mock.timers.reset();
+    }
+  });
+
+  test("agentRunning=false 时也重连（切网络后 agent 看似空闲，旧实现会直接断开）", () => {
+    mock.timers.enable({ apis: ["setTimeout"] });
+    try {
+      const manager = new AgentEventsManager(10);
+      manager.setAgentRunning(false);
+      manager.connect("session-123");
+
+      const es1 = MockEventSource.instances[0];
+      es1.onerror!();
+      assert.equal(manager.getStatus(), "connecting");
+      mock.timers.tick(15);
+      assert.equal(MockEventSource.instances.length, 2, "应已重连");
+      manager.cleanup();
+    } finally {
+      mock.timers.reset();
+    }
+  });
+
+  test("页面回到前台（visibilitychange）立即重连", () => {
+    const listeners: Record<string, () => void> = {};
+    const fakeDoc = {
+      visibilityState: "visible" as string,
+      addEventListener: (n: string, h: () => void) => { listeners[n] = h; },
+      removeEventListener: (n: string) => { delete listeners[n]; },
+    };
+    (globalThis as unknown as { document?: unknown }).document = fakeDoc;
+    (globalThis as unknown as { window?: unknown }).window = {
+      addEventListener: (n: string, h: () => void) => { listeners[n] = h; },
+      removeEventListener: (n: string) => { delete listeners[n]; },
+    };
+    try {
+      const manager = new AgentEventsManager(10_000); // 退避很长：若靠计时器不会立刻重连
+      manager.connect("session-123");
+      assert.equal(MockEventSource.instances.length, 1);
+      assert.ok(listeners["visibilitychange"], "应已注册 visibilitychange");
+      listeners["visibilitychange"]();
+      assert.equal(MockEventSource.instances.length, 2, "回到前台应立刻重连（不等退避）");
+      manager.cleanup();
+    } finally {
+      delete (globalThis as unknown as { document?: unknown }).document;
+      delete (globalThis as unknown as { window?: unknown }).window;
     }
   });
 });

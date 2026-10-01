@@ -57,7 +57,20 @@ export type AgentEvent =
 export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "failed";
 
 export class AgentEventsManager {
+  /**
+   * 重连上限与延迟封顶。
+   *
+   * 2026-10-01 真机教训（TNAS.online relay 场景）：用户**切换网络**时那条 SSE 长连接会断，
+   * 旧实现两个缺陷让它彻底失联 ——
+   *   ① `reconnectAttempts > 5` 就置 failed、不再重连（切网络后 5 次重试 ≈ 31s 内就放弃）；
+   *   ② onerror 里**只有 `agentRunning` 为真才重连**，否则直接 disconnected。
+   * 现在：只要还有会话 id 就持续重连（延迟封顶 30s），并在页面回到前台 / 网络恢复时立即重连。
+   */
+  private static readonly MAX_RECONNECT_ATTEMPTS = 60;
+  private static readonly MAX_RECONNECT_DELAY_MS = 30_000;
+
   private eventSource: EventSource | null = null;
+  private wakeListenersAttached = false;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private agentRunning = false;
   private handleAgentEvent: ((event: AgentEvent) => void) | null = null;
@@ -108,6 +121,42 @@ export class AgentEventsManager {
     return this.eventSource;
   }
 
+  /**
+   * 页面回到前台 / 网络恢复时立即重连（不等退避计时器）。
+   * 依据：切 Wi‑Fi、休眠唤醒、relay 侧链路抖动后，浏览器往往**不会**主动重开这条 SSE；
+   * “页面回到前台”是最强的“我还在用”信号（2026-10-01 relay 场景实测缺口）。
+   */
+  private wakeReconnect() {
+    if (!this.sid) return;
+    if (this.getStatus() === "connected") return;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectAttempts = 0;
+    this.connect(this.sid, true, this.agentRunning);
+  }
+
+  private attachWakeListeners() {
+    if (this.wakeListenersAttached) return;
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+    this.wakeListenersAttached = true;
+    document.addEventListener("visibilitychange", this.onWake);
+    window.addEventListener("online", this.onWake);
+  }
+
+  private detachWakeListeners() {
+    if (!this.wakeListenersAttached) return;
+    this.wakeListenersAttached = false;
+    if (typeof document !== "undefined") document.removeEventListener("visibilitychange", this.onWake);
+    if (typeof window !== "undefined") window.removeEventListener("online", this.onWake);
+  }
+
+  private onWake = () => {
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    this.wakeReconnect();
+  };
+
   connect(sid: string, resetAttempts = true, expectRunning?: boolean) {
     this.sid = sid;
     if (resetAttempts) {
@@ -122,6 +171,7 @@ export class AgentEventsManager {
     this.disconnect();
     this.setStatus("connecting");
 
+    this.attachWakeListeners();
     const es = new EventSource(withBasePath(`/api/agent/${encodeURIComponent(sid)}/events`));
     this.eventSource = es;
 
@@ -142,27 +192,29 @@ export class AgentEventsManager {
     };
 
     es.onerror = () => {
-      if (this.eventSource === es && this.agentRunning) {
-        this.disconnect();
-        this.reconnectAttempts++;
-        if (this.reconnectAttempts > 5) {
-          this.setStatus("failed");
-          return;
-        }
-
-        this.setStatus("connecting");
-        // Exponential backoff: 1s, 2s, 4s, 8s, 16s, up to 30s max
-        const delay = Math.min(30000, this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1));
-        this.reconnectTimer = setTimeout(() => {
-          this.reconnectTimer = null;
-          if (this.agentRunning && this.sid) {
-            this.connect(this.sid, false);
-          }
-        }, delay);
-      } else if (this.eventSource === es) {
-        this.disconnect();
+      if (this.eventSource !== es) return;
+      this.disconnect();
+      if (!this.sid) {
         this.setStatus("disconnected");
+        return;
       }
+      this.reconnectAttempts++;
+      if (this.reconnectAttempts > AgentEventsManager.MAX_RECONNECT_ATTEMPTS) {
+        this.setStatus("failed");
+        return;
+      }
+      this.setStatus("connecting");
+      // Exponential backoff: base, 2x, 4x …，延迟封顶 30s
+      const delay = Math.min(
+        AgentEventsManager.MAX_RECONNECT_DELAY_MS,
+        this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+      );
+      this.reconnectTimer = setTimeout(() => {
+        this.reconnectTimer = null;
+        if (this.sid) {
+          this.connect(this.sid, false, this.agentRunning);
+        }
+      }, delay);
     };
   }
 
@@ -178,6 +230,7 @@ export class AgentEventsManager {
   }
 
   cleanup() {
+    this.detachWakeListeners();
     this.disconnect();
     this.sid = null;
     this.handleAgentEvent = null;

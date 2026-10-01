@@ -9,6 +9,15 @@
 
 # Changelog
 
+## 2026-10-01 — TOS 0.8.8.9-39：SSE 自愈重连（relay/切网络场景根治）+ retry 提示
+
+| 类别 | 内容 |
+|---|---|
+| 实测定位 | 从外网经 relay 直接打应用接口（curl）：首页 200 ✓、`/api/sessions` 200 ✓、`POST prompt` 200 ✓、SSE 收到 **151 个事件**跑完整轮对话 ✓、relay 给的前端 chunk 就是最新构建 ✓ ⇒ **后端/relay/客户端代码全都没问题**，问题在**浏览器那个页面实例的事件订阅**：用户切网络时 SSE 长连接断掉，而客户端没有自愈 |
+| 客户端缺陷（`hooks/agent-session/agent-events-manager.ts`） | ① `reconnectAttempts > 5` 就置 `failed` **不再重连**（切网络后 5 次重试 ≈ 31s 内放弃）；② `onerror` 里**只有 `agentRunning` 为真才重连**，否则直接 `disconnected` |
+| 修复 | ① 持续重连（上限 60 次、延迟封顶 30s）；② **不再依赖 `agentRunning`**（有会话 id 就重连）；③ 新增 **`visibilitychange` / `online` 唤醒重连**（切网络、休眠唤醒、回到页面时立即重连，不等退避）；④ 服务端 SSE 首帧发 **`retry: 3000`**，让 `EventSource` 断线后 3s 就重试 |
+| 测试 | `agent-events-manager.test.ts`：旧的「5 次后 failed」与「agent 未运行就不重连」两条断言按新语义重写，并新增「连续 10 次仍重连」「agentRunning=false 也重连」「回到前台立即重连」三例 → 该文件 10/10；全套 `npm test` 735/732 pass / 0 fail |
+
 ## 2026-10-01 — TOS 0.8.8.9-38：relay 排障诊断日志（行为不变）
 
 | 类别 | 内容 |

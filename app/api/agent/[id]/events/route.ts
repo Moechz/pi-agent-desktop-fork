@@ -108,6 +108,11 @@ export async function GET(
         sseSent += 1;
       };
 
+      // 先给浏览器一个重连节奏（SSE 的 retry 字段，EventSource 断线后按它重试）；
+      // 切网络 / relay 抖动后客户端能更快自愈（2026-10-01 relay 排障）。
+      controller.enqueue(new TextEncoder().encode("retry: 3000\n\n"));
+      sseSent += 1;
+
       // Send initial connected event
       encode({ type: "connected", sessionId: id });
 
