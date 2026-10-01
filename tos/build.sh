@@ -247,6 +247,28 @@ if problems:
 print("  ✓ 应用本体体检通过（Next 运行时齐全 / 无树外链接 / 链接农场可解析）")
 PYBODY
 
+# ★ 坑 68 门禁：本体必须带正确的 basePath。
+# basePath 是**构建期**由 TOS_BASE_PATH 决定的（next.config.ts），所以
+#   · 正确做法：`./build.sh --build-standalone`（内部会 TOS_BASE_PATH="/$APP_ID" npm run build:standalone）
+#   · 错误做法：直接用 `npm run build:standalone` 构建再 --standalone 打包
+#     → 本体没有 basePath → 应用在 /<appid>/ 下全是 404（2026-10-01 真机实证：手工包把线上打成 404）
+if [ ! -f "$APP_ROOT/.next/routes-manifest.json" ]; then
+  echo "❌ 缺少 $APP_ROOT/.next/routes-manifest.json —— 本体不完整或不是 Next standalone 产物" >&2
+  exit 1
+fi
+python3 - "$APP_ROOT/.next/routes-manifest.json" "/$APP_ID" <<'PYBODY'
+import json, sys
+manifest = json.load(open(sys.argv[1], encoding="utf-8"))
+want = sys.argv[2]
+got = manifest.get("basePath") or ""
+if got != want:
+    print(f"❌ routes-manifest.json 的 basePath={got!r}，期望 {want!r}", file=sys.stderr)
+    print("   本体的 basePath 是构建期写入的：请用 `./build.sh --build-standalone` 构建（它会设 TOS_BASE_PATH），", file=sys.stderr)
+    print("   不要直接用 npm run build:standalone 的产物打包（会得到无 basePath 的本体，装上去全是 404）。", file=sys.stderr)
+    sys.exit(1)
+print(f"  ✓ 本体 basePath = {want}（坑 68 门禁）")
+PYBODY
+
 # Next standalone 不含静态资源：手工带入（与桌面版 extraResources 等价）
 if [ ! -d "$APP_ROOT/.next/static" ]; then
   echo "❌ 缺少 $APP_ROOT/.next/static —— standalone 默认不含静态资源，必须从构建产物目录拷贝" >&2
