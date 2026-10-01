@@ -18,6 +18,7 @@
 | 修复（`lib/auth-policy.ts`） | ① 同源判定除 `Host` 外**同时信任反代写入的 `X-Forwarded-Host`**（逗号链取第一段）；② 浏览器内核自报 `Sec-Fetch-Site: same-origin` 时放行（页面脚本无法伪造；**只认 same-origin，不认 same-site** —— TNAS.online 的 `*.tnas.link` 属同一 site，放行 same-site 会允许同 site 子域发命令） |
 | 可诊断性 | 403 响应体现在带上判定依据（`origin` / `host` / `x-forwarded-host` / `sec-fetch-site`）—— 以后这类问题看浏览器 Console 即可定位，不必进 NAS 读日志 |
 | 测试 | `lib/auth-policy.test.ts` +4 例（x-forwarded-host 一致放行 / 逗号链 / same-origin 放行且 same-site 拦截 / 既无信号仍拦截）；`middleware.test.ts` 既有用例保持 → 两个文件 39/39 |
+| 用户确认 | 装 -40 后 Relay 下会话**正常收到模型回复** ✓；外部复核：同一条带 `Origin` 的 POST 由修复前 `403 forbidden origin` → 变为 `400 Unknown command type`（= 已放行至路由），页面/API 200 ✓、SSE 正常 ✓ |
 
 ## 2026-10-01 — TOS 0.8.8.9-39：SSE 自愈重连（relay/切网络场景根治）+ retry 提示
 

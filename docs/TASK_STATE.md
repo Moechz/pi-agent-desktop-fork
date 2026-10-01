@@ -1,6 +1,22 @@
 # Task state
 
-快照日期：2026-10-01 ｜ 当前版本：`package.json 0.8.8-13`（桌面端） / `tos 0.8.8.9-37`（TOS 包）｜ 分支：`custom/main`
+快照日期：2026-10-01 ｜ 当前版本：`package.json 0.8.8-13`（桌面端） / `tos 0.8.8.9-40`（TOS 包）｜ 分支：`custom/main`
+
+## 🆕 2026-10-01（下半场）：远程/relay 访问修复链 -33 → -40（已由用户确认修复）
+
+| 版本 | 修什么 |
+|---|---|
+| -33 | 回环 HTTPS 支持（`node:https` + 仅对 127.0.0.1 放宽自签校验）→ 修「只改 HTTPS 端口后加不了目录」 |
+| -34/-35 | 301 重定向自愈 + 修「fetch 自动跟随吞掉 Location」（`redirect:"manual"`） |
+| -36/-37 | 流式路由补 `no-transform` / `X-Accel-Buffering`（防中转缓冲）+ 心跳 15s；`no-transform` 被 next.config 兜底覆盖的修复 |
+| -38 | relay 排障诊断日志（`[origin-check]` / `[agent-api]` / `[sse]`） |
+| -39 | SSE **自愈重连**（不再 5 次封顶、不再依赖 agentRunning、`visibilitychange`/`online` 唤醒）+ 服务端 `retry: 3000` |
+| **-40** | **修 `forbidden origin`**：Origin 校验信任 `X-Forwarded-Host` + 浏览器 `Sec-Fetch-Site: same-origin`（只认 same-origin）→ **relay 下会话恢复正常** ✓ |
+
+- 定位关键：**用户浏览器 Console** 的 `forbidden origin` 文案；并用**带 `Origin` 的 curl** 复现（不带 Origin 的 curl 会假绿 ✗）
+- 打包侧新增门禁：`tos/build.sh` 断言本体 `basePath == /<appid>`（坑 68，防手工构建漏 `TOS_BASE_PATH`）
+- 文档：指南新增**坑 68（basePath）**与**坑 69（反代/relay Origin 403）**
+- 交付：`~/Downloads/piagentfortos_0.8.8.9-40_amd64.deb`（sha256 `8bab2d30…`）已由用户上传验证 ✓
 
 ## 🆕 2026-10-01：首次多人协作（PR #1 合并）+ CI 触发分支修复
 
