@@ -51,6 +51,19 @@ export function middleware(request: NextRequest): NextResponse {
     // 导致 TOS 反代部署（Origin=http://<nas>:8181）所有写操作 403 —— 勿再分叉。
     const rejection = validateRequestOrigin(request);
     if (rejection !== null) {
+      // 诊断日志（relay/反代场景排障必需）：把判定依据打全，但**不含任何凭据**
+      // （Origin/Host 是公开信息；Cookie 一律不记）。出现这行通常意味着前置代理改写了 Host，
+      // 需要在 piagentfortos.env 里配 PI_ALLOWED_ORIGINS（见打包指南）。
+      console.warn(
+        "[origin-check] 拒绝 %s %s → origin=%j host=%j x-forwarded-host=%j x-forwarded-proto=%j reason=%j",
+        request.method,
+        new URL(request.url).pathname,
+        request.headers.get("origin"),
+        request.headers.get("host"),
+        request.headers.get("x-forwarded-host"),
+        request.headers.get("x-forwarded-proto"),
+        rejection,
+      );
       return new NextResponse(JSON.stringify({ error: rejection }), {
         status: 403,
         headers: { "content-type": "application/json" },

@@ -9,6 +9,15 @@
 
 # Changelog
 
+## 2026-10-01 — TOS 0.8.8.9-38：relay 排障诊断日志（行为不变）
+
+| 类别 | 内容 |
+|---|---|
+| 背景 | 用户反馈：经 **TNAS.online relay** 打开应用后，会话仍无任何响应（-36/-37 的「防缓冲头 + 15s 心跳」未解决）。relay 很可能是**非 nginx 的自研代理**，不理会 `X-Accel-Buffering`，或直接改写 Host / 掐断长连接 —— 需要证据才能定方案 |
+| 新增诊断（不改行为） | ① `middleware.ts`：Origin 校验拒绝时打 `[origin-check] 拒绝 …`（含 origin / host / x-forwarded-host / x-forwarded-proto，**不含任何凭据**）② `POST /api/agent/<id>`：打 `[agent-api] POST 到达 …`（命令是否真到服务端）③ `app/api/agent/<id>/events`：连接建立 / 结束（含**已发送事件数**与存活毫秒） |
+| 判读方式 | `connected` 但 `已发送事件=0` ⇒ 事件被中间层缓冲/吞掉；**连 `connected` 都没有** ⇒ SSE 请求根本没到服务端；出现 `[origin-check] 拒绝` ⇒ 前置代理改写 Host（需配 `PI_ALLOWED_ORIGINS`） |
+| 说明 | 纯诊断版本，无功能变化；定位后再做对应修复（配置项 or 轮询兜底兼容模式） |
+
 ## 2026-09-30 — 修 Windows 客户端启动即「启动失败」（0.8.8-13，同事实锤）
 
 | 类别 | 内容 |

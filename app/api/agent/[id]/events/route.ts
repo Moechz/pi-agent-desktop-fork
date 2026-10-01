@@ -57,9 +57,26 @@ export async function GET(
   let unsubscribe: (() => void) | undefined;
   let cleaned = false;
 
+  // 诊断：SSE 连接与事件计数（relay 排障关键 —— 若日志显示 connected 但 sent=0，
+  // 说明事件被中间层缓冲/吞掉；若连 connected 都没有，说明 SSE 请求根本没到服务端）
+  let sseSent = 0;
+  const sseStartedAt = Date.now();
+  console.log(
+    "[sse] 连接建立 id=%s origin=%j host=%j",
+    id,
+    req.headers.get("origin"),
+    req.headers.get("host"),
+  );
+
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    console.log(
+      "[sse] 连接结束 id=%s 已发送事件=%d 存活=%dms（sent=0 且客户端一直在等 ⇒ 事件被中间层缓冲/吞掉）",
+      id,
+      sseSent,
+      Date.now() - sseStartedAt,
+    );
     if (heartbeat) clearInterval(heartbeat);
     if (unsubscribe) {
       try {
@@ -88,6 +105,7 @@ export async function GET(
       const encode = (data: unknown) => {
         const text = `data: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(new TextEncoder().encode(text));
+        sseSent += 1;
       };
 
       // Send initial connected event
@@ -111,6 +129,7 @@ export async function GET(
         }
         try {
           controller.enqueue(new TextEncoder().encode(":\n\n"));
+          sseSent += 1;
           session.keepAlive();
         } catch {
           // controller already closed; clean up so the idle timer can

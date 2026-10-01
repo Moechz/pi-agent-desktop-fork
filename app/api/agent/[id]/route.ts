@@ -12,6 +12,13 @@ export async function POST(
 ) {
   const { id } = await params;
   const requestId = getRequestId(req);
+  // 诊断：命令是否真的到达了服务端（relay 排障用；不记内容，只记类型与来源头）
+  console.log(
+    "[agent-api] POST 到达 id=%s type待解析 origin=%j host=%j",
+    id,
+    req.headers.get("origin"),
+    req.headers.get("host"),
+  );
 
   try {
     const body = await req.json() as { type: string; [key: string]: unknown };
