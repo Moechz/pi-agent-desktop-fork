@@ -9,6 +9,17 @@
 
 # Changelog
 
+## 2026-10-01 — 发布桌面端 0.8.8-15 + TOS 0.8.8.9-41（系统提示词面板三项修复）
+
+| 类别 | 内容 |
+|---|---|
+| ① 关不掉 | 面板接上统一的 `useDismissOnOutsideClick([topPanelRef, topBarRef])`（点外部 / Esc）+ 头部关闭按钮（`common.close`）；「分支」面板一并受益 |
+| ② 看起来透明 | 根因是**层叠/包含块**：面板在带 `backdrop-filter` 的工具条子树内 → `fixed` 定位被包含 → 压进工具条 36px 上下文。→ portal 到 `document.body` + 底色显式内联 + `break-words` |
+| ③ 看不见内容 | 提示词是运行期产物、不落盘 → 打开面板**按需拉一次**（`?includeState`/`peekState`，无副作用）；冷会话加**显式「载入」按钮**（`get_state` 唤醒，不自动启动） |
+| i18n | 新增 `shell.systemPromptLoad`（en/zh + 19 语种） |
+| 门禁 | `components/AppShell.test.ts` 5 例源码断言（portal / 显式底色 / dismiss / 关闭按钮 / 按需拉取与载入按钮） |
+| 发布 | 桌面端 tag `v0.8.8-15`；TOS tag `tos-v0.8.8.9-41`（-40 仍在审，-41 暂留待提） |
+
 ## 2026-10-01 — 发布桌面端 0.8.8-14（SSE 自愈重连 + 反代/relay Origin 修复）
 
 | 类别 | 内容 |
