@@ -144,10 +144,20 @@ export function AppShell() {
   // Single active panel — only one dropdown open at a time
   const [activeTopPanel, setActiveTopPanel] = useState<"branches" | "system" | null>(null);
   const [topPanelPos, setTopPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const topPanelRef = useRef<HTMLDivElement>(null);
 
   const toggleTopPanel = useCallback((panel: "branches" | "system") => {
     setActiveTopPanel((cur) => (cur === panel ? null : panel));
   }, []);
+
+  // 顶层面板（系统提示词 / 分支）点外部 / Esc 关闭。
+  // topBarRef 也算“内部”：面板由工具条上的菜单项唤起，只看面板自身的话，
+  // 按钮上的 pointerdown 会先关闭、随后的 click 又把它打开（永远关不掉）。
+  // 用户反馈（2026-10-01）：该面板此前**根本没接已有的关闭机制**（仓库里 5 处浮层都已接），
+  // 只能“再点一次同一个菜单项”才能关。
+  useDismissOnOutsideClick([topPanelRef, topBarRef], activeTopPanel !== null, () => {
+    setActiveTopPanel(null);
+  });
 
   useDismissOnOutsideClick([shellMenuRef, shellMenuPanelRef], shellMenuOpen, (reason) => {
     setShellMenuOpen(false);
@@ -740,34 +750,60 @@ export function AppShell() {
               </>
             )}
             {/* Top panel dropdown — shared, only one active at a time */}
-            {activeTopPanel && topPanelPos && (
-              <div
-                className="fixed z-[500]"
-                style={{
-                  top: topPanelPos.top,
-                  left: topPanelPos.left,
-                  width: topPanelPos.width,
-                }}
-              >
-                {activeTopPanel === "system" && (
-                  <div className="t-dropdown is-open material-popover border-b border-divider shadow-popover" data-origin="top-center">
-                    {systemPrompt ? (
-                      <div className="max-h-[min(600px,75vh)] overflow-y-auto px-4 py-3 text-text-muted text-[13px] leading-[1.6] whitespace-pre-wrap font-mono">
-                        {systemPrompt}
+            {activeTopPanel &&
+              topPanelPos &&
+              typeof document !== "undefined" &&
+              createPortal(
+                <div
+                  ref={topPanelRef}
+                  className="fixed z-[500]"
+                  style={{
+                    top: topPanelPos.top,
+                    left: topPanelPos.left,
+                    width: topPanelPos.width,
+                  }}
+                >
+                  {activeTopPanel === "system" && (
+                    <div
+                      className="t-dropdown is-open overflow-hidden rounded-panel border border-border shadow-popover"
+                      data-origin="top-center"
+                      /* 底色显式内联：不依赖 --material-popover（本仓库多处同样兜底，如 ModelSelector / BranchNavigator） */
+                      style={{ background: "var(--bg)" }}
+                    >
+                      <div className="flex items-center justify-between gap-2 border-b border-divider px-3.5 py-2">
+                        <span className="text-[12px] font-medium text-text">{t("shell.systemPrompt")}</span>
+                        {/* 关闭按钮：此前只能“再点一次菜单项”才能关（用户反馈） */}
+                        <button
+                          type="button"
+                          onClick={() => setActiveTopPanel(null)}
+                          aria-label={t("common.close")}
+                          title={t("common.close")}
+                          className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-control border-none bg-transparent text-text-muted transition-colors duration-150 hover:bg-bg-hover hover:text-text"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                          </svg>
+                        </button>
                       </div>
-                    ) : systemPrompt === "" ? (
-                      <div className="px-4 py-2.5 text-[13px] text-text-muted italic">
-                        {t("shell.systemPromptEmpty")}
-                      </div>
-                    ) : (
-                      <div className="px-4 py-2.5 text-[13px] text-text-muted italic">
-                        {t("shell.systemPromptLoadHint")}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                      {systemPrompt ? (
+                        <div className="max-h-[min(600px,75vh)] overflow-y-auto px-4 py-3 font-mono text-[13px] leading-[1.6] whitespace-pre-wrap break-words text-text-muted">
+                          {systemPrompt}
+                        </div>
+                      ) : systemPrompt === "" ? (
+                        <div className="px-4 py-2.5 text-[13px] italic text-text-muted">
+                          {t("shell.systemPromptEmpty")}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2.5 text-[13px] italic text-text-muted">
+                          {t("shell.systemPromptLoadHint")}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>,
+                document.body,
+              )}
           </div>
 
           {/* Chat content */}
