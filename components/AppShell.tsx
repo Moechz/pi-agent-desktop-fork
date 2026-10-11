@@ -20,6 +20,7 @@ import type { SessionInfo, SessionTreeNode } from "@/lib/types";
 import type { ChatInputHandle } from "./ChatInput";
 import { usePanelLayout } from "@/hooks/usePanelLayout";
 import { useDismissOnOutsideClick } from "@/hooks/useDismissOnOutsideClick";
+import { fetchSession } from "@/hooks/agent-session/session-loader-api";
 import { useFileTabs } from "@/hooks/useFileTabs";
 import { StatsBar } from "./StatsBar";
 import { useI18n } from "./I18nProvider";
@@ -112,6 +113,7 @@ export function AppShell() {
   }, []);
 
   const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+  const [loadingSystemPrompt, setLoadingSystemPrompt] = useState(false);
 
   const handleSystemPromptChange = useCallback((prompt: string | null) => {
     setSystemPrompt(prompt);
@@ -158,6 +160,67 @@ export function AppShell() {
   useDismissOnOutsideClick([topPanelRef, topBarRef], activeTopPanel !== null, () => {
     setActiveTopPanel(null);
   });
+
+  // ① 打开「系统提示词」面板时**按需拉一次**：`?includeState` 走 peekState()，
+  //    不会重置服务端 10 分钟空闲回收计时（无副作用）。
+  //    背景：提示词是 pi 运行时拼装的、**不落盘**，原先只在「每轮跑完」或「打开时恰好在跑」才有内容，
+  //    因此打开一个空闲的历史会话时常看到空白（用户反馈“看不见系统提示词”）。
+  useEffect(() => {
+    if (activeTopPanel !== "system") return;
+    if (systemPrompt !== null) return; // 已有内容（跑完推送过来的）不重复拉
+    const sid = selectedSession?.id;
+    if (!sid) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const data = (await fetchSession(sid, true)) as
+          | { agentState?: { running?: boolean; state?: { systemPrompt?: string } } }
+          | null;
+        const prompt = data?.agentState?.state?.systemPrompt;
+        if (alive && typeof prompt === "string") setSystemPrompt(prompt);
+      } catch {
+        /* 忽略：保持“发送消息后将加载”的提示文案 */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [activeTopPanel, systemPrompt, selectedSession?.id]);
+
+  /**
+   * ② 冷会话「载入系统提示词」：显式唤醒服务端 agent（它会读 AGENTS.md 并拼装 prompt）。
+   *
+   * 为什么必须有副作用提示：空闲会话的提示词**根本不存在**（不落盘），只能让服务端起一个
+   * agent 实例才能看到。代价：该会话会常驻到空闲回收；未信任的项目会返回 409
+   * （此处只回落到提示文案 —— 正常发消息时应用本就会弹信任确认）。
+   */
+  const loadSystemPrompt = useCallback(async () => {
+    const sid = selectedSession?.id;
+    if (!sid) return;
+    setLoadingSystemPrompt(true);
+    try {
+      const res = await fetch(withBasePath(`/api/agent/${encodeURIComponent(sid)}`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "get_state" }),
+      });
+      if (!res.ok) {
+        if (res.status === 409) {
+          console.warn("[system-prompt] 该会话需要项目信任确认（409）；先发送一条消息即可触发确认流程");
+        }
+        return;
+      }
+      const data = (await fetchSession(sid, true)) as
+        | { agentState?: { state?: { systemPrompt?: string } } }
+        | null;
+      const prompt = data?.agentState?.state?.systemPrompt;
+      if (typeof prompt === "string") setSystemPrompt(prompt);
+    } catch (error) {
+      console.warn("[system-prompt] 载入失败", error);
+    } finally {
+      setLoadingSystemPrompt(false);
+    }
+  }, [selectedSession?.id]);
 
   useDismissOnOutsideClick([shellMenuRef, shellMenuPanelRef], shellMenuOpen, (reason) => {
     setShellMenuOpen(false);
@@ -795,8 +858,18 @@ export function AppShell() {
                           {t("shell.systemPromptEmpty")}
                         </div>
                       ) : (
-                        <div className="px-4 py-2.5 text-[13px] italic text-text-muted">
-                          {t("shell.systemPromptLoadHint")}
+                        <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-[13px] italic text-text-muted">
+                          <span>{t("shell.systemPromptLoadHint")}</span>
+                          {selectedSession?.id && (
+                            <button
+                              type="button"
+                              onClick={() => void loadSystemPrompt()}
+                              disabled={loadingSystemPrompt}
+                              className="shrink-0 cursor-pointer rounded-control border border-border bg-chrome-button-bg px-2.5 py-1 text-[12px] not-italic text-text transition-colors duration-150 hover:bg-chrome-button-hover disabled:opacity-60"
+                            >
+                              {t("shell.systemPromptLoad")}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
