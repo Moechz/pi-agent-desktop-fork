@@ -81,6 +81,18 @@ export function AddProviderPicker({
             placeholder={t("provider.search")}
             style={{ flex: 1, background: "none", border: "none", outline: "none", color: "var(--text)", fontSize: 13, boxSizing: "border-box" }}
           />
+          {/* 关闭按钮：本层是全屏遮罩，父弹窗的「取消/保存」被它盖住点不到，
+              之前只能点外部空白关闭 —— 用户反馈「搜索页面缺少关闭按钮」。
+              样式沿用 ModelsConfig 弹窗右上角那个 ×。 */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close")}
+            title={t("common.close")}
+            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "2px 6px", flexShrink: 0 }}
+          >
+            ×
+          </button>
         </div>
 
         {/* Card grid */}
