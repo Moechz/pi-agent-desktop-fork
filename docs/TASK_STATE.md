@@ -1,6 +1,16 @@
 # Task state
 
-快照日期：2026-10-01 ｜ 当前版本：`package.json 0.8.8-13`（桌面端） / `tos 0.8.8.9-40`（TOS 包）｜ 分支：`custom/main`
+快照日期：2026-11-16 ｜ 当前版本：`package.json 0.8.8-16`（桌面端） / `tos 0.8.8.9-41`（TOS 包）｜ 分支：`custom/main`
+
+## 🆕 2026-11-16：打开会话停在旧内容（贴底定位重做，0.8.8-16）
+
+| 项 | 内容 |
+|---|---|
+| 用户反馈 | 每次打开一个会话，页面显示的是**较早**的内容，要往下滚好几屏才看到最新部分 |
+| 根因 | `use-chat-scroll.ts` 用 `scrollIntoView` + 固定延时（0/120/400ms）猜时机；长会话的 markdown/高亮/字体图片回流都发生在数据到达之后，定时器猜不中 → 停在中途；且没有“钉底”状态，内容继续变高不会补跳 |
+| 修法 | ① 会话切换时直接写 `scrollTop = scrollHeight`；② 消息容器挂 `ResizeObserver`，钉底状态下持续贴底；③ 用户往上滚解除钉底、滚回底部自动恢复 |
+| 代码 | `hooks/agent-session/use-chat-scroll.ts`、新增 `chat-scroll-metrics.ts`（纯函数）+ `chat-scroll-metrics.test.ts`（5 例） |
+| 验证 | `tsc --noEmit` 0 错；`hooks/** + components/**` 共 103 例全绿 |
 
 ## 🆕 2026-10-01（下半场）：远程/relay 访问修复链 -33 → -40（已由用户确认修复）
 
