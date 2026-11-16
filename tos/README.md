@@ -207,3 +207,48 @@ curl -sS -X POST -H "Authorization: Bearer $TDP_API_TOKEN" "$TDP_BASE_URL/v1/app
 
 > 注意：**改 TOS 网页端口还会让平台侧丢掉所有应用的入口反代**（表现为 404/只剩落地页/302 到桌面）——
 > 见打包指南坑 63；那部分是平台行为，需要重启平台或在应用中心「停用→启用」重建入口。
+
+## Privacy
+
+This application runs entirely on your NAS. **The developer does not collect, receive or
+have access to any data processed by the application.** No telemetry, no analytics, no
+account.
+
+| Topic | Detail |
+|---|---|
+| Data processed | Configuration, database, caches, logs and the files you create with the app. |
+| Where it is stored | `/usr/local/piagentfortos` (application runtime) and the data directory configured for the agent. |
+| Retention period | Until **you** delete it; logs are rotated or size-limited by the application. |
+| Your rights | Access/export by copying the data location; correct in the app; delete with `apt purge` / "delete data". |
+| Deletion channel | Remove the data yourself, or email **moechz@163.com** (answered within 30 days). |
+| Security measures | Dedicated unprivileged system user, only the required ports, rebuilt on upstream fixes. |
+| Children | Not directed at children. |
+
+**Full privacy policy:** [PRIVACY.md](PRIVACY.md) — <https://github.com/Moechz/tos/blob/main/PRIVACY.md>
+
+## Third-party services (API disclosure)
+
+The developer operates no server in this path. The app contacts only the services you
+configure, plus (optionally) an update check and the image registry.
+
+| Service | Endpoint | Data sent | Destination / region |
+|---|---|---|---|
+| Services you configure in the app | the address you enter | only the data that feature needs | normally your own LAN or the provider you chose |
+| Update check (if enabled) | the upstream project's release feed | current version string | GitHub, US |
+
+Full table: [PRIVACY.md](PRIVACY.md) §6.
+
+## Licence and attributions
+
+| Component | Licence | Notes |
+|---|---|---|
+| Pi Agent for TOS | see LICENSE | upstream application |
+| This packaging | GPL-3.0 (see `LICENSE`) | TOS metadata, units, scripts, translations, icon |
+
+“Pi Agent for TOS”, “TerraMaster” and “TOS” are trademarks of their respective owners. This is an
+independent community package by Moechz. Full details: [NOTICE.md](NOTICE.md).
+
+## Support
+
+- Email: moechz@163.com
+- Privacy: [PRIVACY.md](PRIVACY.md) · Licence: [NOTICE.md](NOTICE.md)
